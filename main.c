@@ -272,3 +272,5 @@ void AITurn()
         grid[row][col] = PLAYER_O;
     }
 }
+
+//gcc -o main main.c -IC:\raylib\w64devkit\x86_64-w64-mingw32\include -LC:\raylib\w64devkit\x86_64-w64-mingw32\lib -lraylib -lopengl32 -lgdi32 -lwinmm//
