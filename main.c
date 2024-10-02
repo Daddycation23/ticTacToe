@@ -1,4 +1,4 @@
-#include "C:\raylib\raylib\src\raylib.h"
+#include "C:\\raylib\\raylib\\src\\raylib.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
@@ -9,23 +9,23 @@
 #define CELL_SIZE (SCREEN_WIDTH / GRID_SIZE)
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
-typedef enum { PLAYER, AI } PlayerType;
+typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
 typedef enum { MENU, GAME, GAME_OVER } GameState;
 
 Cell grid[GRID_SIZE][GRID_SIZE];
-PlayerType currentPlayer = PLAYER;
+PlayerTurn currentPlayerTurn = PLAYER_X_TURN;
 bool gameOver = false;
 Cell winner = EMPTY;
 GameState gameState = MENU;
-bool isTwoPlayer = false;
-Cell startingPlayer = EMPTY;
+bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
 
 void InitGame();
 void UpdateGame();
+void HandlePlayerTurn();
+void AITurn();
 void DrawGame();
 bool CheckWin(Cell player);
 bool CheckDraw();
-void AITurn();
 void DrawMenu();
 void DrawGameOver();
 void ResetGame();
@@ -45,13 +45,13 @@ int main(void)
                 {
                     if (mousePos.y > SCREEN_HEIGHT / 2.0 - 60 && mousePos.y < SCREEN_HEIGHT / 2.0 - 20)
                     {
-                        isTwoPlayer = false;
+                        isTwoPlayer = false; // 1 Player mode
                         gameState = GAME;
                         InitGame();
                     }
                     else if (mousePos.y > SCREEN_HEIGHT / 2.0 + 20 && mousePos.y < SCREEN_HEIGHT / 2.0 + 60)
                     {
-                        isTwoPlayer = true;
+                        isTwoPlayer = true; // 2 Player mode
                         gameState = GAME;
                         InitGame();
                     }
@@ -99,6 +99,109 @@ int main(void)
     return 0;
 }
 
+void UpdateGame()
+{
+    if (gameOver) return;
+
+    if (currentPlayerTurn == PLAYER_X_TURN)
+    {
+        HandlePlayerTurn(); // Human's turn
+    }
+    else if (currentPlayerTurn == PLAYER_O_TURN)
+    {
+        if (isTwoPlayer)
+        {
+            HandlePlayerTurn(); // Player 2's turn in 2 Player mode
+        }
+        else
+        {
+            AITurn(); // AI's turn in 1 Player mode
+        }
+    }
+}
+
+void HandlePlayerTurn()
+{
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Vector2 mousePos = GetMousePosition();
+        int row = (int)(mousePos.y / CELL_SIZE);
+        int col = (int)(mousePos.x / CELL_SIZE);
+
+        if (grid[row][col] == EMPTY)
+        {
+            if (currentPlayerTurn == PLAYER_X_TURN)
+            {
+                grid[row][col] = PLAYER_X;
+                if (CheckWin(PLAYER_X))
+                {
+                    gameOver = true;
+                    winner = PLAYER_X;
+                    gameState = GAME_OVER;
+                }
+                else if (CheckDraw())
+                {
+                    gameOver = true;
+                    gameState = GAME_OVER;
+                }
+                else
+                {
+                    currentPlayerTurn = PLAYER_O_TURN;
+                }
+            }
+            else if (currentPlayerTurn == PLAYER_O_TURN)
+            {
+                grid[row][col] = PLAYER_O;
+                if (CheckWin(PLAYER_O))
+                {
+                    gameOver = true;
+                    winner = PLAYER_O;
+                    gameState = GAME_OVER;
+                }
+                else if (CheckDraw())
+                {
+                    gameOver = true;
+                    gameState = GAME_OVER;
+                }
+                else
+                {
+                    currentPlayerTurn = PLAYER_X_TURN;
+                }
+            }
+        }
+    }
+}
+
+void AITurn()
+{
+    int row, col;
+
+    // Simple random AI: find a random empty spot
+    do
+    {
+        row = rand() % GRID_SIZE;
+        col = rand() % GRID_SIZE;
+    } while (grid[row][col] != EMPTY);
+
+    grid[row][col] = PLAYER_O;
+
+    if (CheckWin(PLAYER_O))
+    {
+        gameOver = true;
+        winner = PLAYER_O;
+        gameState = GAME_OVER;
+    }
+    else if (CheckDraw())
+    {
+        gameOver = true;
+        gameState = GAME_OVER;
+    }
+    else
+    {
+        currentPlayerTurn = PLAYER_X_TURN;
+    }
+}
+
 void InitGame()
 {
     srand(time(NULL)); // Seed the random number generator
@@ -111,66 +214,9 @@ void InitGame()
         }
     }
 
-    // Randomly choose the starting player
-    startingPlayer = (rand() % 2 == 0) ? PLAYER_X : PLAYER_O;
-    currentPlayer = PLAYER;
+    currentPlayerTurn = PLAYER_X_TURN;
     gameOver = false;
     winner = EMPTY;
-}
-
-void UpdateGame()
-{
-    if (gameOver) return;
-
-    if (currentPlayer == PLAYER)
-    {
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        {
-            Vector2 mousePos = GetMousePosition();
-            int row = (int)(mousePos.y / CELL_SIZE);
-            int col = (int)(mousePos.x / CELL_SIZE);
-
-            if (grid[row][col] == EMPTY)
-            {
-                grid[row][col] = (startingPlayer == PLAYER_X) ? PLAYER_X : PLAYER_O;
-                if (CheckWin((startingPlayer == PLAYER_X) ? PLAYER_X : PLAYER_O))
-                {
-                    gameOver = true;
-                    winner = (startingPlayer == PLAYER_X) ? PLAYER_X : PLAYER_O;
-                    gameState = GAME_OVER;
-                }
-                else if (CheckDraw())
-                {
-                    gameOver = true;
-                    gameState = GAME_OVER;
-                }
-                else
-                {
-                    currentPlayer = isTwoPlayer ? PLAYER : AI;
-                    startingPlayer = (startingPlayer == PLAYER_X) ? PLAYER_O : PLAYER_X;
-                }
-            }
-        }
-    }
-    else if (currentPlayer == AI)
-    {
-        AITurn();
-        if (CheckWin(PLAYER_O))
-        {
-            gameOver = true;
-            winner = PLAYER_O;
-            gameState = GAME_OVER;
-        }
-        else if (CheckDraw())
-        {
-            gameOver = true;
-            gameState = GAME_OVER;
-        }
-        else
-        {
-            currentPlayer = PLAYER;
-        }
-    }
 }
 
 void DrawGame()
@@ -197,13 +243,12 @@ void DrawGame()
     }
 
     // Display the current player's turn message
-    if (isTwoPlayer && !gameOver)
+    if (!gameOver)
     {
-        const char *message = (startingPlayer == PLAYER_X) ? "Player X's turn" : "Player O's turn";
+        const char *message = (currentPlayerTurn == PLAYER_X_TURN) ? "Player X's turn" : "Player O's turn";
         DrawText(message, SCREEN_WIDTH / 2 - MeasureText(message, 20) / 2, 10, 20, BLACK);
     }
 }
-
 
 void DrawMenu()
 {
@@ -216,10 +261,23 @@ void DrawMenu()
 
 void DrawGameOver()
 {
-    const char *message = winner == PLAYER_X ? "Player X Wins!" : (winner == PLAYER_O ? "Player O Wins!" : "It's a Draw!");
-    DrawText(message, SCREEN_WIDTH / 2 - MeasureText(message, 40) / 2, SCREEN_HEIGHT / 2 - 20, 40, BLACK);
+    const char *message;
+    if (winner == PLAYER_X)
+    {
+        message = "Player X Wins!";
+    }
+    else if (winner == PLAYER_O)
+    {
+        message = "Player O Wins!";
+    }
+    else
+    {
+        message = "It's a Draw!";
+    }
+
+    DrawText(message, SCREEN_WIDTH / 2 - MeasureText(message, 40) / 2, SCREEN_HEIGHT / 2 - 40, 40, BLACK);
     DrawRectangle(SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 40, 200, 40, LIGHTGRAY);
-    DrawText("Play again?", SCREEN_WIDTH / 2 - MeasureText("Play again?", 20) / 2, SCREEN_HEIGHT / 2 + 50, 20, BLACK);
+    DrawText("Main Menu", SCREEN_WIDTH / 2 - MeasureText("Main Menu", 20) / 2, SCREEN_HEIGHT / 2 + 50, 20, BLACK);
 }
 
 bool CheckWin(Cell player)
@@ -229,8 +287,10 @@ bool CheckWin(Cell player)
         if (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player) return true;
         if (grid[0][i] == player && grid[1][i] == player && grid[2][i] == player) return true;
     }
+
     if (grid[0][0] == player && grid[1][1] == player && grid[2][2] == player) return true;
     if (grid[0][2] == player && grid[1][1] == player && grid[2][0] == player) return true;
+
     return false;
 }
 
@@ -246,31 +306,5 @@ bool CheckDraw()
     return true;
 }
 
-void AITurn()
-{
-    int emptyCells[GRID_SIZE * GRID_SIZE][2];
-    int emptyCount = 0;
-
-    for (int i = 0; i < GRID_SIZE; i++)
-    {
-        for (int j = 0; j < GRID_SIZE; j++)
-        {
-            if (grid[i][j] == EMPTY)
-            {
-                emptyCells[emptyCount][0] = i;
-                emptyCells[emptyCount][1] = j;
-                emptyCount++;
-            }
-        }
-    }
-
-    if (emptyCount > 0)
-    {
-        int randomIndex = rand() % emptyCount;
-        int row = emptyCells[randomIndex][0];
-        int col = emptyCells[randomIndex][1];
-        grid[row][col] = PLAYER_O;
-    }
-}
 
 //gcc -o main main.c -IC:\raylib\w64devkit\x86_64-w64-mingw32\include -LC:\raylib\w64devkit\x86_64-w64-mingw32\lib -lraylib -lopengl32 -lgdi32 -lwinmm//
