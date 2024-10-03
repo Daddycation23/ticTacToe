@@ -8,7 +8,7 @@ Steps to download raylib:
   6. Choose your desired directory for the download
   7. Wait for the installation to complete
   8. Open the installer once the download is finished
-  9. IMPORTANT**: A window will pop up for your to start the installation. Make sure the install path is C:\raylib. This is because the include file path is specified in as C:\\raylib\\raylib\\src\\raylib.h, you are free to makes changes if you know how to include the required libraries but if you want to save the trouble, make sure the file path is C:\raylib
+  9. IMPORTANT**: A window will pop up for your to start the installation. Make sure the install path is C:\raylib. This is because the include file path is specified in main.c as C:\\raylib\\raylib\\src\\raylib.h, you are free to makes changes if you know how to include the required libraries but if you want to save the trouble, make sure the file path is C:\raylib
   10. Click install and wait for the installation to complete
   11. Close the window and open VS code or any IDE you prefer to use
   12. Open main.c in from this directory
