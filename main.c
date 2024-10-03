@@ -29,6 +29,8 @@ bool CheckDraw();
 void DrawMenu();
 void DrawGameOver();
 void ResetGame();
+int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing);
+int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
 int main(void)
 {
@@ -174,16 +176,31 @@ void HandlePlayerTurn()
 
 void AITurn()
 {
-    int row, col;
+    int bestScore = -1000;
+    int bestRow = -1;
+    int bestCol = -1;
 
-    // Simple random AI: find a random empty spot
-    do
+    for (int i = 0; i < GRID_SIZE; i++)
     {
-        row = rand() % GRID_SIZE;
-        col = rand() % GRID_SIZE;
-    } while (grid[row][col] != EMPTY);
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            if (grid[i][j] == EMPTY)
+            {
+                grid[i][j] = PLAYER_O;
+                int score = Minimax(grid, false);
+                grid[i][j] = EMPTY;
 
-    grid[row][col] = PLAYER_O;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestRow = i;
+                    bestCol = j;
+                }
+            }
+        }
+    }
+
+    grid[bestRow][bestCol] = PLAYER_O;
 
     if (CheckWin(PLAYER_O))
     {
@@ -199,6 +216,50 @@ void AITurn()
     else
     {
         currentPlayerTurn = PLAYER_X_TURN;
+    }
+}
+
+int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing)
+{
+    if (CheckWin(PLAYER_O)) return 1;
+    if (CheckWin(PLAYER_X)) return -1;
+    if (CheckDraw()) return 0;
+
+    if (isMaximizing)
+    {
+        int bestScore = -1000;
+        for (int i = 0; i < GRID_SIZE; i++)
+        {
+            for (int j = 0; j < GRID_SIZE; j++)
+            {
+                if (board[i][j] == EMPTY)
+                {
+                    board[i][j] = PLAYER_O;
+                    int score = Minimax(board, false);
+                    board[i][j] = EMPTY;
+                    bestScore = (score > bestScore) ? score : bestScore;
+                }
+            }
+        }
+        return bestScore;
+    }
+    else
+    {
+        int bestScore = 1000;
+        for (int i = 0; i < GRID_SIZE; i++)
+        {
+            for (int j = 0; j < GRID_SIZE; j++)
+            {
+                if (board[i][j] == EMPTY)
+                {
+                    board[i][j] = PLAYER_X;
+                    int score = Minimax(board, true);
+                    board[i][j] = EMPTY;
+                    bestScore = (score < bestScore) ? score : bestScore;
+                }
+            }
+        }
+        return bestScore;
     }
 }
 
@@ -305,6 +366,5 @@ bool CheckDraw()
     }
     return true;
 }
-
 
 //gcc -o main main.c -IC:\raylib\w64devkit\x86_64-w64-mingw32\include -LC:\raylib\w64devkit\x86_64-w64-mingw32\lib -lraylib -lopengl32 -lgdi32 -lwinmm//
