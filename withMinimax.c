@@ -225,29 +225,42 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing)
     if (CheckWin(PLAYER_X)) return -1;
     if (CheckDraw()) return 0;
 
-    // Reduce the depth of recursion to make the AI less intelligent
-    static int depth = 0;
-    if (depth >= 2) return 0;
-
-    depth++;
-    int bestScore = isMaximizing ? -1000 : 1000;
-
-    for (int i = 0; i < GRID_SIZE; i++)
+    if (isMaximizing)
     {
-        for (int j = 0; j < GRID_SIZE; j++)
+        int bestScore = -1000;
+        for (int i = 0; i < GRID_SIZE; i++)
         {
-            if (board[i][j] == EMPTY)
+            for (int j = 0; j < GRID_SIZE; j++)
             {
-                board[i][j] = isMaximizing ? PLAYER_O : PLAYER_X;
-                int score = Minimax(board, !isMaximizing);
-                board[i][j] = EMPTY;
-                bestScore = isMaximizing ? (score > bestScore ? score : bestScore) : (score < bestScore ? score : bestScore);
+                if (board[i][j] == EMPTY)
+                {
+                    board[i][j] = PLAYER_O;
+                    int score = Minimax(board, false);
+                    board[i][j] = EMPTY;
+                    bestScore = (score > bestScore) ? score : bestScore;
+                }
             }
         }
+        return bestScore;
     }
-
-    depth--;
-    return bestScore;
+    else
+    {
+        int bestScore = 1000;
+        for (int i = 0; i < GRID_SIZE; i++)
+        {
+            for (int j = 0; j < GRID_SIZE; j++)
+            {
+                if (board[i][j] == EMPTY)
+                {
+                    board[i][j] = PLAYER_X;
+                    int score = Minimax(board, true);
+                    board[i][j] = EMPTY;
+                    bestScore = (score < bestScore) ? score : bestScore;
+                }
+            }
+        }
+        return bestScore;
+    }
 }
 
 void InitGame()
