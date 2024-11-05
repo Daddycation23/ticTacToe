@@ -2,11 +2,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+#include <math.h>
 
 #define SCREEN_WIDTH 600
 #define SCREEN_HEIGHT 600
 #define GRID_SIZE 3
 #define CELL_SIZE (SCREEN_WIDTH / GRID_SIZE)
+#define MAX_INSTANCES 958 // Total number of instances in the dataset
+#define FEATURES 9 // Number of features (board positions)
+#define CLASSES 2 // Number of classes (positive and negative)
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
@@ -18,6 +23,16 @@ bool gameOver = false;
 Cell winner = EMPTY;
 GameState gameState = MENU;
 bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
+
+typedef struct {
+    char board[FEATURES];
+    int class; // 0 for negative, 1 for positive
+} Instance;
+
+Instance dataset[MAX_INSTANCES];
+int datasetSize = 0;
+double priorProbability[CLASSES];
+double conditionalProbability[CLASSES][FEATURES][3]; // 3 possible values: 'x', 'o', 'b'
 
 void InitGame();
 void UpdateGame();
@@ -31,10 +46,17 @@ void DrawGameOver();
 void ResetGame();
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
+void loadDataset();
+void trainNaiveBayes();
+int predictNaiveBayes(Cell board[GRID_SIZE][GRID_SIZE]);
+double calculateProbability(Cell board[GRID_SIZE][GRID_SIZE], int class);
 
 int main(void)
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe");
+
+    loadDataset();
+    trainNaiveBayes();
 
     while (!WindowShouldClose())
     {
@@ -176,9 +198,8 @@ void HandlePlayerTurn()
 
 void AITurn()
 {
-    int bestScore = -1000;
-    int bestRow = -1;
-    int bestCol = -1;
+    int bestMove[2] = {-1, -1};
+    double bestProb = -1.0;
 
     for (int i = 0; i < GRID_SIZE; i++)
     {
@@ -186,21 +207,27 @@ void AITurn()
         {
             if (grid[i][j] == EMPTY)
             {
-                grid[i][j] = PLAYER_O;
-                int score = Minimax(grid, false);
-                grid[i][j] = EMPTY;
-
-                if (score > bestScore)
+                Cell tempBoard[GRID_SIZE][GRID_SIZE];
+                memcpy(tempBoard, grid, sizeof(grid));
+                tempBoard[i][j] = PLAYER_O;
+                
+                int prediction = predictNaiveBayes(tempBoard);
+                double prob = calculateProbability(tempBoard, prediction);
+                
+                if (prob > bestProb)
                 {
-                    bestScore = score;
-                    bestRow = i;
-                    bestCol = j;
+                    bestProb = prob;
+                    bestMove[0] = i;
+                    bestMove[1] = j;
                 }
             }
         }
     }
 
-    grid[bestRow][bestCol] = PLAYER_O;
+    if (bestMove[0] != -1 && bestMove[1] != -1)
+    {
+        grid[bestMove[0]][bestMove[1]] = PLAYER_O;
+    }
 
     if (CheckWin(PLAYER_O))
     {
@@ -354,4 +381,108 @@ bool CheckDraw()
     return true;
 }
 
-//gcc -o main main.c -IC:\msys64\mingw64\include -LC:\msys64\mingw64\lib -lraylib -lopengl32 -lgdi32 -lwinmm//
+void loadDataset()
+{
+    FILE *file = fopen("tic-tac-toe.data", "r");
+    if (file == NULL)
+    {
+        printf("Error opening file\n");
+        return;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file))
+    {
+        char *token = strtok(line, ",");
+        int i = 0;
+        while (token != NULL && i < FEATURES)
+        {
+            dataset[datasetSize].board[i] = token[0];
+            token = strtok(NULL, ",");
+            i++;
+        }
+        if (token != NULL)
+        {
+            dataset[datasetSize].class = (strcmp(token, "positive\n") == 0) ? 1 : 0;
+        }
+        datasetSize++;
+    }
+
+    fclose(file);
+}
+
+void trainNaiveBayes()
+{
+    int classCounts[CLASSES] = {0};
+    int featureCounts[CLASSES][FEATURES][3] = {0};
+
+    for (int i = 0; i < datasetSize; i++)
+    {
+        int class = dataset[i].class;
+        classCounts[class]++;
+
+        for (int j = 0; j < FEATURES; j++)
+        {
+            char value = dataset[i].board[j];
+            int valueIndex = (value == 'x') ? 0 : (value == 'o') ? 1 : 2;
+            featureCounts[class][j][valueIndex]++;
+        }
+    }
+
+    for (int i = 0; i < CLASSES; i++)
+    {
+        priorProbability[i] = (double)classCounts[i] / datasetSize;
+
+        for (int j = 0; j < FEATURES; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                conditionalProbability[i][j][k] = ((double)featureCounts[i][j][k] + 1) / (classCounts[i] + 3);
+            }
+        }
+    }
+}
+
+int predictNaiveBayes(Cell board[GRID_SIZE][GRID_SIZE])
+{
+    double maxProb = -1.0;
+    int bestClass = -1;
+
+    for (int i = 0; i < CLASSES; i++)
+    {
+        double prob = calculateProbability(board, i);
+        if (prob > maxProb)
+        {
+            maxProb = prob;
+            bestClass = i;
+        }
+    }
+
+    return bestClass;
+}
+
+double calculateProbability(Cell board[GRID_SIZE][GRID_SIZE], int class)
+{
+    double logProb = log(priorProbability[class]);
+
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            int feature = i * GRID_SIZE + j;
+            int valueIndex;
+            if (board[i][j] == PLAYER_X)
+                valueIndex = 0;
+            else if (board[i][j] == PLAYER_O)
+                valueIndex = 1;
+            else
+                valueIndex = 2;
+
+            logProb += log(conditionalProbability[class][feature][valueIndex]);
+        }
+    }
+
+    return exp(logProb);
+}
+
+//gcc -o main main.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm//
