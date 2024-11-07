@@ -17,7 +17,7 @@
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
-typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, AI_ANALYSIS } GameState;
+typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, AI_ANALYSIS, EXIT } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
 
 typedef struct {
@@ -118,7 +118,7 @@ int main(void)
                 // Exit button, exit game when clicked
                 else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
                     mousePos.y >= SCREEN_HEIGHT/2 + 180 && mousePos.y <= SCREEN_HEIGHT/2 + 220) {
-                    break;
+                    gameState = EXIT; // Change to Exit state
                 }
             }
         }
@@ -174,6 +174,11 @@ int main(void)
                 }
             }
         }
+        else if (gameState == EXIT)
+        {
+            break;
+        }
+        
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
