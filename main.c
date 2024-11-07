@@ -703,6 +703,7 @@ void UpdateGame()
 
 void AITurn()
 {
+    printf("AI's turn\n"); // Debug print
     int bestScore = -1000;
     int bestRow = -1;
     int bestCol = -1;
@@ -710,34 +711,28 @@ void AITurn()
     // Easy mode: 40% chance of random move
     if (currentDifficulty == EASY) {
         if (GetRandomValue(0, 100) < 40) {
-            do {
+            // Attempt a random move
+            for (int attempt = 0; attempt < 9; attempt++) { // Try up to 9 times
                 bestRow = GetRandomValue(0, 2);
                 bestCol = GetRandomValue(0, 2);
-            } while (grid[bestRow][bestCol] != EMPTY);
-            grid[bestRow][bestCol] = PLAYER_O;
-            
-            // Update game state and return
-            if (CheckWin(PLAYER_O)) {
-                gameOver = true;
-                winner = PLAYER_O;
-                gameState = GAME_OVER;
-                switch(currentDifficulty) {
-                    case EASY: easyStats.wins++; easyStats.totalGames++; break;
-                    case MEDIUM: mediumStats.wins++; mediumStats.totalGames++; break;
-                    case HARD: hardStats.wins++; hardStats.totalGames++; break;
+                if (grid[bestRow][bestCol] == EMPTY) {
+                    grid[bestRow][bestCol] = PLAYER_O;
+                    break;
                 }
-            } else if (CheckDraw()) {
-                gameOver = true;
-                gameState = GAME_OVER;
-                switch(currentDifficulty) {
-                    case EASY: easyStats.draws++; easyStats.totalGames++; break;
-                    case MEDIUM: mediumStats.draws++; mediumStats.totalGames++; break;
-                    case HARD: hardStats.draws++; hardStats.totalGames++; break;
-                }
-            } else {
-                currentPlayerTurn = PLAYER_X_TURN;
             }
-            return;
+        } else {
+            // If random move fails, fall back to a simple strategy
+            for (int i = 0; i < GRID_SIZE; i++) {
+                for (int j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j] == EMPTY) {
+                        grid[i][j] = PLAYER_O;
+                        bestRow = i;
+                        bestCol = j;
+                        break;
+                    }
+                }
+                if (bestRow != -1) break;
+            }
         }
     }
     // Medium mode: use Minimax with limited depth
@@ -781,7 +776,10 @@ void AITurn()
         }
     }
 
-    grid[bestRow][bestCol] = PLAYER_O;
+    // Ensure a move is made
+    if (bestRow != -1 && bestCol != -1) {
+        grid[bestRow][bestCol] = PLAYER_O;
+    }
 
     if (CheckWin(PLAYER_O)) {
         gameOver = true;
