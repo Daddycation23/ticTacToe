@@ -708,37 +708,29 @@ void AITurn()
     int bestRow = -1;
     int bestCol = -1;
 
-    // Easy mode: 40% chance of random move
+    // Easy mode: use Minimax with limited depth search of 2
     if (currentDifficulty == EASY) {
-        if (GetRandomValue(0, 100) < 40) {
-            // Attempt a random move
-            for (int attempt = 0; attempt < 9; attempt++) { // Try up to 9 times
-                bestRow = GetRandomValue(0, 2);
-                bestCol = GetRandomValue(0, 2);
-                if (grid[bestRow][bestCol] == EMPTY) {
-                    grid[bestRow][bestCol] = PLAYER_O;
-                    break;
-                }
-            }
-        } else {
-            // If random move fails, fall back to a simple strategy
-            for (int i = 0; i < GRID_SIZE; i++) {
-                for (int j = 0; j < GRID_SIZE; j++) {
-                    if (grid[i][j] == EMPTY) {
-                        grid[i][j] = PLAYER_O;
+        int depthLimit = 1; // Set a depth limit for easy difficulty
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (grid[i][j] == EMPTY) {
+                    grid[i][j] = PLAYER_O;
+                    int score = Minimax(grid, false, 0, depthLimit);
+                    grid[i][j] = EMPTY;
+
+                    if (score > bestScore) {
+                        bestScore = score;
                         bestRow = i;
                         bestCol = j;
-                        break;
                     }
                 }
-                if (bestRow != -1) break;
             }
         }
     }
-    // Medium mode: use Minimax with limited depth
+    // Medium mode: use Minimax with limited depth search of 4
     else if (currentDifficulty == MEDIUM)
     {
-        int depthLimit = 3; // Set a depth limit for medium difficulty
+        int depthLimit = 4; // Set a depth limit for medium difficulty
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 if (grid[i][j] == EMPTY) {
