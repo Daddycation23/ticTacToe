@@ -115,6 +115,11 @@ int main(void)
                     LoadAndEvaluateDataset();
                     gameState = AI_ANALYSIS;  // Change to AI Analysis state instead of just displaying stats
                 }
+                // Exit button, exit game when clicked
+                else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
+                    mousePos.y >= SCREEN_HEIGHT/2 + 180 && mousePos.y <= SCREEN_HEIGHT/2 + 220) {
+                    break;
+                }
             }
         }
         else if (gameState == GAME)
@@ -942,20 +947,29 @@ void DrawMenu() {
         BUTTON_HEIGHT
     };
 
+    Rectangle exitBtn = {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 3,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    };
+
     Vector2 mousePos = GetMousePosition();
     
     // Check hover states
     bool singlePlayerHover = CheckCollisionPointRec(mousePos, singlePlayerBtn);
     bool twoPlayerHover = CheckCollisionPointRec(mousePos, twoPlayerBtn);
     bool analysisHover = CheckCollisionPointRec(mousePos, analysisBtn);
+    bool exitHover = CheckCollisionPointRec(mousePos, exitBtn);
 
     // Draw buttons with hover effects
     DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover);
     DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover);
     DrawButton(analysisBtn, "View AI Analysis", buttonFontSize, analysisHover);
+    DrawButton(exitBtn, "Exit Game", buttonFontSize, exitHover);
 
     // Set cursor based on any button hover
-    SetMouseCursor((singlePlayerHover || twoPlayerHover || analysisHover) ? 
+    SetMouseCursor((singlePlayerHover || twoPlayerHover || analysisHover || exitHover) ? 
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
