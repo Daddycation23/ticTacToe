@@ -1,8 +1,38 @@
 #include "main.h"
 
-DifficultyStats easyStats = {0, 0, 0, 0};
-DifficultyStats mediumStats = {0, 0, 0, 0};
-DifficultyStats hardStats = {0, 0, 0, 0};
+#define MAX_SYMBOLS 100
+#define SYMBOL_SPEED 0.02f  // Constant speed for falling symbols
+
+typedef struct {
+    Vector2 position;
+    char symbol;
+} FallingSymbol;
+
+FallingSymbol symbols[MAX_SYMBOLS];
+
+void InitSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
+        symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+    }
+}
+
+void UpdateSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        symbols[i].position.y += SYMBOL_SPEED;
+        if (symbols[i].position.y > SCREEN_HEIGHT) {
+            symbols[i].position.y = GetRandomValue(-SCREEN_HEIGHT, 0);
+            symbols[i].position.x = GetRandomValue(0, SCREEN_WIDTH);
+            symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+        }
+    }
+}
+
+void DrawSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        DrawText(&symbols[i].symbol, symbols[i].position.x, symbols[i].position.y, 20, symbols[i].symbol == 'X' ? BLUE : RED);
+    }
+}
 
 Difficulty currentDifficulty = MEDIUM; // Default difficulty
 Cell grid[GRID_SIZE][GRID_SIZE];
@@ -29,10 +59,30 @@ int main(void)
     Sound victorySound = LoadSound("FFVictory.mp3");  // Load the victory sound
     Sound loseSound = LoadSound("MarioLose.mp3");  // Load the lose sound
     Sound drawSound = LoadSound("Draw.mp3");  // Load the draw sound
+    Sound mainMenuSound = LoadSound("MainMenu.mp3");  // Load the main menu sound
+    Sound playSound = LoadSound("Play.mp3");  // Load the play sound
+
+    InitSymbols();  // Initialize the falling symbols
 
     while (!WindowShouldClose())
     {
+        if (gameState == MENU || gameState == DIFFICULTY_SELECT) {
+            if (!IsSoundPlaying(mainMenuSound)) {
+                PlaySound(mainMenuSound);  // Play main menu sound
+            }
+            StopSound(playSound);  // Ensure play sound is stopped
+        } else if (gameState == GAME) {
+            if (!IsSoundPlaying(playSound)) {
+                PlaySound(playSound);  // Play play sound
+            }
+            StopSound(mainMenuSound);  // Ensure main menu sound is stopped
+        } else {
+            StopSound(mainMenuSound);  // Stop main menu sound when leaving these states
+            StopSound(playSound);  // Stop play sound when leaving the game state
+        }
+
         if (gameState == MENU) {
+            UpdateSymbols();  // Update the falling symbols
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 Vector2 mousePos = GetMousePosition();
                 // Single Player button
@@ -111,6 +161,7 @@ int main(void)
 
         switch(gameState) {
             case MENU:
+                DrawSymbols();  // Draw the falling symbols
                 DrawMenu();
                 break;
             case DIFFICULTY_SELECT:
@@ -133,6 +184,8 @@ int main(void)
     UnloadSound(victorySound);  // Unload the victory sound
     UnloadSound(loseSound);  // Unload the lose sound
     UnloadSound(drawSound);  // Unload the draw sound
+    UnloadSound(mainMenuSound);  // Unload the main menu sound
+    UnloadSound(playSound);  // Unload the play sound
     CloseAudioDevice();  // Close the audio device
     UnloadFont(customFont);
     CloseWindow();
@@ -206,26 +259,6 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                         }
                     } else {
                         PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
-                    }
-
-                    // Track AI losses when player wins
-                    if (winner == PLAYER_X && !isTwoPlayer) {
-                        switch(currentDifficulty) {
-                            case EASY: easyStats.losses++; easyStats.totalGames++; break;
-                            case MEDIUM: mediumStats.losses++; mediumStats.totalGames++; break;
-                            case HARD: hardStats.losses++; hardStats.totalGames++; break;
-                        }
-                    }
-                }
-                else if (CheckDraw())
-                {
-                    gameOver = true;
-                    gameState = GAME_OVER;
-                    PlaySound(drawSound);  // Play draw sound
-                    switch(currentDifficulty) {
-                        case EASY: easyStats.draws++; easyStats.totalGames++; break;
-                        case MEDIUM: mediumStats.draws++; mediumStats.totalGames++; break;
-                        case HARD: hardStats.draws++; hardStats.totalGames++; break;
                     }
                 }
                 else
@@ -322,21 +355,11 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
             PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
         }
 
-        switch(currentDifficulty) {
-            case EASY: easyStats.wins++; easyStats.totalGames++; break;
-            case MEDIUM: mediumStats.wins++; mediumStats.totalGames++; break;
-            case HARD: hardStats.wins++; hardStats.totalGames++; break;
-        }
     } 
     else if (CheckDraw()) {
         gameOver = true;
         gameState = GAME_OVER;
         PlaySound(drawSound);  // Play draw sound
-        switch(currentDifficulty) {
-            case EASY: easyStats.draws++; easyStats.totalGames++; break;
-            case MEDIUM: mediumStats.draws++; mediumStats.totalGames++; break;
-            case HARD: hardStats.draws++; hardStats.totalGames++; break;
-        }
     } 
     else {
         currentPlayerTurn = PLAYER_X_TURN;
@@ -615,33 +638,6 @@ void DrawGameOver() {
     
     // Set cursor
     SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
-}
-
-void DrawDifficultySection(const char* difficulty, DifficultyStats stats, int* y, Color color, int padding, int textFontSize) {
-    char buffer[100];
-    
-    // Draw difficulty title
-    DrawText(difficulty, padding, *y, textFontSize + 4, color);
-    *y += textFontSize + padding/2;
-
-    // Draw stats
-    snprintf(buffer, sizeof(buffer), "Wins: %d", stats.wins);
-    DrawText(buffer, padding * 2, *y, textFontSize, BLACK);
-    *y += textFontSize + padding/3;
-
-    snprintf(buffer, sizeof(buffer), "Losses: %d", stats.losses);
-    DrawText(buffer, padding * 2, *y, textFontSize, BLACK);
-    *y += textFontSize + padding/3;
-
-    snprintf(buffer, sizeof(buffer), "Draws: %d", stats.draws);
-    DrawText(buffer, padding * 2, *y, textFontSize, BLACK);
-    *y += textFontSize + padding/3;
-
-    float winRate = stats.totalGames > 0 ? 
-        (float)stats.wins/stats.totalGames * 100 : 0;
-    snprintf(buffer, sizeof(buffer), "Win Rate: %.1f%%", winRate);
-    DrawText(buffer, padding * 2, *y, textFontSize, BLACK);
-    *y += textFontSize + padding;
 }
 
 // Add the function definition

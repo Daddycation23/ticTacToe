@@ -25,13 +25,6 @@ typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
 
 typedef struct {
-    int wins;
-    int losses;
-    int draws;
-    int totalGames;
-} DifficultyStats;
-
-typedef struct {
     char symbol;  // 'X', 'O' or ' '
     float alpha;  // For fade effect
     bool active;
@@ -39,9 +32,6 @@ typedef struct {
 
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 
-extern DifficultyStats easyStats;
-extern DifficultyStats mediumStats;
-extern DifficultyStats hardStats;
 extern Difficulty currentDifficulty;
 extern PlayerTurn currentPlayerTurn;
 extern bool gameOver;
@@ -74,7 +64,7 @@ void DrawGameOver();
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
-void DrawDifficultySection(const char* difficulty, DifficultyStats stats, int* y, Color color, int padding, int textFontSize);
+void DrawDifficultySection(const char* difficulty, int* y, Color color, int padding, int textFontSize);
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
 
 Font customFont;
