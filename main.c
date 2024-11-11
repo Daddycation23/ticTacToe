@@ -1,36 +1,34 @@
 #include "main.h"
 
-#define MAX_SYMBOLS 100
-#define SYMBOL_SPEED 0.02f  // Constant speed for falling symbols
-
-typedef struct {
-    Vector2 position;
-    char symbol;
-} FallingSymbol;
-
+// Define the global arrays
+GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
 
 void InitSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
         symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
         symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+        symbols[i].rotation = GetRandomValue(0, 360);  // Random initial rotation
     }
 }
 
 void UpdateSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
         symbols[i].position.y += SYMBOL_SPEED;
+        symbols[i].rotation += ROTATION_SPEED;  // Update rotation
         if (symbols[i].position.y > SCREEN_HEIGHT) {
             symbols[i].position.y = GetRandomValue(-SCREEN_HEIGHT, 0);
             symbols[i].position.x = GetRandomValue(0, SCREEN_WIDTH);
             symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+            symbols[i].rotation = GetRandomValue(0, 360);  // Reset rotation
         }
     }
 }
 
 void DrawSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
-        DrawText(&symbols[i].symbol, symbols[i].position.x, symbols[i].position.y, 20, symbols[i].symbol == 'X' ? BLUE : RED);
+        Vector2 origin = {10, 10};  // Center of rotation
+        DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED);
     }
 }
 
@@ -53,6 +51,11 @@ int main(void)
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe");
     InitAudioDevice();  // Initialize audio device
+
+    // Load the icon image
+    Image icon = LoadImage("icon.png");  // Make sure the file path is correct
+    SetWindowIcon(icon);  // Set the window icon
+    UnloadImage(icon);  // Unload the image after setting the icon
 
     Sound buttonClickSound = LoadSound("ButtonClicked.mp3");  // Load the button click sound
     Sound popSound = LoadSound("Pop.mp3");  // Load the pop sound
@@ -81,8 +84,11 @@ int main(void)
             StopSound(playSound);  // Stop play sound when leaving the game state
         }
 
-        if (gameState == MENU) {
+        if (gameState == MENU || gameState == DIFFICULTY_SELECT) {
             UpdateSymbols();  // Update the falling symbols
+        }
+
+        if (gameState == MENU) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 Vector2 mousePos = GetMousePosition();
                 // Single Player button
@@ -165,6 +171,7 @@ int main(void)
                 DrawMenu();
                 break;
             case DIFFICULTY_SELECT:
+                DrawSymbols();  // Draw the falling symbols
                 DrawDifficultySelect();
                 break;
             case GAME:

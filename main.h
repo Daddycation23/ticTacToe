@@ -18,6 +18,9 @@
 #define CELL_SIZE (SCREEN_WIDTH / GRID_SIZE)
 #define FEATURES 9 // Number of features (board positions)
 #define TITLE_GRID_SIZE 3
+#define MAX_SYMBOLS 100
+#define SYMBOL_SPEED 0.02f  // Constant speed for falling symbols
+#define ROTATION_SPEED 0.02f  // Speed of rotation
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
@@ -30,7 +33,14 @@ typedef struct {
     bool active;
 } GridSymbol;
 
-GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
+typedef struct {
+    Vector2 position;
+    char symbol;
+    float rotation;  // Rotation angle
+} FallingSymbol;
+
+extern GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
+extern FallingSymbol symbols[MAX_SYMBOLS];
 
 extern Difficulty currentDifficulty;
 extern PlayerTurn currentPlayerTurn;
@@ -50,6 +60,9 @@ static float scrollY = 0.0f;
 static const float scrollSpeed = 20.0f;
 
 void InitGame();
+void InitSymbols();
+void UpdateSymbols();
+void DrawSymbols();
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
 void UpdateGameOver(Sound buttonClickSound);
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
