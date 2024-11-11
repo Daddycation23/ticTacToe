@@ -17,7 +17,7 @@
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
-typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, AI_ANALYSIS, EXIT } GameState;
+typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, EXIT } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
 
 typedef struct {
@@ -26,15 +26,6 @@ typedef struct {
     int draws;
     int totalGames;
 } DifficultyStats;
-
-typedef struct {
-    int tp, tn, fp, fn; // True Positives, True Negatives, False Positives, False Negatives
-} ConfusionMatrix;
-
-typedef struct {
-    int correctPredictions;
-    int totalPredictions;
-} AccuracyResult;
 
 DifficultyStats easyStats = {0, 0, 0, 0};
 DifficultyStats mediumStats = {0, 0, 0, 0};
@@ -48,14 +39,6 @@ Cell winner = EMPTY;
 GameState gameState = MENU;
 bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
 
-ConfusionMatrix confusionMatrix = {0, 0, 0, 0};
-float trainingAccuracy = 0.0f;
-float testingAccuracy = 0.0f;
-
-// Declare scroll variables
-static float scrollY = 0.0f;
-static const float scrollSpeed = 20.0f;
-
 void InitGame();
 void UpdateGame();
 void UpdateGameOver();
@@ -67,29 +50,19 @@ bool CheckWin(Cell player);
 bool CheckDraw();
 void DrawMenu();
 void DrawGameOver();
-void LoadAndEvaluateDataset(void);
-void DisplayDifficultyStats(void);
 
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
-void DrawAIAnalysis();
 void DrawDifficultySection(const char* difficulty, DifficultyStats stats, int* y, Color color, int padding, int textFontSize);
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
-
-// Linear Regression Functions
-void TrainLinearRegression(float weights[FEATURES + 1], float learningRate, int epochs);
-float PredictLinearRegression(float weights[FEATURES + 1], float features[FEATURES]);
-void EvaluateLinearRegression(float weights[FEATURES + 1]);
 
 int main(void)
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe");
 
-    // Initialize weights for linear regression
-    float weights[FEATURES + 1] = {0}; // +1 for the bias term
-    TrainLinearRegression(weights, 0.01, 1000); // Train the model
-    EvaluateLinearRegression(weights); // Evaluate the model
+    // Load the image as a texture
+    Texture2D background = LoadTexture("background.png");
 
     while (!WindowShouldClose())
     {
@@ -109,15 +82,9 @@ int main(void)
                     gameState = GAME;
                     InitGame();
                 }
-                // AI Analysis button
-                else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
-                    mousePos.y >= SCREEN_HEIGHT/2 + 120 && mousePos.y <= SCREEN_HEIGHT/2 + 160) {
-                    LoadAndEvaluateDataset();
-                    gameState = AI_ANALYSIS;  // Change to AI Analysis state instead of just displaying stats
-                }
                 // Exit button, exit game when clicked
                 else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
-                    mousePos.y >= SCREEN_HEIGHT/2 + 180 && mousePos.y <= SCREEN_HEIGHT/2 + 220) {
+                    mousePos.y >= SCREEN_HEIGHT/2 + 120 && mousePos.y <= SCREEN_HEIGHT/2 + 160) {
                     gameState = EXIT; // Change to Exit state
                 }
             }
@@ -159,21 +126,6 @@ int main(void)
                 }
             }
         }
-        else if (gameState == AI_ANALYSIS) {
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                Vector2 mousePos = GetMousePosition();
-                Rectangle backBtn = {
-                    SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-                    SCREEN_HEIGHT - BUTTON_HEIGHT - 20,
-                    BUTTON_WIDTH,
-                    BUTTON_HEIGHT
-                };
-                
-                if (CheckCollisionPointRec(mousePos, backBtn)) {
-                    gameState = MENU;
-                }
-            }
-        }
         else if (gameState == EXIT)
         {
             break;
@@ -185,6 +137,8 @@ int main(void)
 
         switch(gameState) {
             case MENU:
+                // Draw the background image scaled to fit the window
+                DrawTextureEx(background, (Vector2){0, 0}, 0.0f, (float)SCREEN_WIDTH / background.width, WHITE);
                 DrawMenu();
                 break;
             case DIFFICULTY_SELECT:
@@ -197,14 +151,12 @@ int main(void)
                 DrawGame();
                 DrawGameOver();
                 break;
-            case AI_ANALYSIS:
-                DrawAIAnalysis();
-                break;
         }
 
         EndDrawing();
     }
 
+    UnloadTexture(background); // Unload the texture when done
     CloseWindow();
     return 0;
 }
@@ -230,11 +182,9 @@ void UpdateGameOver() {
         };
         
         if (CheckCollisionPointRec(mousePos, menuBtn)) {
-            printf("Back to Menu clicked\n"); // Debug print
             gameState = MENU;
             InitGame();  // Reset the game state
         } else if (CheckCollisionPointRec(mousePos, retryBtn)) {
-            printf("Retry clicked\n"); // Debug print
             gameState = GAME;
             InitGame();  // Reset the game state for a new game
         }
@@ -336,91 +286,6 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE])
     return 0; // No winner
 }
 
-// Linear Regression Training
-void TrainLinearRegression(float weights[FEATURES + 1], float learningRate, int epochs) {
-    FILE *file = fopen("tic-tac-toe.data", "r");
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        return;
-    }
-
-    char line[100];
-    for (int epoch = 0; epoch < epochs; epoch++) {
-        rewind(file); // Reset file pointer to the beginning
-        while (fgets(line, sizeof(line), file)) {
-            float features[FEATURES] = {0};
-            int outcome = (line[9] == '1') ? 1 : 0; // Convert outcome to 0 or 1
-
-            // Convert board state to features
-            for (int i = 0; i < FEATURES; i++) {
-                if (line[i] == 'x') features[i] = 1.0;
-                else if (line[i] == 'o') features[i] = -1.0;
-                else features[i] = 0.0;
-            }
-
-            // Calculate prediction
-            float prediction = PredictLinearRegression(weights, features);
-
-            // Update weights
-            for (int i = 0; i < FEATURES; i++) {
-                weights[i] += learningRate * (outcome - prediction) * features[i];
-            }
-            weights[FEATURES] += learningRate * (outcome - prediction); // Update bias
-        }
-    }
-
-    fclose(file);
-}
-
-// Linear Regression Prediction
-float PredictLinearRegression(float weights[FEATURES + 1], float features[FEATURES]) {
-    float result = weights[FEATURES]; // Start with bias
-    for (int i = 0; i < FEATURES; i++) {
-        result += weights[i] * features[i];
-    }
-    return result > 0.5 ? 1.0 : 0.0; // Threshold at 0.5
-}
-
-// Evaluate Linear Regression
-void EvaluateLinearRegression(float weights[FEATURES + 1]) {
-    FILE *file = fopen("tic-tac-toe.data", "r");
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        return;
-    }
-
-    char line[100];
-    confusionMatrix.tp = confusionMatrix.tn = confusionMatrix.fp = confusionMatrix.fn = 0;
-
-    while (fgets(line, sizeof(line), file)) {
-        float features[FEATURES] = {0};
-        int outcome = (line[9] == '1') ? 1 : 0; // Convert outcome to 0 or 1
-
-        // Convert board state to features
-        for (int i = 0; i < FEATURES; i++) {
-            if (line[i] == 'x') features[i] = 1.0;
-            else if (line[i] == 'o') features[i] = -1.0;
-            else features[i] = 0.0;
-        }
-
-        // Calculate prediction
-        float prediction = PredictLinearRegression(weights, features);
-
-        // Update confusion matrix
-        if (prediction == 1.0 && outcome == 1) confusionMatrix.tp++;
-        else if (prediction == 0.0 && outcome == 0) confusionMatrix.tn++;
-        else if (prediction == 1.0 && outcome == 0) confusionMatrix.fp++;
-        else if (prediction == 0.0 && outcome == 1) confusionMatrix.fn++;
-    }
-
-    fclose(file);
-
-    // Print confusion matrix
-    printf("Confusion Matrix:\n");
-    printf("TP: %d, TN: %d, FP: %d, FN: %d\n", confusionMatrix.tp, confusionMatrix.tn, confusionMatrix.fp, confusionMatrix.fn);
-}
-
-// function to draw difficulty selection screen
 void DrawDifficultySelect() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
@@ -470,163 +335,6 @@ void DrawDifficultySelect() {
     // Set cursor based on any button hover
     SetMouseCursor((easyHover || mediumHover || hardHover) ? 
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
-}
-
-void DisplayDifficultyStats() {
-    printf("\n=== Difficulty Level Statistics ===\n");
-    
-    // Easy Stats
-    printf("\nEasy Mode:");
-    printf("\nAI Wins: %d", easyStats.wins);
-    printf("\nAI Losses: %d", easyStats.losses);
-    printf("\nAI Draws: %d", easyStats.draws);
-    printf("\nAI Win Rate: %.2f%%\n", easyStats.totalGames > 0 ? (float)easyStats.wins/easyStats.totalGames * 100 : 0);
-    
-    // Medium Stats
-    printf("\nMedium Mode:");
-    printf("\nAI Wins: %d", mediumStats.wins);
-    printf("\nAI Losses: %d", mediumStats.losses);
-    printf("\nAI Draws: %d", mediumStats.draws);
-    printf("\nAI Win Rate: %.2f%%\n", mediumStats.totalGames > 0 ? (float)mediumStats.wins/mediumStats.totalGames * 100 : 0);
-    
-    // Hard Stats
-    printf("\nHard Mode:");
-    printf("\nAI Wins: %d", hardStats.wins);
-    printf("\nAI Losses: %d", hardStats.losses);
-    printf("\nAI Draws: %d", hardStats.draws);
-    printf("\nAI Win Rate: %.2f%%\n", hardStats.totalGames > 0 ? (float)hardStats.wins/hardStats.totalGames * 100 : 0);
-}
-
-bool simulateGame(char* gameState, int expectedOutcome) {
-    Cell simulatedGrid[GRID_SIZE][GRID_SIZE];
-    
-    // Convert string to grid state
-    int index = 0;
-    for (int i = 0; i < GRID_SIZE; i++) {
-        for (int j = 0; j < GRID_SIZE; j++) {
-            char c = gameState[index++];
-            if (c == 'x' || c == 'X') simulatedGrid[i][j] = PLAYER_X;
-            else if (c == 'o' || c == 'O') simulatedGrid[i][j] = PLAYER_O;
-            else simulatedGrid[i][j] = EMPTY;
-        }
-    }
-    
-    int depthLimit = 3; // Set a depth limit for simulation
-    int prediction = Minimax(simulatedGrid, true, 0, depthLimit);
-    return (prediction > 0) == (expectedOutcome == 1);
-}
-
-// Split the dataset into training and testing sets and calculate accuracy
-void evaluateAccuracy(FILE *file) { 
-    ConfusionMatrix trainingCM = {0, 0, 0, 0};
-    ConfusionMatrix testingCM = {0, 0, 0, 0};
-    AccuracyResult trainAcc = {0, 0}, testAcc = {0, 0};
-    
-    char line[100];
-    int lineCount = 0;
-
-    while (fgets(line, sizeof(line), file)) {
-        int outcome = line[9] - '0'; // Example: Assume outcome is in column 10
-
-        if (lineCount < 800) { // 80% Training
-            if (simulateGame(line, outcome)) {
-                trainAcc.correctPredictions++;
-                if (outcome == 1) trainingCM.tp++; // True Positive
-                else trainingCM.tn++; // True Negative
-            } else {
-                if (outcome == 1) trainingCM.fn++; // False Negative
-                else trainingCM.fp++; // False Positive
-            }
-            trainAcc.totalPredictions++;
-        } else { // 20% Testing
-            if (simulateGame(line, outcome)) {
-                testAcc.correctPredictions++;
-                if (outcome == 1) testingCM.tp++; // True Positive
-                else testingCM.tn++; // True Negative
-            } else {
-                if (outcome == 1) testingCM.fn++; // False Negative
-                else testingCM.fp++; // False Positive
-            }
-            testAcc.totalPredictions++;
-        }
-        lineCount++;
-    }
-
-    // Calculate and print training and testing accuracy
-    printf("Training Accuracy: %.2f%%\n", (float)trainAcc.correctPredictions / trainAcc.totalPredictions * 100);
-    printf("Testing Accuracy: %.2f%%\n", (float)testAcc.correctPredictions / testAcc.totalPredictions * 100);
-
-    // Print confusion matrix
-    printf("Training Confusion Matrix:\n");
-    printf("TP: %d, TN: %d, FP: %d, FN: %d\n", trainingCM.tp, trainingCM.tn, trainingCM.fp, trainingCM.fn);
-    printf("Testing Confusion Matrix:\n");
-    printf("TP: %d, TN: %d, FP: %d, FN: %d\n", testingCM.tp, testingCM.tn, testingCM.fp, testingCM.fn);
-}
-
-void LoadDataset() {
-    FILE *file = fopen("tic-tac-toe.data", "r");
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        return;
-    }
-
-    // Print only summary statistics
-    int totalGames = 0;
-    char line[100];
-    while (fgets(line, sizeof(line), file)) {
-        totalGames++;
-    }
-    printf("\nTotal games in dataset: %d\n", totalGames);
-    fclose(file);
-}
-
-// Call this function after loading the dataset
-void LoadAndEvaluateDataset() {
-    FILE *file = fopen("tic-tac-toe.data", "r");
-    if (file == NULL) {
-        return;
-    }
-
-    int totalCorrectTrain = 0;
-    int totalTrain = 0;
-    int totalCorrectTest = 0;
-    int totalTest = 0;
-    
-    char line[100];
-    int lineCount = 0;
-
-    // Reset confusion matrix
-    confusionMatrix.tp = 0;
-    confusionMatrix.tn = 0;
-    confusionMatrix.fp = 0;
-    confusionMatrix.fn = 0;
-
-    while (fgets(line, sizeof(line), file)) {
-        int outcome = line[9] - '0';
-
-        if (lineCount < 800) { // 80% Training
-            if (simulateGame(line, outcome)) {
-                totalCorrectTrain++;
-                if (outcome == 1) confusionMatrix.tp++;
-                else confusionMatrix.tn++;
-            } else {
-                if (outcome == 1) confusionMatrix.fn++;
-                else confusionMatrix.fp++;
-            }
-            totalTrain++;
-        } else { // 20% Testing
-            if (simulateGame(line, outcome)) {
-                totalCorrectTest++;
-            }
-            totalTest++;
-        }
-        lineCount++;
-    }
-
-    trainingAccuracy = (float)totalCorrectTrain / totalTrain * 100;
-    testingAccuracy = (float)totalCorrectTest / totalTest * 100;
-
-    fclose(file);
 }
 
 void HandlePlayerTurn()
@@ -687,7 +395,6 @@ void UpdateGame()
         if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
             mousePos.y >= 10 && mousePos.y <= 40)
         {
-            DisplayDifficultyStats();  // Show stats before returning to menu
             gameState = MENU;
             return;
         }
@@ -713,7 +420,6 @@ void UpdateGame()
 
 void AITurn()
 {
-    printf("AI's turn\n"); // Debug print
     int bestScore = -1000;
     int bestRow = -1;
     int bestCol = -1;
@@ -944,17 +650,10 @@ void DrawMenu() {
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
-    
-    Rectangle analysisBtn = {
-        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2,
-        BUTTON_WIDTH,
-        BUTTON_HEIGHT
-    };
 
     Rectangle exitBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 3,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2,
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
@@ -964,17 +663,15 @@ void DrawMenu() {
     // Check hover states
     bool singlePlayerHover = CheckCollisionPointRec(mousePos, singlePlayerBtn);
     bool twoPlayerHover = CheckCollisionPointRec(mousePos, twoPlayerBtn);
-    bool analysisHover = CheckCollisionPointRec(mousePos, analysisBtn);
     bool exitHover = CheckCollisionPointRec(mousePos, exitBtn);
 
     // Draw buttons with hover effects
     DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover);
     DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover);
-    DrawButton(analysisBtn, "View AI Analysis", buttonFontSize, analysisHover);
     DrawButton(exitBtn, "Exit Game", buttonFontSize, exitHover);
 
     // Set cursor based on any button hover
-    SetMouseCursor((singlePlayerHover || twoPlayerHover || analysisHover || exitHover) ? 
+    SetMouseCursor((singlePlayerHover || twoPlayerHover || exitHover) ? 
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
@@ -1044,119 +741,6 @@ void DrawGameOver() {
     SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
-void DrawAIAnalysis() {
-    const int titleFontSize = 35;
-    const int textFontSize = 20;
-    const int padding = 20;
-    
-    // Handle scrolling with mouse wheel
-    scrollY += GetMouseWheelMove() * scrollSpeed;
-    
-    // Calculate total content height
-    float totalContentHeight = 900;  // Total height of all content
-    float visibleHeight = SCREEN_HEIGHT - (BUTTON_HEIGHT + padding);  // Visible area height
-    
-    // Limit scrolling
-    float maxScroll = totalContentHeight - visibleHeight;
-    if (scrollY > 0) scrollY = 0;
-    if (scrollY < -maxScroll && maxScroll > 0) scrollY = -maxScroll;
-    
-    // Apply scroll offset to starting Y position
-    int currentY = 40 + scrollY;
-    
-    BeginScissorMode(0, 0, SCREEN_WIDTH - 15, SCREEN_HEIGHT - (BUTTON_HEIGHT + padding));  // Leave space for scrollbar
-    
-    // Title
-    const char* title = "AI Performance Analysis";
-    DrawText(title, 
-        SCREEN_WIDTH/2 - MeasureText(title, titleFontSize)/2,
-        currentY,
-        titleFontSize,
-        BLACK);
-    currentY += titleFontSize + padding;
-
-    // Draw Dataset Statistics
-    char buffer[100];
-    snprintf(buffer, sizeof(buffer), "Total Games in Dataset: %d", easyStats.totalGames + mediumStats.totalGames + hardStats.totalGames);
-    DrawText(buffer, padding, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding;
-
-    // Draw Training and Testing Results
-    DrawText("Model Performance:", padding, currentY, textFontSize + 4, DARKBLUE);
-    currentY += textFontSize + padding/2;
-
-    snprintf(buffer, sizeof(buffer), "Training Accuracy: %.2f%%", trainingAccuracy);
-    DrawText(buffer, padding * 2, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding/2;
-
-    snprintf(buffer, sizeof(buffer), "Testing Accuracy: %.2f%%", testingAccuracy);
-    DrawText(buffer, padding * 2, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding;
-
-    // Draw Confusion Matrix
-    DrawText("Confusion Matrix:", padding, currentY, textFontSize + 4, DARKBLUE);
-    currentY += textFontSize + padding/2;
-
-    snprintf(buffer, sizeof(buffer), "True Positives: %d", confusionMatrix.tp);
-    DrawText(buffer, padding * 2, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding/2;
-
-    snprintf(buffer, sizeof(buffer), "True Negatives: %d", confusionMatrix.tn);
-    DrawText(buffer, padding * 2, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding/2;
-
-    snprintf(buffer, sizeof(buffer), "False Positives: %d", confusionMatrix.fp);
-    DrawText(buffer, padding * 2, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding/2;
-
-    snprintf(buffer, sizeof(buffer), "False Negatives: %d", confusionMatrix.fn);
-    DrawText(buffer, padding * 2, currentY, textFontSize, BLACK);
-    currentY += textFontSize + padding;
-
-    // Draw Difficulty Statistics
-    DrawText("Performance by Difficulty:", padding, currentY, textFontSize + 4, DARKBLUE);
-    currentY += textFontSize + padding;
-
-    DrawDifficultySection("Easy Mode", easyStats, &currentY, GREEN, padding, textFontSize);
-    DrawDifficultySection("Medium Mode", mediumStats, &currentY, ORANGE, padding, textFontSize);
-    DrawDifficultySection("Hard Mode", hardStats, &currentY, RED, padding, textFontSize);
-
-    EndScissorMode();
-
-    // Draw scrollbar
-    if (maxScroll > 0) {
-        float scrollbarHeight = (visibleHeight / totalContentHeight) * visibleHeight;
-        float scrollbarY = (-scrollY / maxScroll) * (visibleHeight - scrollbarHeight);
-        
-        // Draw scrollbar background
-        DrawRectangle(SCREEN_WIDTH - 15, 0, 15, visibleHeight, LIGHTGRAY);
-        
-        // Draw scrollbar handle
-        DrawRectangle(
-            SCREEN_WIDTH - 13,
-            scrollbarY,
-            11,
-            scrollbarHeight,
-            GRAY
-        );
-    }
-
-    // Back button (outside scissor mode to always be visible)
-    Rectangle backBtn = {
-        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT - BUTTON_HEIGHT - padding/2,
-        BUTTON_WIDTH,
-        BUTTON_HEIGHT
-    };
-
-    Vector2 mousePos = GetMousePosition();
-    bool isHovering = CheckCollisionPointRec(mousePos, backBtn);
-
-    DrawButton(backBtn, "Back to Menu", textFontSize, isHovering);
-
-    SetMouseCursor(isHovering ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
-}
-
 void DrawDifficultySection(const char* difficulty, DifficultyStats stats, int* y, Color color, int padding, int textFontSize) {
     char buffer[100];
     
@@ -1195,4 +779,4 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
         BLACK);
 }
 
-// gcc -o lessSmartAI-Copy2 "lessSmartAI copy 2.c" -IC:\\msys64\\mingw64\\include -LC:\\msys64\\mingw64\\lib -lraylib -lopengl32 -lgdi32 -lwinmm
+// gcc -o main main.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
