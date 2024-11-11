@@ -4,6 +4,69 @@
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
 
+#define JUMP_SPEED 0.02f  // Constant jump speed
+#define JUMP_DELAY 0.7f  // Constant delay between jumps
+
+typedef struct {
+    Vector2 position;
+    Vector2 targetPosition;
+    const char* word;
+    bool isJumping;
+    float jumpSpeed;
+} TitleWord;
+
+TitleWord titleWords[5];  // "Tic", "-", "Tac", "-", "Toe"
+
+void InitTitleWords() {
+    const char* words[] = {"Tic", "-", "Tac", "-", "Toe"};
+    int startX = SCREEN_WIDTH / 2 - MeasureText("Tic-Tac-Toe", 40) / 2;
+    int startY = SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20;
+    int spacing = 10;  // Space between words and hyphens
+
+    for (int i = 0; i < 5; i++) {
+        titleWords[i].word = words[i];
+        titleWords[i].position = (Vector2){ startX, startY };
+        titleWords[i].targetPosition = (Vector2){ startX, startY - 20 };
+        titleWords[i].isJumping = false;
+        titleWords[i].jumpSpeed = JUMP_SPEED;
+        startX += MeasureText(words[i], 40) + spacing;
+    }
+}
+
+void UpdateTitleWords() {
+    static int currentWord = 0;
+    static float jumpDelay = 0.0f;
+
+    jumpDelay += GetFrameTime();
+    if (jumpDelay > JUMP_DELAY) {  // Delay between each word's jump
+        if (!titleWords[currentWord].isJumping) {
+            titleWords[currentWord].isJumping = true;
+            jumpDelay = 0.0f;
+        }
+    }
+
+    for (int i = 0; i < 5; i++) {
+        if (titleWords[i].isJumping) {
+            titleWords[i].position.y -= titleWords[i].jumpSpeed;
+            if (titleWords[i].position.y <= titleWords[i].targetPosition.y) {
+                titleWords[i].jumpSpeed = -titleWords[i].jumpSpeed;  // Reverse direction
+            }
+            if (titleWords[i].position.y >= SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20) {
+                titleWords[i].position.y = SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20;
+                titleWords[i].isJumping = false;
+                titleWords[i].jumpSpeed = JUMP_SPEED;
+                currentWord = (currentWord + 1) % 5;  // Move to the next word
+            }
+        }
+    }
+}
+
+void DrawTitleWords() {
+    for (int i = 0; i < 5; i++) {
+        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK);
+    }
+}
+
 void InitSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
         symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
@@ -66,6 +129,7 @@ int main(void)
     Sound playSound = LoadSound("Play.mp3");  // Load the play sound
 
     InitSymbols();  // Initialize the falling symbols
+    InitTitleWords();  // Initialize the title words
 
     while (!WindowShouldClose())
     {
@@ -86,6 +150,7 @@ int main(void)
 
         if (gameState == MENU || gameState == DIFFICULTY_SELECT) {
             UpdateSymbols();  // Update the falling symbols
+            UpdateTitleWords();  // Update the title words
         }
 
         if (gameState == MENU) {
@@ -168,6 +233,7 @@ int main(void)
         switch(gameState) {
             case MENU:
                 DrawSymbols();  // Draw the falling symbols
+                DrawTitleWords();  // Draw the jumping title words
                 DrawMenu();
                 break;
             case DIFFICULTY_SELECT:
@@ -489,7 +555,7 @@ void DrawMenu() {
     const int buttonFontSize = 20;
     
     // Title
-    const char* title = "Tic-Tac-Toe";
+    const char* title = "";
     const int cellSize = 50;  // larger cells for better visibility
     const int gridWidth = TITLE_GRID_SIZE * cellSize;
     const int gridHeight = TITLE_GRID_SIZE * cellSize;
