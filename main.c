@@ -88,12 +88,12 @@ void DrawSymbols() {
     }
 }
 
-Difficulty currentDifficulty = MEDIUM; // Default difficulty
-Cell grid[GRID_SIZE][GRID_SIZE];
-PlayerTurn currentPlayerTurn = PLAYER_X_TURN;
-bool gameOver = false;
-Cell winner = EMPTY;
-GameState gameState = MENU;
+Difficulty currentDifficulty = MEDIUM; // Initialize difficulty to a value, doesn't have to be medium
+Cell grid[GRID_SIZE][GRID_SIZE]; // Initialize the grid with empty cells
+PlayerTurn currentPlayerTurn = PLAYER_X_TURN; // Initialize the current player turn to Player X
+bool gameOver = false; // Initialize the game over flag to false
+Cell winner = EMPTY; // Initialize the winner to empty
+GameState gameState = MENU; // Initialize the game state to menu
 bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
 
 float titleCellScales[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
@@ -743,15 +743,15 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
     }
 
     // Draw the button background
-    DrawRectangleRec(vibrationBounds, isHovered ? GRAY : LIGHTGRAY);
+    DrawRectangleRec(vibrationBounds, isHovered ? GRAY : LIGHTGRAY); // Draw the button background with a gray color if hovered
 
     // Draw the button outline
-    DrawRectangleLinesEx(vibrationBounds, 2, BLACK);
+    DrawRectangleLinesEx(vibrationBounds, 2, BLACK); // Draw the button outline with a black color
 
     // Draw the button text
     DrawText(text,
-        vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2,
-        vibrationBounds.y + (vibrationBounds.height - fontSize)/2,
+        vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2, // Center the text horizontally
+        vibrationBounds.y + (vibrationBounds.height - fontSize)/2, // Center the text vertically
         fontSize,
         BLACK
     );
@@ -870,33 +870,33 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
     if (CheckDraw()) return 0; // Draw
 
     if (isMaximizing) {
-        int bestScore = -1000;
+        int bestScore = -1000; // Initialize the best score to a very low value
         for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (board[i][j] == EMPTY) {
-                    board[i][j] = PLAYER_O;
-                    bestScore = fmax(bestScore, Minimax(board, false, depth + 1, depthLimit));
-                    board[i][j] = EMPTY;
+            for (int j = 0; j < GRID_SIZE; j++) { // Iterate through each cell in the grid
+                if (board[i][j] == EMPTY) { // If the cell is empty
+                    board[i][j] = PLAYER_O; // Set the cell to PLAYER_O
+                    bestScore = fmax(bestScore, Minimax(board, false, depth + 1, depthLimit)); // Update the best score
+                    board[i][j] = EMPTY; // Reset the cell to EMPTY
                 }
             }
         }
         return bestScore;
     } else {
-        int bestScore = 1000;
+        int bestScore = 1000; // Initialize the best score to a very high value
         for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (board[i][j] == EMPTY) {
-                    board[i][j] = PLAYER_X;
-                    bestScore = fmin(bestScore, Minimax(board, true, depth + 1, depthLimit));
-                    board[i][j] = EMPTY;
+            for (int j = 0; j < GRID_SIZE; j++) { // Iterate through each cell in the grid
+                if (board[i][j] == EMPTY) { // If the cell is empty
+                    board[i][j] = PLAYER_X; // Set the cell to PLAYER_X
+                    bestScore = fmin(bestScore, Minimax(board, true, depth + 1, depthLimit)); // Update the best score
+                    board[i][j] = EMPTY; // Reset the cell to EMPTY
                 }
             }
         }
-        return bestScore;
+        return bestScore; // Return the best score
     }
 }
 
-// Ensure other functions like EvaluateBoard are also defined
+// Evaluate the board
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]) {
     // Check rows and columns for a win
     for (int row = 0; row < GRID_SIZE; row++) {
