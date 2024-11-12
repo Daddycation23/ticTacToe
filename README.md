@@ -75,7 +75,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 
 1. **Clone**: Just clone the repository, ensure the .a files are cloned. Clone the repository to your desired location using this command:
    ```bash
-   git clone https://github.com/Daddycation23/ticTacToe/tree/alt
+   git clone https://github.com/Daddycation23/ticTacToe
    ```
 2. **Build**: Compile the program using a C compiler with Raylib linked.
    ```bash
