@@ -736,7 +736,8 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
                       strstr(text, "Medium") ||
                       strstr(text, "Hard") ||
                       strstr(text, "Back") ||
-                      strstr(text, "Exit"))) {  // Include "Exit" for vibration
+                      strstr(text, "Exit") ||
+                      strstr(text, "Retry"))) {  // Include "Retry" for vibration
         buttonVibrationOffset = sinf(GetTime() * vibrationSpeed) * vibrationAmount;
         vibrationBounds.x += buttonVibrationOffset;
     }
