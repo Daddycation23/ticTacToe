@@ -329,6 +329,13 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                         PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
                     }
                 }
+                else if (CheckDraw())  // Check for a draw
+                {
+                    gameOver = true;
+                    gameState = GAME_OVER;
+                    winner = EMPTY;  // No winner in a draw
+                    PlaySound(drawSound);  // Play draw sound
+                }
                 else
                 {
                     currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN;
