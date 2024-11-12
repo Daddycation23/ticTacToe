@@ -21,6 +21,8 @@
 #define MAX_SYMBOLS 100
 #define SYMBOL_SPEED 0.02f  // Constant speed for falling symbols
 #define ROTATION_SPEED 0.02f  // Speed of rotation
+#define JUMP_SPEED 0.02f  // Constant jump speed
+#define JUMP_DELAY 0.7f  // Constant delay between jumps
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
@@ -39,8 +41,17 @@ typedef struct {
     float rotation;  // Rotation angle
 } FallingSymbol;
 
+typedef struct {
+    Vector2 position;
+    Vector2 targetPosition;
+    const char* word;
+    bool isJumping;
+    float jumpSpeed;
+} TitleWord;
+
 extern GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 extern FallingSymbol symbols[MAX_SYMBOLS];
+extern TitleWord titleWords[5];  // "Tic", "-", "Tac", "-", "Toe"
 
 extern Difficulty currentDifficulty;
 extern PlayerTurn currentPlayerTurn;
@@ -55,14 +66,13 @@ extern float buttonVibrationOffset;
 extern float vibrationSpeed;
 extern float vibrationAmount;
 
-// Declare scroll variables
-static float scrollY = 0.0f;
-static const float scrollSpeed = 20.0f;
-
 void InitGame();
 void InitSymbols();
 void UpdateSymbols();
 void DrawSymbols();
+void InitTitleWords();
+void UpdateTitleWords();
+void DrawTitleWords();
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
 void UpdateGameOver(Sound buttonClickSound);
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);

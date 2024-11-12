@@ -3,20 +3,9 @@
 // Define the global arrays
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
-
-#define JUMP_SPEED 0.02f  // Constant jump speed
-#define JUMP_DELAY 0.7f  // Constant delay between jumps
-
-typedef struct {
-    Vector2 position;
-    Vector2 targetPosition;
-    const char* word;
-    bool isJumping;
-    float jumpSpeed;
-} TitleWord;
-
 TitleWord titleWords[5];  // "Tic", "-", "Tac", "-", "Toe"
 
+// Initialize the title words
 void InitTitleWords() {
     const char* words[] = {"Tic", "-", "Tac", "-", "Toe"};
     int startX = SCREEN_WIDTH / 2 - MeasureText("Tic-Tac-Toe", 40) / 2;
@@ -33,6 +22,7 @@ void InitTitleWords() {
     }
 }
 
+// Update the title words
 void UpdateTitleWords() {
     static int currentWord = 0;
     static float jumpDelay = 0.0f;
@@ -61,12 +51,14 @@ void UpdateTitleWords() {
     }
 }
 
+// Draw the title words
 void DrawTitleWords() {
     for (int i = 0; i < 5; i++) {
         DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK);
     }
 }
 
+// Initialize the symbols
 void InitSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
         symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
@@ -75,6 +67,7 @@ void InitSymbols() {
     }
 }
 
+// Update the symbols
 void UpdateSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
         symbols[i].position.y += SYMBOL_SPEED;
@@ -87,7 +80,7 @@ void UpdateSymbols() {
         }
     }
 }
-
+// Draw the symbols
 void DrawSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
         Vector2 origin = {10, 10};  // Center of rotation
@@ -110,6 +103,7 @@ float buttonVibrationOffset = 0.0f;
 float vibrationSpeed = 15.0f;
 float vibrationAmount = 2.0f;
 
+// Main function
 int main(void)
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe");
@@ -179,7 +173,7 @@ int main(void)
                 }
             }
         }
-        else if (gameState == GAME)
+        else if (gameState == GAME) 
         {
             UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound);
         }
@@ -234,22 +228,22 @@ int main(void)
             case MENU:
                 DrawSymbols();  // Draw the falling symbols
                 DrawTitleWords();  // Draw the jumping title words
-                DrawMenu();
+                DrawMenu();  // Draw the menu
                 break;
             case DIFFICULTY_SELECT:
                 DrawSymbols();  // Draw the falling symbols
-                DrawDifficultySelect();
+                DrawDifficultySelect();  // Draw the difficulty selection
                 break;
             case GAME:
-                DrawGame();
+                DrawGame();  // Draw the game
                 break;
             case GAME_OVER:
-                DrawGame();
-                DrawGameOver();
+                DrawGame();  // Draw the game
+                DrawGameOver();  // Draw the game over screen
                 break;
         }
 
-        EndDrawing();
+        EndDrawing();  // End drawing
     }
 
     UnloadSound(buttonClickSound);  // Unload the button click sound
@@ -260,16 +254,16 @@ int main(void)
     UnloadSound(mainMenuSound);  // Unload the main menu sound
     UnloadSound(playSound);  // Unload the play sound
     CloseAudioDevice();  // Close the audio device
-    UnloadFont(customFont);
-    CloseWindow();
+    CloseWindow();  // Close the window
     return 0;
 }
 
+// Update the game
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
 {
     if (gameOver) return;
 
-    // quit button click
+    // Quit button click
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         Vector2 mousePos = GetMousePosition();
@@ -304,6 +298,7 @@ void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Soun
     }
 }
 
+// Handle the player's turn
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
 {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -345,6 +340,7 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
     return false;  // No move was made
 }
 
+// AI's turn
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
 {
     int bestScore = -1000;
@@ -439,6 +435,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
     }
 }
 
+// Check if the player has won  
 bool CheckWin(Cell player)
 {
     // check rows and columns
@@ -455,6 +452,7 @@ bool CheckWin(Cell player)
     return false; // No win found
 }
 
+// Check if the game is a draw
 bool CheckDraw()
 {
     for (int i = 0; i < GRID_SIZE; i++)
@@ -467,11 +465,12 @@ bool CheckDraw()
     return true; // All cells are filled
 }
 
+// Draw the game
 void DrawGame()
 {
     Vector2 mousePos = GetMousePosition();
     
-    // Quit button hover (keep this part if you want the quit button to work)
+    // Quit button hover 
     bool isQuitHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
                          mousePos.y >= 10 && mousePos.y <= 40);
     
@@ -482,7 +481,7 @@ void DrawGame()
         SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     }
 
-    // the grid and pieces
+    // The grid and pieces
     for (int i = 0; i < GRID_SIZE; i++)
     {
         for (int j = 0; j < GRID_SIZE; j++)
@@ -513,14 +512,14 @@ void DrawGame()
         }
     }
 
-    // grid lines
+    // Grid lines
     for (int i = 1; i < GRID_SIZE; i++)
     {
         DrawLine(i * CELL_SIZE, 0, i * CELL_SIZE, SCREEN_HEIGHT, BLACK);
         DrawLine(0, i * CELL_SIZE, SCREEN_WIDTH, i * CELL_SIZE, BLACK);
     }
 
-    // quit button
+    // Quit button
     Rectangle quitBtn = {
         SCREEN_WIDTH - 80, 10,  // position
         70, 30                  // size
@@ -532,7 +531,7 @@ void DrawGame()
     
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);
 
-    // turn indicator
+    // Turn indicator
     if (!gameOver) {
         const char* turnText;
         if (currentPlayerTurn == PLAYER_X_TURN) {
@@ -550,6 +549,7 @@ void DrawGame()
     }
 }
 
+// Draw the menu
 void DrawMenu() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
@@ -562,7 +562,7 @@ void DrawMenu() {
     const int startX = SCREEN_WIDTH/2 - gridWidth/2;
     const int startY = SCREEN_HEIGHT/5;
 
-    // cell animations
+    // Cell animations
     for(int i = 0; i < TITLE_GRID_SIZE; i++) {
         for(int j = 0; j < TITLE_GRID_SIZE; j++) {
             Rectangle cell = {
