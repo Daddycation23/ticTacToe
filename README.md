@@ -44,11 +44,11 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 1. **Dependencies**: Ensure you have the Raylib library installed on your system. You can download it from [Raylib's official website](https://www.raylib.com/).
 2. **Build**: Compile the program using a C compiler with Raylib linked.
    ```bash
-   gcc main.c -o tic-tac-toe -lraylib
+   gcc -o main main.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
    ```
 3. **Run**: Execute the compiled program.
    ```bash
-   ./tic-tac-toe
+   ./main
    ```
 
 ## Future Improvements
