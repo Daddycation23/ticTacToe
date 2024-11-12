@@ -110,17 +110,17 @@ int main(void)
     InitAudioDevice();  // Initialize audio device
 
     // Load the icon image
-    Image icon = LoadImage("icon.png");  // Make sure the file path is correct
+    Image icon = LoadImage("assets\\icon.png");  // Make sure the file path is correct
     SetWindowIcon(icon);  // Set the window icon
     UnloadImage(icon);  // Unload the image after setting the icon
 
-    Sound buttonClickSound = LoadSound("ButtonClicked.mp3");  // Load the button click sound
-    Sound popSound = LoadSound("Pop.mp3");  // Load the pop sound
-    Sound victorySound = LoadSound("FFVictory.mp3");  // Load the victory sound
-    Sound loseSound = LoadSound("MarioLose.mp3");  // Load the lose sound
-    Sound drawSound = LoadSound("Draw.mp3");  // Load the draw sound
-    Sound mainMenuSound = LoadSound("MainMenu.mp3");  // Load the main menu sound
-    Sound playSound = LoadSound("Play.mp3");  // Load the play sound
+    Sound buttonClickSound = LoadSound("assets\\ButtonClicked.mp3");  // Load the button click sound
+    Sound popSound = LoadSound("assets\\Pop.mp3");  // Load the pop sound
+    Sound victorySound = LoadSound("assets\\FFVictory.mp3");  // Load the victory sound
+    Sound loseSound = LoadSound("assets\\MarioLose.mp3");  // Load the lose sound
+    Sound drawSound = LoadSound("assets\\Draw.mp3");  // Load the draw sound
+    Sound mainMenuSound = LoadSound("assets\\MainMenu.mp3");  // Load the main menu sound
+    Sound playSound = LoadSound("assets\\Play.mp3");  // Load the play sound
 
     InitSymbols();  // Initialize the falling symbols
     InitTitleWords();  // Initialize the title words

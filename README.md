@@ -54,7 +54,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit)`: Implements the Minimax algorithm for AI decision-making.
 - `EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE])`: Evaluates the board to determine the score for the AI.
 
-### Raylib Functions Used
+### Raylib Functions
 - `InitWindow()`: Initializes the game window.
 - `CloseWindow()`: Closes the game window.
 - `BeginDrawing()`: Begins the drawing process.
