@@ -494,7 +494,12 @@ void DrawGame()
         for (int j = 0; j < GRID_SIZE; j++)
         {
             Rectangle cell = {(float)(j * CELL_SIZE), (float)(i * CELL_SIZE), (float)CELL_SIZE, (float)CELL_SIZE};
-            DrawRectangleRec(cell, LIGHTGRAY);
+            
+            // Check if the mouse is hovering over the cell and the cell is empty
+            bool isHovered = !gameOver && grid[i][j] == EMPTY && CheckCollisionPointRec(mousePos, cell);
+            
+            // Draw the cell with a darker color if hovered
+            DrawRectangleRec(cell, isHovered ? DARKGRAY : LIGHTGRAY);
 
             if (grid[i][j] == PLAYER_X)
             {
@@ -724,12 +729,14 @@ void DrawGameOver() {
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered) {
     Rectangle vibrationBounds = bounds;
     
+    // Apply vibration effect to specific buttons
     if (isHovered && (strstr(text, "Single Player") || 
                       strstr(text, "Two Players") || 
                       strstr(text, "Easy") ||
                       strstr(text, "Medium") ||
                       strstr(text, "Hard") ||
-                      strstr(text, "Back"))) {  // Include "Back" for vibration
+                      strstr(text, "Back") ||
+                      strstr(text, "Exit"))) {  // Include "Exit" for vibration
         buttonVibrationOffset = sinf(GetTime() * vibrationSpeed) * vibrationAmount;
         vibrationBounds.x += buttonVibrationOffset;
     }
