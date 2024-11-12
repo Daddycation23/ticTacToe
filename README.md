@@ -31,13 +31,45 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 
 ## Key Functions
 
+### Game Logic Functions
 - `InitGame()`: Initializes the game state and grid.
 - `UpdateGame()`: Updates the game state based on player input and game logic.
 - `DrawGame()`: Renders the game grid, symbols, and UI elements.
-- `CheckWin()`: Checks if a player has won the game.
+- `CheckWin(Cell player)`: Checks if a specified player has won the game.
 - `CheckDraw()`: Checks if the game is a draw.
-- `AITurn()`: Handles the AI's turn in single-player mode.
-- `DrawButton()`: Draws buttons with optional hover and vibration effects.
+- `AITurn(Sound victorySound, Sound loseSound, Sound drawSound)`: Handles the AI's turn in single-player mode.
+- `HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)`: Manages the player's turn and checks for game outcomes.
+- `UpdateGameOver(Sound buttonClickSound)`: Manages the game over state, allowing players to retry or return to the menu.
+
+### UI and Animation Functions
+- `DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered)`: Draws buttons with optional hover and vibration effects.
+- `InitSymbols()`: Initializes the falling symbols for the animated UI.
+- `UpdateSymbols()`: Updates the position and rotation of falling symbols.
+- `DrawSymbols()`: Draws the falling symbols on the screen.
+- `InitTitleWords()`: Initializes the title words for the animated title.
+- `UpdateTitleWords()`: Updates the animation state of the title words.
+- `DrawTitleWords()`: Draws the animated title words.
+
+### AI Functions
+- `Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit)`: Implements the Minimax algorithm for AI decision-making.
+- `EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE])`: Evaluates the board to determine the score for the AI.
+
+### Raylib Functions Used
+- `InitWindow()`: Initializes the game window.
+- `CloseWindow()`: Closes the game window.
+- `BeginDrawing()`: Begins the drawing process.
+- `EndDrawing()`: Ends the drawing process.
+- `DrawText()`: Draws text on the screen.
+- `DrawRectangleRec()`: Draws a rectangle on the screen.
+- `DrawRectangleLinesEx()`: Draws the outline of a rectangle.
+- `GetMousePosition()`: Retrieves the current mouse position.
+- `IsMouseButtonPressed()`: Checks if a mouse button is pressed.
+- `CheckCollisionPointRec()`: Checks if a point is within a rectangle.
+- `PlaySound()`: Plays a sound.
+- `LoadSound()`: Loads a sound file.
+- `UnloadSound()`: Unloads a sound file.
+- `InitAudioDevice()`: Initializes the audio device.
+- `CloseAudioDevice()`: Closes the audio device.
 
 ## Installation
 
@@ -60,7 +92,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+??
 
 ## Contributing
 
