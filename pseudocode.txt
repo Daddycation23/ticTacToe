@@ -1,0 +1,311 @@
+BEGIN 
+    InitWindow()
+    InitAudioDevice()
+    icon ← LoadImage("assets\icon.png")
+    SetWindowIcon(icon)
+    UnloadImage(icon)
+
+    buttonClickSound ← LoadSound("assets\ButtonClicked.mp3")
+    popSound ← LoadSound("assets\Pop.mp3")
+    victorySound ← LoadSound("assets\FFVictory.mp3")
+    loseSound ← LoadSound("assets\MarioLose/mp3")
+    drawSound ← LoadSound("assets\Draw.mp3")
+    mainMenuSound ← LoadSound("assets\MainMenu.mp3")
+    playSound ← LoadSound("assets\Play.mp3")
+
+    InitSymbols()
+    InitTitleWords()
+
+    WHILE (!WindowShouldClose())
+        IF (gameState == MENU || gameState == DIFFICULTY_SELECT)
+            IF (!IsSoundPlaying(mainMenuSound))
+                PlaySound(mainMenuSound)
+            ENDIF
+            StopSound(playSound)
+        ENDIF
+        ELSEIF (gameState == GAME)
+            IF (!IsSoundPlaying(playSound))
+                PlaySound(playSound)
+            ENDIF
+            StopSound(mainMenuSound)
+        ENDIF
+        ELSE 
+            StopSound(mainMenuSound)
+            StopSound(playSound)
+        ENDIF
+
+        IF (gameState == MENU || gameState == DIFFICULTY_SELECT)
+            UpdateSymbols()
+            UpdateTitleWords()
+        ENDIF
+
+        IF (gameState == MENU)
+            IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                mousePos = GetMousePosition()
+
+                IF (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
+                    mousePos.y >= SCREEN_HEIGHT/2 + 60 && mousePos.y <= SCREEN_HEIGHT/2 + 100)
+                    PlaySound(buttonClickSound)
+                    isTwoPlayer ← false
+                    gameState ← DIFFICULTY_SELECT
+                ENDIF
+
+                ELSEIF (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
+                    mousePos.y >= SCREEN_HEIGHT/2 + 120 && mousePos.y <= SCREEN_HEIGHT/2 + 160)
+                    PlaySound(buttonClickSound)
+                    isTwoPlayer ← true
+                    gameState ← GAME
+                    InitGame()
+                ENDIF
+
+                ELSEIF (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
+                        mousePos.y >= SCREEN_HEIGHT/2 + 180 && mousePos.y <= SCREEN_HEIGHT/2 + 220)
+                        PlaySound(buttonClickSound)
+                        BREAK
+                ENDIF
+            ENDIF
+        ENDIF
+
+        ELSEIF (gameState == GAME)
+            UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound)
+        ENDIF
+
+        ELSEIF (gameState == GAME_OVER)
+            UpdateGameOver(buttonClickSound)
+        ENDIF
+
+        ELSEIF (gameState == DIFFICULTY_SELECT)
+
+            IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                mousePos = GetMousePosition()
+
+                IF (mousePos.x >= 20 && mousePos.x <= SCREEN_WIDTH/6 && mousePos.y >= 10 && mousePos.y <= 40)
+                    PlaySound(buttonClickSound)
+                    gameState ← MENU
+                ENDIF
+
+                IF (mousePos.x >= SCREEN_WIDTH/2 - BUTTON_WIDTH/2 && 
+                    mousePos.x <= SCREEN_WIDTH/2 + BUTTON_WIDTH/2)
+
+                    IF (mousePos.y >= SCREEN_HEIGHT/2 && mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT)
+                        PlaySound(buttonClickSound)
+                        currentDifficulty ← EASY
+                        gameState ← GAME
+                        InitGame()
+                    ENDIF
+
+                    ELSEIF (mousePos.y >= SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20 && 
+                            mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT * 2 + 20)
+                        PlaySound(buttonClickSound)
+                        currentDifficulty ← MEDIUM
+                        gameState ← GAME
+                        InitGame()
+                    ENDIF
+
+                    ELSEIF (mousePos.y >= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 && 
+                            mousePos.y <= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 + BUTTON_HEIGHT)
+                        PlaySound(buttonClickSound)
+                        currentDifficulty ← HARD
+                        gameState ← GAME
+                        InitGame()
+                    ENDIF
+                ENDIF
+            ENDIF
+        ENDIF
+
+        BeginDrawing()
+        ClearBackground()
+
+        SWITCH(gameState)
+            CASE MENU
+                DrawSymbols() 
+                DrawTitleWords()
+                DrawMenu()
+                BREAK 
+            CASE DIFFICULTY_SELECT
+                DrawSymbols()
+                DrawDifficultySelect()
+                BREAK 
+            CASE GAME
+                DrawGame()
+                BREAK 
+            CASE GAME_OVER
+                DrawGame()
+                DrawGameOver()
+                BREAK 
+        ENDSWITCH
+        EndDrawing()
+    ENDWHILE
+
+    UnloadSound(buttonClickSound)
+    UnloadSound(popSound)
+    UnloadSound(victorySound)
+    UnloadSound(loseSound)
+    UnloadSound(drawSound)
+    UnloadSound(mainMenuSound)
+    UnloadSound(playSound)
+    CloseAudioDevice()
+    CloseWindow()
+END 
+
+FUNCTION InitTitleWords()
+    words ← {"Tic", "-", "Tac", "-", "Toe"}
+    startX ← SCREEN_WIDTH / 2 - MeasureText("Tic-Tac-Toe", 40) / 2
+    startY ← SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20
+    int spacing ← 10
+
+    FOR i ← 0 to 4 do
+        titleWords[i].word ← words[i]
+        titleWords[i].position ← (Vector2){ startX, startY }
+        titleWords[i].targetPosition ← (Vector2){ startX, startY - 20 }
+        titleWords[i].isJumping ← false
+        titleWords[i].jumpSpeed ← JUMP_SPEED
+        startX ← startX + MeasureText(words[i], 40) + spacing
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION UpdateTitleWords()
+    currentWord ← 0
+    jumpDelay ← 0.0f
+
+    jumpDelay ← jumpDelay + GetFrameTime()
+    IF (jumpDelay > JUMP_DELAY)
+        IF (!titleWords[currentWord].isJumping)
+            titleWords[currentWord].isJumping ← true
+            jumpDelay ← 0.0f
+        ENDIF
+    ENDIF
+
+    FOR i = 0 to 4 do 
+        IF (titleWords[i].isJumping)
+            titleWords[i].position.y ← titleWords[i].position.y - titleWords[i].jumpSpeed
+            
+            IF (titleWords[i].position.y <= titleWords[i].targetPosition.y)
+                titleWords[i].jumpSpeed ← -titleWords[i].jumpSpeed
+            ENDIF
+
+            IF (titleWords[i].position.y >= SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20)
+                titleWords[i].position.y ← SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20
+                titleWords[i].isJumping ← false
+                titleWords[i].jumpSpeed ← JUMP_SPEED
+                currentWord ← (currentWord + 1) % 5
+            ENDIF
+        ENDIF
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION DrawTitleWords()
+    FOR i = 0 to 4 do
+        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK)
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION InitSymbols()
+    FOR i = 0 to MAX_SYMBOLS - 1 do
+        symbols[i].position ← (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) }
+        symbols[i].symbol ← GetRandomValue(0, 1) ? 'X' : 'O'
+        symbols[i].rotation ← GetRandomValue(0, 360)
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION UpdateSymbols()
+    FOR i = 0 to MAX_SYMBOLS - 1 do 
+        symbols[i].position.y ← symbols[i].position.y + SYMBOL_SPEED
+        symbols[i].rotation ← symbols[i].rotation + ROTATION_SPEED
+        IF (symbols[i].position.y > SCREEN_HEIGHT)
+            symbols[i].position.y ← GetRandomValue(-SCREEN_HEIGHT, 0)
+            symbols[i].position.x ← GetRandomValue(0, SCREEN_WIDTH)
+            symbols[i].symbol ← GetRandomValue(0, 1) ? 'X' : 'O'
+            symbols[i].rotation ← GetRandomValue(0, 360)
+        ENDIF
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION DrawSymbols()
+    for i = 0 tp MAX_SYMBOLS - 1 do
+        origin ← {10, 10};  
+        DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED)
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION UpdateGame()
+    IF (gameOver)
+        RETURN 
+
+    IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        mousePos ← GetMousePosition()
+        IF (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
+            mousePos.y >= 10 && mousePos.y <= 40)
+            PlaySound(buttonClickSound)
+            gameState ← MENU
+            RETURN 
+        ENDIF
+    ENDIF
+
+    IF (currentPlayerTurn == PLAYER_X_TURN)
+        IF (HandlePlayerTurn())
+            PlaySound()
+        ENDIF
+    ENDIF
+
+    ELSEIF (currentPlayerTurn == PLAYER_O_TURN)
+        IF (isTwoPlayer)
+            IF (HandlePlayerTurn()) 
+                PlaySound() 
+            ENDIF
+        ENDIF
+
+        ELSE
+            AITurn()
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION HandlePlayerTurn()
+    IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        mousePos ← GetMousePosition()
+        row ← (int)(mousePos.y / CELL_SIZE)
+        col ← (int)(mousePos.x / CELL_SIZE)
+
+        IF (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
+
+            IF (grid[row][col] == EMPTY)
+                grid[row][col] ← (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O
+
+                IF (CheckWin(grid[row][col]))
+                    gameOver ← true
+                    winner ← grid[row][col]
+                    gameState ← GAME_OVER
+
+                    IF (!isTwoPlayer)
+                        IF (winner == PLAYER_X)
+                            PlaySound(victorySound)
+                        ENDIF
+
+                        ELSEIF (winner == PLAYER_O)
+                            PlaySound(loseSound)
+                        ENDIF
+                    ENDIF
+
+                    ELSE
+                        PlaySound(victorySound)
+                    ENDIF
+                ENDIF
+
+                ELSEIF (CheckDraw())
+                    gameOver ← true
+                    gameState ← GAME_OVER
+                    winner ← EMPTY
+                    PlaySound(drawSound)
+                ENDIF
+
+                ELSE 
+                    currentPlayerTurn ← (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN
+                ENDIF
+
+                RETURN true
+            ENDIF
+        ENDIF
+    ENDIF
+    RETURN false
+ENDFUNCTION
