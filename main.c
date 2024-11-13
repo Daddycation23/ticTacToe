@@ -729,15 +729,8 @@ void DrawGameOver() {
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered) {
     Rectangle vibrationBounds = bounds;
     
-    // Apply vibration effect to specific buttons
-    if (isHovered && (strstr(text, "Single Player") || 
-                      strstr(text, "Two Players") || 
-                      strstr(text, "Easy") ||
-                      strstr(text, "Medium") ||
-                      strstr(text, "Hard") ||
-                      strstr(text, "Back") ||
-                      strstr(text, "Exit") ||
-                      strstr(text, "Retry"))) {  // Include "Retry" for vibration
+    // Apply vibration effect to all buttons when hovered
+    if (isHovered) {
         buttonVibrationOffset = sinf(GetTime() * vibrationSpeed) * vibrationAmount;
         vibrationBounds.x += buttonVibrationOffset;
     }
