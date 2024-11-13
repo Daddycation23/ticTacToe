@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include "naivebayes.h" 
 
 #define SCREEN_WIDTH 600
 #define SCREEN_HEIGHT 600
@@ -77,6 +78,8 @@ void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Soun
 void UpdateGameOver(Sound buttonClickSound);
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound);
+void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound);
+void LoadNaiveBayesModel();
 void DrawGame();
 void DrawDifficultySelect(void);
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
@@ -84,8 +87,8 @@ bool CheckWin(Cell player);
 bool CheckDraw();
 void DrawMenu();
 void DrawGameOver();
-
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
+
 
 #endif // MAIN_H

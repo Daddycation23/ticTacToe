@@ -1,4 +1,5 @@
 #include "main.h"
+#include "naivebayes.h" 
 
 // Define the global arrays
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
@@ -17,6 +18,7 @@ float titleAnimSpeed = 2.0f; // Animation speed for title cells
 float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
 float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
 float vibrationAmount = 2.0f; // Amount of vibration
+NaiveBayesModel model;
 
 // Initialize the title words
 void InitTitleWords() {
@@ -618,6 +620,36 @@ void InitGame() {
     currentPlayerTurn = PLAYER_X_TURN;
 }
 
+void load_model(NaiveBayesModel *model, FILE *file) {
+    // Read class probabilities
+    fscanf(file, "Class Probabilities:\n");
+    fscanf(file, "P(Positive): %lf\n", &model->class_probs[POSITIVE]);
+    fscanf(file, "P(Negative): %lf\n", &model->class_probs[NEGATIVE]);
+
+    // Read position probabilities
+    for (int i = 0; i < NUM_POSITIONS; i++) {
+        fscanf(file, "Position %d:\n", &i);
+        fscanf(file, "P(x | Positive): %lf\n", &model->x_probs[i][POSITIVE]);
+        fscanf(file, "P(x | Negative): %lf\n", &model->x_probs[i][NEGATIVE]);
+        fscanf(file, "P(o | Positive): %lf\n", &model->o_probs[i][POSITIVE]);
+        fscanf(file, "P(o | Negative): %lf\n", &model->o_probs[i][NEGATIVE]);
+        fscanf(file, "P(b | Positive): %lf\n", &model->b_probs[i][POSITIVE]);
+        fscanf(file, "P(b | Negative): %lf\n", &model->b_probs[i][NEGATIVE]);
+    }
+}
+
+void LoadNaiveBayesModel()
+{
+    FILE *file = fopen("naivebayes_ml/model_weights.txt", "r");  // Adjust path if necessary
+    if (file) {
+        load_model(&model, file);  // Assuming `load_model` is the function in naivebayes.h to load the model
+        fclose(file);
+        printf("Model loaded successfully.\n");
+    } else {
+        printf("Failed to load model from 'model_weights.txt'. Make sure the file is available.\n");
+    }
+}
+
 // Update the game
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
 {
@@ -653,7 +685,12 @@ void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Soun
         }
         else
         {
-            AITurn(victorySound, loseSound, drawSound);
+            // Call Naive Bayes AI for Easy mode, and Minimax for Medium and Hard
+            if (currentDifficulty == EASY) {
+                AITurnNaiveBayes(victorySound, loseSound, drawSound);
+            } else {
+                AITurn(victorySound, loseSound, drawSound);
+            }
         }
     }
 }
@@ -710,32 +747,21 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
 // AI's turn using MiniMax algorithm
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
 {
+    printf("Minimax is running.\n");
+
+    // Ensure this function only applies in medium and hard modes
+    if (currentDifficulty == EASY) {
+        printf("Easy mode detected: Minimax is not running in Easy mode. Switching to Naive Bayes or other Easy mode AI.\n");
+        return;
+    }
+
     int bestScore = -1000;
     int bestRow = -1;
     int bestCol = -1;
 
-    // Easy mode: use Minimax with limited depth search of 2
-    if (currentDifficulty == EASY) {
-        int depthLimit = 1; // Set a depth limit for easy difficulty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == EMPTY) {
-                    grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
-                    grid[i][j] = EMPTY;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = i;
-                        bestCol = j;
-                    }
-                }
-            }
-        }
-    }
     // Medium mode: use Minimax with limited depth search of 4
-    else if (currentDifficulty == MEDIUM)
-    {
+    if (currentDifficulty == MEDIUM) {
+        printf("Running Minimax in Medium mode with depth limit 4.\n");
         int depthLimit = 4; // Set a depth limit for medium difficulty
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
@@ -754,8 +780,8 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
         }
     }
     // Hard mode: full Minimax search
-    else if (currentDifficulty == HARD)
-    {
+    else if (currentDifficulty == HARD) {
+        printf("Running Minimax in Hard mode with full depth limit 9.\n");
         int depthLimit = 9; // Full depth for hard mode
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
@@ -776,7 +802,10 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
 
     // Ensure a move is made
     if (bestRow != -1 && bestCol != -1) {
+        printf("Best move found at row %d, col %d with score %d.\n", bestRow, bestCol, bestScore);
         grid[bestRow][bestCol] = PLAYER_O;
+    } else {
+        printf("No valid move found.\n");
     }
 
     if (CheckWin(PLAYER_O)) {
@@ -796,9 +825,62 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
         gameOver = true;
         gameState = GAME_OVER;
         PlaySound(drawSound);  // Play draw sound
+        printf("Game ended in a draw.\n");
     } 
     else {
         currentPlayerTurn = PLAYER_X_TURN;
+    }
+}
+
+void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound)
+{
+    // Ensure this function only applies in easy mode
+    if (currentDifficulty != EASY) {
+        printf("Naive Bayes is running.\n");
+        return;
+    }
+
+    printf("Naive Bayes AI Turn: Difficulty Level - Easy\n");
+
+    char board_str[FEATURES + 1];
+    for (int i = 0, k = 0; i < GRID_SIZE; i++) {
+        for (int j = 0; j < GRID_SIZE; j++, k++) {
+            board_str[k] = (grid[i][j] == PLAYER_X) ? 'x' :
+                           (grid[i][j] == PLAYER_O) ? 'o' : 'b';
+        }
+    }
+    board_str[FEATURES] = '\0';
+
+    int move = predict_move(&model, board_str);
+    printf("Naive Bayes predicted move: %d\n", move);
+    
+    if (move != -1) {
+        int row = move / GRID_SIZE;
+        int col = move % GRID_SIZE;
+
+        printf("Naive Bayes AI selected move at row %d, col %d\n", row, col);
+
+        if (grid[row][col] == EMPTY) {
+            grid[row][col] = PLAYER_O; // AI makes its move
+            printf("Naive Bayes AI move applied on board at (%d, %d).\n", row, col);
+
+            if (CheckWin(PLAYER_O)) {
+                gameOver = true;
+                winner = PLAYER_O;
+                gameState = GAME_OVER;
+                printf("Naive Bayes AI wins the game.\n");
+            } else if (CheckDraw()) {
+                gameOver = true;
+                gameState = GAME_OVER;
+                printf("Game ended in a draw.\n");
+            } else {
+                currentPlayerTurn = PLAYER_X_TURN;
+            }
+        } else {
+            printf("Error: Naive Bayes AI chose an invalid move at (%d, %d).\n", row, col);
+        }
+    } else {
+        printf("Naive Bayes AI couldn't find a valid move.\n");
     }
 }
 
@@ -930,5 +1012,5 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]) {
     return 0; // No winner
 }
 
-// gcc -o main main.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+//  gcc -o main main.c naivebayes_ml/naivebayesModel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
 // ./main
