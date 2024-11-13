@@ -546,46 +546,7 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
     );
 }
 
-void InitGame() {
-    // Initialize the grid to EMPTY in a single loop
-    memset(grid, EMPTY, sizeof(grid));
-    gameOver = false;
-    winner = EMPTY;
-    currentPlayerTurn = PLAYER_X_TURN;
-}
-
-void UpdateGameOver(Sound buttonClickSound) {
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        Vector2 mousePos = GetMousePosition();
-        
-        // Retry Button
-        Rectangle retryBtn = {
-            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-            SCREEN_HEIGHT/2 + 40,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
-        };
-        
-        // Back to Menu Button
-        Rectangle menuBtn = {
-            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-            SCREEN_HEIGHT/2 + 100,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
-        };
-        
-        if (CheckCollisionPointRec(mousePos, menuBtn)) {
-            PlaySound(buttonClickSound);  // Play sound on button click
-            gameState = MENU;
-            InitGame();  // Reset the game state
-        } else if (CheckCollisionPointRec(mousePos, retryBtn)) {
-            PlaySound(buttonClickSound);  // Play sound on button click
-            gameState = GAME;
-            InitGame();  // Reset the game state for a new game
-        }
-    }
-}
-
+// Draw the difficulty selection screen
 void DrawDifficultySelect() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
@@ -650,11 +611,8 @@ void DrawDifficultySelect() {
 // Game Functions
 // initialize the game
 void InitGame() {
-    for (int i = 0; i < GRID_SIZE; i++) {
-        for (int j = 0; j < GRID_SIZE; j++) {
-            grid[i][j] = EMPTY;
-        }
-    }
+    // Initialize the grid to EMPTY in a single loop
+    memset(grid, EMPTY, sizeof(grid));
     gameOver = false;
     winner = EMPTY;
     currentPlayerTurn = PLAYER_X_TURN;
@@ -973,3 +931,4 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]) {
 }
 
 // gcc -o main main.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+// ./main
