@@ -525,15 +525,8 @@ void DrawGameOver() {
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered) {
     Rectangle vibrationBounds = bounds;
     
-    // Apply vibration effect to specific buttons
-    if (isHovered && (strstr(text, "Single Player") || 
-                      strstr(text, "Two Players") || 
-                      strstr(text, "Easy") ||
-                      strstr(text, "Medium") ||
-                      strstr(text, "Hard") ||
-                      strstr(text, "Back") ||
-                      strstr(text, "Exit") ||
-                      strstr(text, "Retry"))) {  // Include "Retry" for vibration
+    // Apply vibration effect to all buttons when hovered
+    if (isHovered) {
         buttonVibrationOffset = sinf(GetTime() * vibrationSpeed) * vibrationAmount;
         vibrationBounds.x += buttonVibrationOffset;
     }
@@ -553,7 +546,46 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
     );
 }
 
-// draw the various difficulty level buttons
+void InitGame() {
+    // Initialize the grid to EMPTY in a single loop
+    memset(grid, EMPTY, sizeof(grid));
+    gameOver = false;
+    winner = EMPTY;
+    currentPlayerTurn = PLAYER_X_TURN;
+}
+
+void UpdateGameOver(Sound buttonClickSound) {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        Vector2 mousePos = GetMousePosition();
+        
+        // Retry Button
+        Rectangle retryBtn = {
+            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+            SCREEN_HEIGHT/2 + 40,
+            BUTTON_WIDTH,
+            BUTTON_HEIGHT
+        };
+        
+        // Back to Menu Button
+        Rectangle menuBtn = {
+            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+            SCREEN_HEIGHT/2 + 100,
+            BUTTON_WIDTH,
+            BUTTON_HEIGHT
+        };
+        
+        if (CheckCollisionPointRec(mousePos, menuBtn)) {
+            PlaySound(buttonClickSound);  // Play sound on button click
+            gameState = MENU;
+            InitGame();  // Reset the game state
+        } else if (CheckCollisionPointRec(mousePos, retryBtn)) {
+            PlaySound(buttonClickSound);  // Play sound on button click
+            gameState = GAME;
+            InitGame();  // Reset the game state for a new game
+        }
+    }
+}
+
 void DrawDifficultySelect() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
