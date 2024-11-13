@@ -4,6 +4,19 @@
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
 TitleWord titleWords[5];  // "Tic", "-", "Tac", "-", "Toe"
+Difficulty currentDifficulty = MEDIUM; // Initialize difficulty to a value, doesn't have to be medium
+Cell grid[GRID_SIZE][GRID_SIZE]; // Initialize the grid with empty cells
+PlayerTurn currentPlayerTurn = PLAYER_X_TURN; // Initialize the current player turn to Player X
+bool gameOver = false; // Initialize the game over flag to false
+Cell winner = EMPTY; // Initialize the winner to empty
+GameState gameState = MENU; // Initialize the game state to menu
+bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
+float titleCellScales[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
+float titleRotations[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
+float titleAnimSpeed = 2.0f; // Animation speed for title cells
+float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
+float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
+float vibrationAmount = 2.0f; // Amount of vibration
 
 // Initialize the title words
 void InitTitleWords() {
@@ -19,6 +32,15 @@ void InitTitleWords() {
         titleWords[i].isJumping = false;
         titleWords[i].jumpSpeed = JUMP_SPEED;
         startX += MeasureText(words[i], 40) + spacing;
+    }
+}
+
+// Initialize the symbols
+void InitSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
+        symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+        symbols[i].rotation = GetRandomValue(0, 360);  // Random initial rotation
     }
 }
 
@@ -51,22 +73,6 @@ void UpdateTitleWords() {
     }
 }
 
-// Draw the title words
-void DrawTitleWords() {
-    for (int i = 0; i < 5; i++) {
-        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK);
-    }
-}
-
-// Initialize the symbols
-void InitSymbols() {
-    for (int i = 0; i < MAX_SYMBOLS; i++) {
-        symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
-        symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
-        symbols[i].rotation = GetRandomValue(0, 360);  // Random initial rotation
-    }
-}
-
 // Update the symbols
 void UpdateSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
@@ -80,6 +86,14 @@ void UpdateSymbols() {
         }
     }
 }
+
+// Draw the title words
+void DrawTitleWords() {
+    for (int i = 0; i < 5; i++) {
+        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK);
+    }
+}
+
 // Draw the symbols
 void DrawSymbols() {
     for (int i = 0; i < MAX_SYMBOLS; i++) {
@@ -87,21 +101,6 @@ void DrawSymbols() {
         DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED);
     }
 }
-
-Difficulty currentDifficulty = MEDIUM; // Initialize difficulty to a value, doesn't have to be medium
-Cell grid[GRID_SIZE][GRID_SIZE]; // Initialize the grid with empty cells
-PlayerTurn currentPlayerTurn = PLAYER_X_TURN; // Initialize the current player turn to Player X
-bool gameOver = false; // Initialize the game over flag to false
-Cell winner = EMPTY; // Initialize the winner to empty
-GameState gameState = MENU; // Initialize the game state to menu
-bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
-
-float titleCellScales[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
-float titleRotations[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
-float titleAnimSpeed = 2.0f;
-float buttonVibrationOffset = 0.0f;
-float vibrationSpeed = 15.0f;
-float vibrationAmount = 2.0f;
 
 // Main function
 int main(void)
@@ -267,220 +266,7 @@ int main(void)
     return 0;
 }
 
-// Update the game
-void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
-{
-    if (gameOver) return;
-
-    // Quit button click
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        Vector2 mousePos = GetMousePosition();
-        if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
-            mousePos.y >= 10 && mousePos.y <= 40)
-        {
-            PlaySound(buttonClickSound);  // Play sound on button click
-            gameState = MENU;
-            return;
-        }
-    }
-
-    // Handle game moves
-    if (currentPlayerTurn == PLAYER_X_TURN)
-    {
-        if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
-            PlaySound(popSound);  // Play sound when player moves
-        }
-    }
-    else if (currentPlayerTurn == PLAYER_O_TURN)
-    {
-        if (isTwoPlayer)
-        {
-            if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
-                PlaySound(popSound);  // Play sound when player moves
-            }
-        }
-        else
-        {
-            AITurn(victorySound, loseSound, drawSound);
-        }
-    }
-}
-
-// Handle the player's turn
-bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
-{
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        Vector2 mousePos = GetMousePosition();
-        int row = (int)(mousePos.y / CELL_SIZE);
-        int col = (int)(mousePos.x / CELL_SIZE);
-
-        if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
-        {
-            if (grid[row][col] == EMPTY)
-            {
-                grid[row][col] = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
-                if (CheckWin(grid[row][col]))
-                {
-                    gameOver = true;
-                    winner = grid[row][col];
-                    gameState = GAME_OVER;
-                    
-                    // Play sound immediately when a winner is detected
-                    if (!isTwoPlayer) {
-                        if (winner == PLAYER_X) {
-                            PlaySound(victorySound);  // Play victory sound for Player X
-                        } else if (winner == PLAYER_O) {
-                            PlaySound(loseSound);  // Play lose sound for Player O
-                        }
-                    } else {
-                        PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
-                    }
-                }
-                else if (CheckDraw())  // Check for a draw
-                {
-                    gameOver = true;
-                    gameState = GAME_OVER;
-                    winner = EMPTY;  // No winner in a draw
-                    PlaySound(drawSound);  // Play draw sound
-                }
-                else
-                {
-                    currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN;
-                }
-                return true;  // Move was made
-            }
-        }
-    }
-    return false;  // No move was made
-}
-
-// AI's turn
-void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
-{
-    int bestScore = -1000;
-    int bestRow = -1;
-    int bestCol = -1;
-
-    // Easy mode: use Minimax with limited depth search of 2
-    if (currentDifficulty == EASY) {
-        int depthLimit = 1; // Set a depth limit for easy difficulty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == EMPTY) {
-                    grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
-                    grid[i][j] = EMPTY;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = i;
-                        bestCol = j;
-                    }
-                }
-            }
-        }
-    }
-    // Medium mode: use Minimax with limited depth search of 4
-    else if (currentDifficulty == MEDIUM)
-    {
-        int depthLimit = 4; // Set a depth limit for medium difficulty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == EMPTY) {
-                    grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
-                    grid[i][j] = EMPTY;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = i;
-                        bestCol = j;
-                    }
-                }
-            }
-        }
-    }
-    // Hard mode: full Minimax search
-    else if (currentDifficulty == HARD)
-    {
-        int depthLimit = 9; // Full depth for hard mode
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == EMPTY) {
-                    grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
-                    grid[i][j] = EMPTY;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = i;
-                        bestCol = j;
-                    }
-                }
-            }
-        }
-    }
-
-    // Ensure a move is made
-    if (bestRow != -1 && bestCol != -1) {
-        grid[bestRow][bestCol] = PLAYER_O;
-    }
-
-    if (CheckWin(PLAYER_O)) {
-        gameOver = true;
-        winner = PLAYER_O;
-        gameState = GAME_OVER;
-        
-        // Play sound immediately when a winner is detected
-        if (!isTwoPlayer) {
-            PlaySound(loseSound);  // Play lose sound for Player O
-        } else {
-            PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
-        }
-
-    } 
-    else if (CheckDraw()) {
-        gameOver = true;
-        gameState = GAME_OVER;
-        PlaySound(drawSound);  // Play draw sound
-    } 
-    else {
-        currentPlayerTurn = PLAYER_X_TURN;
-    }
-}
-
-// Check if the player has won  
-bool CheckWin(Cell player)
-{
-    // check rows and columns
-    for (int i = 0; i < GRID_SIZE; i++)
-    {
-        if (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player) return true; // Row check
-        if (grid[0][i] == player && grid[1][i] == player && grid[2][i] == player) return true; // Column check
-    }
-
-    // Check diagonals
-    if (grid[0][0] == player && grid[1][1] == player && grid[2][2] == player) return true; // Main diagonal
-    if (grid[0][2] == player && grid[1][1] == player && grid[2][0] == player) return true; // Anti diagonal
-
-    return false; // No win found
-}
-
-// Check if the game is a draw
-bool CheckDraw()
-{
-    for (int i = 0; i < GRID_SIZE; i++)
-    {
-        for (int j = 0; j < GRID_SIZE; j++)
-        {
-            if (grid[i][j] == EMPTY) return false; // If there's an empty cell, it's not a draw
-        }
-    }
-    return true; // All cells are filled
-}
-
+// Drawing of the Game Designs
 // Draw the game
 void DrawGame()
 {
@@ -668,6 +454,7 @@ void DrawMenu() {
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
+// Draw the game over screen
 void DrawGameOver() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
@@ -734,7 +521,7 @@ void DrawGameOver() {
     SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
-// Add the function definition
+// draw the buttons with hover effect
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered) {
     Rectangle vibrationBounds = bounds;
     
@@ -766,49 +553,7 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
     );
 }
 
-void InitGame() {
-    for (int i = 0; i < GRID_SIZE; i++) {
-        for (int j = 0; j < GRID_SIZE; j++) {
-            grid[i][j] = EMPTY;
-        }
-    }
-    gameOver = false;
-    winner = EMPTY;
-    currentPlayerTurn = PLAYER_X_TURN;
-}
-
-void UpdateGameOver(Sound buttonClickSound) {
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        Vector2 mousePos = GetMousePosition();
-        
-        // Retry Button
-        Rectangle retryBtn = {
-            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-            SCREEN_HEIGHT/2 + 40,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
-        };
-        
-        // Back to Menu Button
-        Rectangle menuBtn = {
-            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-            SCREEN_HEIGHT/2 + 100,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
-        };
-        
-        if (CheckCollisionPointRec(mousePos, menuBtn)) {
-            PlaySound(buttonClickSound);  // Play sound on button click
-            gameState = MENU;
-            InitGame();  // Reset the game state
-        } else if (CheckCollisionPointRec(mousePos, retryBtn)) {
-            PlaySound(buttonClickSound);  // Play sound on button click
-            gameState = GAME;
-            InitGame();  // Reset the game state for a new game
-        }
-    }
-}
-
+// draw the various difficulty level buttons
 void DrawDifficultySelect() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
@@ -870,6 +615,267 @@ void DrawDifficultySelect() {
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
+// Game Functions
+// initialize the game
+void InitGame() {
+    for (int i = 0; i < GRID_SIZE; i++) {
+        for (int j = 0; j < GRID_SIZE; j++) {
+            grid[i][j] = EMPTY;
+        }
+    }
+    gameOver = false;
+    winner = EMPTY;
+    currentPlayerTurn = PLAYER_X_TURN;
+}
+
+// Update the game
+void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
+{
+    if (gameOver) return;
+
+    // Quit button click
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Vector2 mousePos = GetMousePosition();
+        if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
+            mousePos.y >= 10 && mousePos.y <= 40)
+        {
+            PlaySound(buttonClickSound);  // Play sound on button click
+            gameState = MENU;
+            return;
+        }
+    }
+
+    // Handle game moves
+    if (currentPlayerTurn == PLAYER_X_TURN)
+    {
+        if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
+            PlaySound(popSound);  // Play sound when player moves
+        }
+    }
+    else if (currentPlayerTurn == PLAYER_O_TURN)
+    {
+        if (isTwoPlayer)
+        {
+            if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
+                PlaySound(popSound);  // Play sound when player moves
+            }
+        }
+        else
+        {
+            AITurn(victorySound, loseSound, drawSound);
+        }
+    }
+}
+
+// Handle the player's turn
+bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
+{
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Vector2 mousePos = GetMousePosition();
+        int row = (int)(mousePos.y / CELL_SIZE);
+        int col = (int)(mousePos.x / CELL_SIZE);
+
+        if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
+        {
+            if (grid[row][col] == EMPTY)
+            {
+                grid[row][col] = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
+                if (CheckWin(grid[row][col]))
+                {
+                    gameOver = true;
+                    winner = grid[row][col];
+                    gameState = GAME_OVER;
+                    
+                    // Play sound immediately when a winner is detected
+                    if (!isTwoPlayer) {
+                        if (winner == PLAYER_X) {
+                            PlaySound(victorySound);  // Play victory sound for Player X
+                        } else if (winner == PLAYER_O) {
+                            PlaySound(loseSound);  // Play lose sound for Player O
+                        }
+                    } else {
+                        PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
+                    }
+                }
+                else if (CheckDraw())  // Check for a draw
+                {
+                    gameOver = true;
+                    gameState = GAME_OVER;
+                    winner = EMPTY;  // No winner in a draw
+                    PlaySound(drawSound);  // Play draw sound
+                }
+                else
+                {
+                    currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN;
+                }
+                return true;  // Move was made
+            }
+        }
+    }
+    return false;  // No move was made
+}
+
+// AI's turn using MiniMax algorithm
+void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
+{
+    int bestScore = -1000;
+    int bestRow = -1;
+    int bestCol = -1;
+
+    // Easy mode: use Minimax with limited depth search of 2
+    if (currentDifficulty == EASY) {
+        int depthLimit = 1; // Set a depth limit for easy difficulty
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (grid[i][j] == EMPTY) {
+                    grid[i][j] = PLAYER_O;
+                    int score = Minimax(grid, false, 0, depthLimit);
+                    grid[i][j] = EMPTY;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestRow = i;
+                        bestCol = j;
+                    }
+                }
+            }
+        }
+    }
+    // Medium mode: use Minimax with limited depth search of 4
+    else if (currentDifficulty == MEDIUM)
+    {
+        int depthLimit = 4; // Set a depth limit for medium difficulty
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (grid[i][j] == EMPTY) {
+                    grid[i][j] = PLAYER_O;
+                    int score = Minimax(grid, false, 0, depthLimit);
+                    grid[i][j] = EMPTY;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestRow = i;
+                        bestCol = j;
+                    }
+                }
+            }
+        }
+    }
+    // Hard mode: full Minimax search
+    else if (currentDifficulty == HARD)
+    {
+        int depthLimit = 9; // Full depth for hard mode
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (grid[i][j] == EMPTY) {
+                    grid[i][j] = PLAYER_O;
+                    int score = Minimax(grid, false, 0, depthLimit);
+                    grid[i][j] = EMPTY;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestRow = i;
+                        bestCol = j;
+                    }
+                }
+            }
+        }
+    }
+
+    // Ensure a move is made
+    if (bestRow != -1 && bestCol != -1) {
+        grid[bestRow][bestCol] = PLAYER_O;
+    }
+
+    if (CheckWin(PLAYER_O)) {
+        gameOver = true;
+        winner = PLAYER_O;
+        gameState = GAME_OVER;
+        
+        // Play sound immediately when a winner is detected
+        if (!isTwoPlayer) {
+            PlaySound(loseSound);  // Play lose sound for Player O
+        } else {
+            PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
+        }
+
+    } 
+    else if (CheckDraw()) {
+        gameOver = true;
+        gameState = GAME_OVER;
+        PlaySound(drawSound);  // Play draw sound
+    } 
+    else {
+        currentPlayerTurn = PLAYER_X_TURN;
+    }
+}
+
+// Check if the player has won  
+bool CheckWin(Cell player)
+{
+    // check rows and columns
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        if (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player) return true; // Row check
+        if (grid[0][i] == player && grid[1][i] == player && grid[2][i] == player) return true; // Column check
+    }
+
+    // Check diagonals
+    if (grid[0][0] == player && grid[1][1] == player && grid[2][2] == player) return true; // Main diagonal
+    if (grid[0][2] == player && grid[1][1] == player && grid[2][0] == player) return true; // Anti diagonal
+
+    return false; // No win found
+}
+
+// Check if the game is a draw
+bool CheckDraw()
+{
+    for (int i = 0; i < GRID_SIZE; i++)
+    {
+        for (int j = 0; j < GRID_SIZE; j++)
+        {
+            if (grid[i][j] == EMPTY) return false; // If there's an empty cell, it's not a draw
+        }
+    }
+    return true; // All cells are filled
+}
+
+// update the game when its over
+void UpdateGameOver(Sound buttonClickSound) {
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        Vector2 mousePos = GetMousePosition();
+        
+        // Retry Button
+        Rectangle retryBtn = {
+            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+            SCREEN_HEIGHT/2 + 40,
+            BUTTON_WIDTH,
+            BUTTON_HEIGHT
+        };
+        
+        // Back to Menu Button
+        Rectangle menuBtn = {
+            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+            SCREEN_HEIGHT/2 + 100,
+            BUTTON_WIDTH,
+            BUTTON_HEIGHT
+        };
+        
+        if (CheckCollisionPointRec(mousePos, menuBtn)) {
+            PlaySound(buttonClickSound);  // Play sound on button click
+            gameState = MENU;
+            InitGame();  // Reset the game state
+        } else if (CheckCollisionPointRec(mousePos, retryBtn)) {
+            PlaySound(buttonClickSound);  // Play sound on button click
+            gameState = GAME;
+            InitGame();  // Reset the game state for a new game
+        }
+    }
+}
+
+// minimax algorithm
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit) {
     if (depth >= depthLimit) return 0; // Return 0 if depth limit is reached
 

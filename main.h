@@ -79,6 +79,7 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound);
 void DrawGame();
 void DrawDifficultySelect(void);
+void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
 bool CheckWin(Cell player);
 bool CheckDraw();
 void DrawMenu();
@@ -86,10 +87,5 @@ void DrawGameOver();
 
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
-
-void DrawDifficultySection(const char* difficulty, int* y, Color color, int padding, int textFontSize);
-void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
-
-Font customFont;
 
 #endif // MAIN_H
