@@ -1,0 +1,14 @@
+# Ignore Visual Studio Code settings
+.vscode/
+
+# Ignore output directories
+/build/
+*.out
+*.o
+
+# Ignore other common build artifacts
+*.log
+*.tmp
+*.obj
+*.dll
+*.pdb
