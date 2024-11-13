@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include "naivebayes.h" 
 
 #define SCREEN_WIDTH 600
 #define SCREEN_HEIGHT 600
@@ -38,12 +39,15 @@ bool gameOver = false;
 Cell winner = EMPTY;
 GameState gameState = MENU;
 bool isTwoPlayer = false; // Flag to check if it's a two-player or single-player game
+NaiveBayesModel model;
 
 void InitGame();
 void UpdateGame();
 void UpdateGameOver();
 void HandlePlayerTurn();
 void AITurn();
+void AITurnNaiveBayes();
+void LoadNaiveBayesModel();
 void DrawGame();
 void DrawDifficultySelect(void);
 bool CheckWin(Cell player);
@@ -89,6 +93,36 @@ int main(void)
                 }
             }
         }
+        else if (gameState == DIFFICULTY_SELECT)  // Difficulty selection menu
+        {
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                Vector2 mousePos = GetMousePosition();
+                if (mousePos.x >= SCREEN_WIDTH/2 - BUTTON_WIDTH/2 && 
+                    mousePos.x <= SCREEN_WIDTH/2 + BUTTON_WIDTH/2) {
+                    // Easy button
+                    if (mousePos.y >= SCREEN_HEIGHT/2 && 
+                        mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT) {
+                        currentDifficulty = EASY;
+                        gameState = GAME;
+                        InitGame();
+                    }
+                    // Medium button
+                    else if (mousePos.y >= SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20 && 
+                            mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT * 2 + 20) {
+                        currentDifficulty = MEDIUM;
+                        gameState = GAME;
+                        InitGame();
+                    }
+                    // Hard button
+                    else if (mousePos.y >= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 && 
+                            mousePos.y <= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 + BUTTON_HEIGHT) {
+                        currentDifficulty = HARD;
+                        gameState = GAME;
+                        InitGame();
+                    }
+                }
+            }
+        }
         else if (gameState == GAME)
         {
             UpdateGame();
@@ -97,47 +131,16 @@ int main(void)
         {
             UpdateGameOver();
         }
-        else if (gameState == DIFFICULTY_SELECT) {
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                Vector2 mousePos = GetMousePosition();
-                if (mousePos.x >= SCREEN_WIDTH/2 - BUTTON_WIDTH/2 && 
-                    mousePos.x <= SCREEN_WIDTH/2 + BUTTON_WIDTH/2) {
-                    // easy button
-                    if (mousePos.y >= SCREEN_HEIGHT/2 && 
-                        mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT) {
-                        currentDifficulty = EASY;
-                        gameState = GAME;
-                        InitGame();
-                    }
-                    // medium button
-                    else if (mousePos.y >= SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20 && 
-                             mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT * 2 + 20) {
-                        currentDifficulty = MEDIUM;
-                        gameState = GAME;
-                        InitGame();
-                    }
-                    // hard button
-                    else if (mousePos.y >= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 && 
-                             mousePos.y <= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 + BUTTON_HEIGHT) {
-                        currentDifficulty = HARD;
-                        gameState = GAME;
-                        InitGame();
-                    }
-                }
-            }
-        }
         else if (gameState == EXIT)
         {
             break;
         }
-        
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
         switch(gameState) {
             case MENU:
-                // Draw the background image scaled to fit the window
                 DrawTextureEx(background, (Vector2){0, 0}, 0.0f, (float)SCREEN_WIDTH / background.width, WHITE);
                 DrawMenu();
                 break;
@@ -155,10 +158,39 @@ int main(void)
 
         EndDrawing();
     }
-
     UnloadTexture(background); // Unload the texture when done
     CloseWindow();
     return 0;
+}
+
+void load_model(NaiveBayesModel *model, FILE *file) {
+    // Read class probabilities
+    fscanf(file, "Class Probabilities:\n");
+    fscanf(file, "P(Positive): %lf\n", &model->class_probs[POSITIVE]);
+    fscanf(file, "P(Negative): %lf\n", &model->class_probs[NEGATIVE]);
+
+    // Read position probabilities
+    for (int i = 0; i < NUM_POSITIONS; i++) {
+        fscanf(file, "Position %d:\n", &i);
+        fscanf(file, "P(x | Positive): %lf\n", &model->x_probs[i][POSITIVE]);
+        fscanf(file, "P(x | Negative): %lf\n", &model->x_probs[i][NEGATIVE]);
+        fscanf(file, "P(o | Positive): %lf\n", &model->o_probs[i][POSITIVE]);
+        fscanf(file, "P(o | Negative): %lf\n", &model->o_probs[i][NEGATIVE]);
+        fscanf(file, "P(b | Positive): %lf\n", &model->b_probs[i][POSITIVE]);
+        fscanf(file, "P(b | Negative): %lf\n", &model->b_probs[i][NEGATIVE]);
+    }
+}
+
+void LoadNaiveBayesModel()
+{
+    FILE *file = fopen("naivebayes_ml/model_weights.txt", "r");  // Adjust path if necessary
+    if (file) {
+        load_model(&model, file);  // Assuming `load_model` is the function in naivebayes.h to load the model
+        fclose(file);
+        printf("Model loaded successfully.\n");
+    } else {
+        printf("Failed to load model from 'model_weights.txt'. Make sure the file is available.\n");
+    }
 }
 
 void UpdateGameOver() {
@@ -379,6 +411,7 @@ void HandlePlayerTurn()
                 {
                     currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN;
                 }
+                printf("Turn switched to: %d\n", currentPlayerTurn); // Debugging statement
             }
         }
     }
@@ -387,6 +420,7 @@ void HandlePlayerTurn()
 void UpdateGame()
 {
     if (gameOver) return;
+    printf("Current Player Turn: %d\n", currentPlayerTurn);
 
     // quit button click
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -400,21 +434,106 @@ void UpdateGame()
         }
     }
 
-    // Handle game moves
-    if (currentPlayerTurn == PLAYER_X_TURN)
+    // Check if it is now the AI's turn and game is not over
+    if (currentPlayerTurn == PLAYER_X_TURN && !gameOver)
     {
+        printf("Handling PLAYER_X's turn.\n");
         HandlePlayerTurn();
+
+        // Check if Player X's move led to a game over (win or draw)
+        if (gameOver) return;
+
+        // If Player X has played a valid move, switch to AI's turn
+        if (currentPlayerTurn == PLAYER_O_TURN)
+        {
+            printf("Switching to AI's turn.\n");
+        }
     }
-    else if (currentPlayerTurn == PLAYER_O_TURN)
+
+    // Handle AI's turn only if it's AI's turn and the game is not over
+    if (currentPlayerTurn == PLAYER_O_TURN && !gameOver)
     {
         if (isTwoPlayer)
         {
+            // In two-player mode, handle Player O's move
             HandlePlayerTurn();
         }
         else
         {
-            AITurn();
+            // In single-player mode, AI makes a move based on difficulty level
+            if (currentDifficulty == HARD)
+            {
+                printf("Using Minimax for Hard Mode\n");
+                AITurn();  // Use Minimax for hard difficulty
+            }
+            else
+            {
+                printf("Using Naive Bayes for %s Mode\n", 
+                    (currentDifficulty == EASY ) ? "Easy" : "Medium");
+                AITurnNaiveBayes();  // Use Naive Bayes for easy and medium difficulties
+            }
+
+            // Print board state after AI move for debugging
+            printf("Board state after AI move:\n");
+            for (int i = 0; i < GRID_SIZE; i++) {
+                for (int j = 0; j < GRID_SIZE; j++) {
+                    printf("%d ", grid[i][j]);
+                }
+                printf("\n");
+            }
+
+            // Check if AI's move led to a game over (win or draw)
+            if (gameOver) return;
+
+            // After AI's move, switch back to Player X's turn if the game is not over
+            currentPlayerTurn = PLAYER_X_TURN;
+            printf("Switching turn back to PLAYER_X.\n");
         }
+    }
+}
+void AITurnNaiveBayes()
+{
+    printf("Naive Bayes AI Turn: Difficulty Level - %s\n", 
+           (currentDifficulty == EASY) ? "Easy" : "Medium"); 
+
+    char board_str[FEATURES + 1];
+    for (int i = 0, k = 0; i < GRID_SIZE; i++) {
+        for (int j = 0; j < GRID_SIZE; j++, k++) {
+            board_str[k] = (grid[i][j] == PLAYER_X) ? 'x' :
+                           (grid[i][j] == PLAYER_O) ? 'o' : 'b';
+        }
+    }
+    board_str[FEATURES] = '\0';
+
+    int move = predict_move(&model, board_str);
+    printf("Naive Bayes predicted move: %d\n", move); 
+    if (move != -1) {
+        int row = move / GRID_SIZE;
+        int col = move % GRID_SIZE;
+        
+        printf("AI selected move at row %d, col %d\n", row, col);
+
+        if (grid[row][col] == EMPTY) {
+            grid[row][col] = PLAYER_O; // AI makes its move
+            printf("AI move applied on board at (%d, %d).\n", row, col);
+
+            if (CheckWin(PLAYER_O)) {
+                gameOver = true;
+                winner = PLAYER_O;
+                gameState = GAME_OVER;
+                printf("AI wins the game.\n");
+            } else if (CheckDraw()) {
+                gameOver = true;
+                gameState = GAME_OVER;
+                printf("Game ended in a draw.\n");
+            } else {
+                currentPlayerTurn = PLAYER_X_TURN;
+            }
+        } else {
+            printf("Error: AI chose an invalid move at (%d, %d).\n", row, col);
+        }
+    } else {
+        printf("AI couldn't find a valid move.\n");
     }
 }
 
@@ -424,48 +543,8 @@ void AITurn()
     int bestRow = -1;
     int bestCol = -1;
 
-    // Easy mode: use Minimax with limited depth search of 2
-    if (currentDifficulty == EASY) {
-        int depthLimit = 1; // Set a depth limit for easy difficulty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == EMPTY) {
-                    grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
-                    grid[i][j] = EMPTY;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = i;
-                        bestCol = j;
-                    }
-                }
-            }
-        }
-    }
-    // Medium mode: use Minimax with limited depth search of 4
-    else if (currentDifficulty == MEDIUM)
-    {
-        int depthLimit = 4; // Set a depth limit for medium difficulty
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == EMPTY) {
-                    grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
-                    grid[i][j] = EMPTY;
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = i;
-                        bestCol = j;
-                    }
-                }
-            }
-        }
-    }
     // Hard mode: full Minimax search
-    else if (currentDifficulty == HARD)
-    {
+    if (currentDifficulty == HARD) {
         int depthLimit = 9; // Full depth for hard mode
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
@@ -484,6 +563,71 @@ void AITurn()
         }
     }
 
+    /* Commented out Easy and Medium Mode - Now handled by AITurnNaiveBayes
+    // Easy mode: use Minimax with limited depth search of 2
+    else if (currentDifficulty == EASY) {
+        int depthLimit = 1; // Set a depth limit for easy difficulty
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (grid[i][j] == EMPTY) {
+                    grid[i][j] = PLAYER_O;
+                    int score = Minimax(grid, false, 0, depthLimit);
+                    grid[i][j] = EMPTY;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestRow = i;
+                        bestCol = j;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Medium mode: use Minimax with limited depth search of 4
+    else if (currentDifficulty == MEDIUM) {
+        int depthLimit = 4; // Set a depth limit for medium difficulty
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (grid[i][j] == EMPTY) {
+                    grid[i][j] = PLAYER_O;
+                    int score = Minimax(grid, false, 0, depthLimit);
+                    grid[i][j] = EMPTY;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestRow = i;
+                        bestCol = j;
+                    }
+                }
+            }
+        }
+    }
+    */
+
+    // Ensure a move is made
+    if (bestRow != -1 && bestCol != -1) {
+        grid[bestRow][bestCol] = PLAYER_O;
+    }
+
+    if (CheckWin(PLAYER_O)) {
+        gameOver = true;
+        winner = PLAYER_O;
+        gameState = GAME_OVER;
+        hardStats.wins++;
+        hardStats.totalGames++;
+    } 
+    else if (CheckDraw()) {
+        gameOver = true;
+        gameState = GAME_OVER;
+        hardStats.draws++;
+        hardStats.totalGames++;
+    } 
+    else {
+        currentPlayerTurn = PLAYER_X_TURN;
+    }
+}
+    /*
     // Ensure a move is made
     if (bestRow != -1 && bestCol != -1) {
         grid[bestRow][bestCol] = PLAYER_O;
@@ -511,7 +655,7 @@ void AITurn()
     else {
         currentPlayerTurn = PLAYER_X_TURN;
     }
-}
+}*/
 
 bool CheckWin(Cell player)
 {
