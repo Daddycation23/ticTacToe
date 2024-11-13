@@ -751,11 +751,8 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
 }
 
 void InitGame() {
-    for (int i = 0; i < GRID_SIZE; i++) {
-        for (int j = 0; j < GRID_SIZE; j++) {
-            grid[i][j] = EMPTY;
-        }
-    }
+    // Initialize the grid to EMPTY in a single loop
+    memset(grid, EMPTY, sizeof(grid));
     gameOver = false;
     winner = EMPTY;
     currentPlayerTurn = PLAYER_X_TURN;
