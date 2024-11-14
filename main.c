@@ -250,7 +250,7 @@ int main(void)
                     BUTTON_HEIGHT
                 };
 
-                Rectangle lrBtn = {
+                Rectangle dtBtn = {
                     SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
                     SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
                     BUTTON_WIDTH,
@@ -263,9 +263,9 @@ int main(void)
                     gameState = GAME;
                     InitGame();
                 }
-                else if (CheckCollisionPointRec(mousePos, lrBtn)) {
+                else if (CheckCollisionPointRec(mousePos, dtBtn)) {
                     PlaySound(buttonClickSound);
-                    currentModel = LINEAR_REGRESSION;
+                    currentModel = DECISION_TREE;
                     gameState = GAME;
                     InitGame();
                 }
@@ -286,8 +286,8 @@ int main(void)
                 DrawDifficultySelect();  // Draw the difficulty selection
                 break;
             case MODEL_SELECT:
-                DrawSymbols();  // Optional background
-                DrawModelSelect();
+                DrawSymbols();  // Draw the falling symbols
+                DrawModelSelect(); // Draw the model selection
                 break;
             case GAME:
                 DrawGame();  // Draw the game
@@ -386,7 +386,6 @@ void DrawGame()
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);
 
     // Turn indicator
-    // In DrawGame() function, modify the turn indicator section:
     if (!gameOver) {
         // Display stats at the top regardless of game mode
         char statsText[100];
@@ -410,11 +409,7 @@ void DrawGame()
                 currentStats->draws);
 
         // Draw stats in middle above turn display
-        DrawText(statsText, 
-                SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2,
-                10, 
-                20, 
-                BLACK);
+        DrawText(statsText, SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2, 10, 20, BLACK);
 
         // Then handle turn display
         if (currentPlayerTurn == PLAYER_X_TURN) {
@@ -696,7 +691,7 @@ void DrawModelSelect() {
         BUTTON_HEIGHT
     };
     
-    Rectangle lrBtn = {
+    Rectangle dtBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
         SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
         BUTTON_WIDTH,
@@ -713,14 +708,14 @@ void DrawModelSelect() {
 
     Vector2 mousePos = GetMousePosition();
     bool nbHover = CheckCollisionPointRec(mousePos, nbBtn);
-    bool lrHover = CheckCollisionPointRec(mousePos, lrBtn);
+    bool dtHover = CheckCollisionPointRec(mousePos, dtBtn);
     bool backHover = CheckCollisionPointRec(mousePos, backBtn);
 
     DrawButton(nbBtn, "Naive Bayes", 20, nbHover);
-    DrawButton(lrBtn, "Linear Regression", 20, lrHover);
+    DrawButton(dtBtn, "Decision Tree", 20, dtHover);
     DrawButton(backBtn, "Back", 20, backHover);
     
-    SetMouseCursor((nbHover || lrHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    SetMouseCursor((nbHover || dtHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
 // Game Functions
@@ -892,7 +887,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
             AITurnNaiveBayes(victorySound, loseSound, drawSound);
         } 
         else {
-            AITurnLinearRegression(victorySound, loseSound, drawSound);  // New function to implement
+            AITurnDecisionTree(victorySound, loseSound, drawSound);  // New function to implement
         }
     }
 
@@ -1060,10 +1055,10 @@ void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound)
     }
 }
 
-// Linear Regression or another AI Turn function
-void AITurnLinearRegression(Sound victorySound, Sound loseSound, Sound drawSound) {
-    printf("Linear Regression AI Turn\n");
-    // Implement your linear regression logic here
+// Decision Tree AI Turn function
+void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound) {
+    printf("Decision Tree AI Turn\n");
+    // Implement your decision tree logic here
     // For now, just make a random valid move
     int row, col;
     do {

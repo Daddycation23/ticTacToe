@@ -52,7 +52,7 @@ typedef struct {
 
 typedef enum {
     NAIVE_BAYES,
-    LINEAR_REGRESSION
+    DECISION_TREE,
 } AIModel;
 
 typedef struct {
@@ -115,7 +115,7 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound);
 void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound);
 void LoadNaiveBayesModel();
-void AITurnLinearRegression(Sound victorySound, Sound loseSound, Sound drawSound);
+void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound);
 
 
 #endif // MAIN_H
