@@ -62,9 +62,18 @@ typedef struct {
     int totalGames;
 } ModeStats;
 
-ModeStats easyStats = {0, 0, 0, 0};
 ModeStats mediumStats = {0, 0, 0, 0};
 ModeStats hardStats = {0, 0, 0, 0};
+ModeStats naiveBayesStats = {0, 0, 0, 0};
+ModeStats decisionTreeStats = {0, 0, 0, 0};
+
+Sound buttonClickSound;
+Sound popSound;
+Sound victorySound;
+Sound loseSound;
+Sound drawSound; 
+Sound mainMenuSound;
+Sound playSound;
 
 extern GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 extern FallingSymbol symbols[MAX_SYMBOLS];
@@ -104,18 +113,18 @@ void InitSymbols();
 void InitTitleWords();
 void UpdateSymbols();
 void UpdateTitleWords();
-void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
-void UpdateGameOver(Sound buttonClickSound);
-bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
+void UpdateGame();
+void UpdateGameOver();
+bool HandlePlayerTurn();
 bool CheckWin(Cell player);
 bool CheckDraw();
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
-void AITurn(Sound victorySound, Sound loseSound, Sound drawSound);
-void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound);
+void AITurn();
+void AITurnNaiveBayes();
 void LoadNaiveBayesModel();
-void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound);
+void AITurnDecisionTree();
 
 
 #endif // MAIN_H
