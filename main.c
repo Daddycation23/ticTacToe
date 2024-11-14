@@ -188,11 +188,11 @@ int main(void)
         }
         else if (gameState == GAME) 
         {
-            UpdateGame();
+            UpdateGame();   // Update the game state
         }
         else if (gameState == GAME_OVER)
         {
-            UpdateGameOver();
+            UpdateGameOver();   // Update the game over state
         }
         else if (gameState == DIFFICULTY_SELECT) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -243,6 +243,7 @@ int main(void)
                     gameState = DIFFICULTY_SELECT;
                 }
 
+                // Naive Bayes button
                 Rectangle nbBtn = {
                     SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
                     SCREEN_HEIGHT/2,
@@ -250,6 +251,7 @@ int main(void)
                     BUTTON_HEIGHT
                 };
 
+                // Decision Tree button
                 Rectangle dtBtn = {
                     SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
                     SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
@@ -383,46 +385,49 @@ void DrawGame()
     // Update isQuitHovered using CheckCollisionPointRec
     isQuitHovered = CheckCollisionPointRec(mousePos, quitBtn);
     
-    DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);
+    DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);    // draw the quit button
 
-    // Turn indicator
     if (!gameOver) {
-        // Display stats at the top regardless of game mode
-        char statsText[100];
-        ModeStats* currentStats;
-        
-        switch(currentDifficulty) {
-            case EASY:
-                if (currentModel == NAIVE_BAYES) {
-                    currentStats = &naiveBayesStats;
-                } else {
-                    currentStats = &decisionTreeStats;
-                }
-                break;
-            case MEDIUM:
-                currentStats = &mediumStats;
-                break;
-            case HARD:
-                currentStats = &hardStats;
-                break;
+        // only display stats for single player mode
+        if (!isTwoPlayer) {
+            char statsText[100];
+            ModeStats* currentStats;
+            
+            switch(currentDifficulty) {
+                case EASY:
+                    if (currentModel == NAIVE_BAYES) {
+                        currentStats = &naiveBayesStats;    // naive bayes scores
+                    } else {
+                        currentStats = &decisionTreeStats;  // decision tree scores
+                    }
+                    break;
+                case MEDIUM:
+                    currentStats = &mediumStats;    // medium mode scores
+                    break;
+                case HARD:
+                    currentStats = &hardStats;  // hard mode scores
+                    break;
+            }
+
+            sprintf(statsText, "Player: %d | AI: %d | Draws: %d", 
+                    currentStats->playerWins, 
+                    currentStats->aiWins, 
+                    currentStats->draws);
+
+            // draw stats in middle above turn display
+            DrawText(statsText, SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2, 10, 20, BLACK);
         }
 
-        sprintf(statsText, "Player: %d | AI: %d | Draws: %d", 
-                currentStats->playerWins, 
-                currentStats->aiWins, 
-                currentStats->draws);
+        // turn display indicator
+        int yPos = isTwoPlayer ? 20 : 40;  // shift up for 2 player mode
 
-        // Draw stats in middle above turn display
-        DrawText(statsText, SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2, 10, 20, BLACK);
-
-        // Then handle turn display
         if (currentPlayerTurn == PLAYER_X_TURN) {
             const char* turnText = "Player X's Turn";
-            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, 40, 30, BLUE);
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, BLUE);
         } else {
             const char* turnText = isTwoPlayer ? "Player O's Turn" : "AI's Turn";
             Color turnColor = isTwoPlayer ? RED : RED;
-            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, 40, 30, turnColor);
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, turnColor);
         }
     }
 }
@@ -652,7 +657,7 @@ void DrawDifficultySelect() {
         BUTTON_HEIGHT
     };
 
-    // Add back button at top left
+    // back button at top left
     Rectangle backBtn = {
         20,                // Left margin
         10,                // Top margin  
@@ -702,7 +707,7 @@ void DrawModelSelect() {
         BUTTON_HEIGHT
     };
     
-    // Add back button at top left
+    // back button at top left
     Rectangle backBtn = {
         20,                // Left margin
         10,                // Top margin  
@@ -856,13 +861,13 @@ bool HandlePlayerTurn()
                     // Play sound immediately when a winner is detected
                     if (!isTwoPlayer) {
                         if (winner == PLAYER_X) {
-                            currentStats->playerWins++;
-                            currentStats->totalGames++;
+                            currentStats->playerWins++; // Increment player wins
+                            currentStats->totalGames++; // Increment total games
                             PlaySound(victorySound);  // Play victory sound for Player X
                         } 
                         else if (winner == PLAYER_O) {
-                            currentStats->aiWins++;
-                            currentStats->totalGames++;
+                            currentStats->aiWins++; // Increment AI wins
+                            currentStats->totalGames++; // Increment total games
                             PlaySound(loseSound);  // Play lose sound for Player O
                         }
                     } else {
@@ -874,8 +879,8 @@ bool HandlePlayerTurn()
                     gameOver = true;
                     gameState = GAME_OVER;
                     winner = EMPTY;  // No winner in a draw
-                    currentStats->draws++;
-                    currentStats->totalGames++;
+                    currentStats->draws++;  // Increment draws scores
+                    currentStats->totalGames++; // Increment total games
                     PlaySound(drawSound);  // Play draw sound
                 }
                 else
@@ -979,8 +984,8 @@ void AITurn()
                 currentStats = &hardStats;
                 break;
         }
-
-        // Update the correct counter
+        
+        // Update the stats counter
         currentStats->aiWins++;
         currentStats->totalGames++;
 
@@ -995,6 +1000,29 @@ void AITurn()
     else if (CheckDraw()) {
         gameOver = true;
         gameState = GAME_OVER;
+
+        // Get the current mode's stats
+        ModeStats* currentStats;
+        switch(currentDifficulty) {
+            case EASY:
+                if (currentModel == NAIVE_BAYES) {
+                    currentStats = &naiveBayesStats;
+                } else {
+                    currentStats = &decisionTreeStats;
+                }
+                break;
+            case MEDIUM:
+                currentStats = &mediumStats;
+                break;
+            case HARD:
+                currentStats = &hardStats;
+                break;
+        }
+        
+        // Update the stats counter
+        currentStats->draws++;
+        currentStats->totalGames++;
+
         PlaySound(drawSound);  // Play draw sound
         printf("Game ended in a draw.\n");
     } 
