@@ -27,7 +27,7 @@
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
-typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER } GameState;
+typedef enum { MENU, DIFFICULTY_SELECT, MODEL_SELECT, GAME, GAME_OVER } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
 
 typedef struct {
@@ -50,6 +50,22 @@ typedef struct {
     float jumpSpeed;
 } TitleWord;
 
+typedef enum {
+    NAIVE_BAYES,
+    LINEAR_REGRESSION
+} AIModel;
+
+typedef struct {
+    int playerWins;
+    int aiWins; 
+    int draws;
+    int totalGames;
+} ModeStats;
+
+ModeStats easyStats = {0, 0, 0, 0};
+ModeStats mediumStats = {0, 0, 0, 0};
+ModeStats hardStats = {0, 0, 0, 0};
+
 extern GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 extern FallingSymbol symbols[MAX_SYMBOLS];
 extern TitleWord titleWords[5];  // "Tic", "-", "Tac", "-", "Toe"
@@ -66,29 +82,40 @@ extern float titleAnimSpeed;
 extern float buttonVibrationOffset;
 extern float vibrationSpeed;
 extern float vibrationAmount;
+extern AIModel currentModel;
+extern NaiveBayesModel model;
+
+extern int playerWins;
+extern int aiWins;
+extern int draws;
+extern int totalGames;
+
+void DrawSymbols();
+void DrawTitleWords();
+void DrawGame();
+void DrawDifficultySelect(void);
+void DrawModelSelect(void);
+void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
+void DrawMenu();
+void DrawGameOver();
 
 void InitGame();
 void InitSymbols();
-void UpdateSymbols();
-void DrawSymbols();
 void InitTitleWords();
+void UpdateSymbols();
 void UpdateTitleWords();
-void DrawTitleWords();
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
 void UpdateGameOver(Sound buttonClickSound);
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
+bool CheckWin(Cell player);
+bool CheckDraw();
+int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
+int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
+
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound);
 void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound);
 void LoadNaiveBayesModel();
-void DrawGame();
-void DrawDifficultySelect(void);
-void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
-bool CheckWin(Cell player);
-bool CheckDraw();
-void DrawMenu();
-void DrawGameOver();
-int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
-int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
+void AITurnLinearRegression(Sound victorySound, Sound loseSound, Sound drawSound);
 
 
 #endif // MAIN_H

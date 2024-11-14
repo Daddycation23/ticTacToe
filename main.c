@@ -1,10 +1,10 @@
 #include "main.h"
 #include "naivebayes.h" 
 
-// Define the global arrays
+// Declare global variables
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
-TitleWord titleWords[5];  // "Tic", "-", "Tac", "-", "Toe"
+TitleWord titleWords[5];
 Difficulty currentDifficulty = MEDIUM; // Initialize difficulty to a value, doesn't have to be medium
 Cell grid[GRID_SIZE][GRID_SIZE]; // Initialize the grid with empty cells
 PlayerTurn currentPlayerTurn = PLAYER_X_TURN; // Initialize the current player turn to Player X
@@ -19,6 +19,9 @@ float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
 float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
 float vibrationAmount = 2.0f; // Amount of vibration
 NaiveBayesModel model;
+AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
+int totalGames;
+int aiWins;
 
 // Initialize the title words
 void InitTitleWords() {
@@ -137,7 +140,7 @@ int main(void)
 
     while (!WindowShouldClose())
     {
-        if (gameState == MENU || gameState == DIFFICULTY_SELECT) {
+        if (gameState == MENU || gameState == DIFFICULTY_SELECT || gameState == MODEL_SELECT) {
             if (!IsSoundPlaying(mainMenuSound)) {
                 PlaySound(mainMenuSound);  // Play main menu sound
             }
@@ -152,7 +155,7 @@ int main(void)
             StopSound(playSound);  // Stop play sound when leaving the game state
         }
 
-        if (gameState == MENU || gameState == DIFFICULTY_SELECT) {
+        if (gameState == MENU || gameState == DIFFICULTY_SELECT || gameState == MODEL_SELECT) {
             UpdateSymbols();  // Update the falling symbols
             UpdateTitleWords();  // Update the title words
         }
@@ -208,7 +211,7 @@ int main(void)
                         mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT) {
                         PlaySound(buttonClickSound);  // Play sound on button click
                         currentDifficulty = EASY;
-                        gameState = GAME;
+                        gameState = MODEL_SELECT;   // go to model selection instead of game
                         InitGame();
                     }
                     // medium button
@@ -230,6 +233,44 @@ int main(void)
                 }
             }
         }
+        else if (gameState == MODEL_SELECT) {
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                Vector2 mousePos = GetMousePosition();
+
+                // Back button
+                if (mousePos.x >= 20 && mousePos.x <= SCREEN_WIDTH/6 && mousePos.y >= 10 && mousePos.y <= 40) {
+                    PlaySound(buttonClickSound);  // Play sound on button click
+                    gameState = DIFFICULTY_SELECT;
+                }
+
+                Rectangle nbBtn = {
+                    SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+                    SCREEN_HEIGHT/2,
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT
+                };
+
+                Rectangle lrBtn = {
+                    SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+                    SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT
+                };
+                
+                if (CheckCollisionPointRec(mousePos, nbBtn)) {
+                    PlaySound(buttonClickSound);
+                    currentModel = NAIVE_BAYES;
+                    gameState = GAME;
+                    InitGame();
+                }
+                else if (CheckCollisionPointRec(mousePos, lrBtn)) {
+                    PlaySound(buttonClickSound);
+                    currentModel = LINEAR_REGRESSION;
+                    gameState = GAME;
+                    InitGame();
+                }
+            }
+        }
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -243,6 +284,10 @@ int main(void)
             case DIFFICULTY_SELECT:
                 DrawSymbols();  // Draw the falling symbols
                 DrawDifficultySelect();  // Draw the difficulty selection
+                break;
+            case MODEL_SELECT:
+                DrawSymbols();  // Optional background
+                DrawModelSelect();
                 break;
             case GAME:
                 DrawGame();  // Draw the game
@@ -341,19 +386,44 @@ void DrawGame()
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);
 
     // Turn indicator
+    // In DrawGame() function, modify the turn indicator section:
     if (!gameOver) {
-        const char* turnText;
+        // Display stats at the top regardless of game mode
+        char statsText[100];
+        ModeStats* currentStats;
+        
+        switch(currentDifficulty) {
+            case EASY:
+                currentStats = &easyStats;
+                break;
+            case MEDIUM:
+                currentStats = &mediumStats;
+                break;
+            case HARD:
+                currentStats = &hardStats;
+                break;
+        }
+
+        sprintf(statsText, "Player: %d | AI: %d | Draws: %d", 
+                currentStats->playerWins, 
+                currentStats->aiWins, 
+                currentStats->draws);
+
+        // Draw stats in middle above turn display
+        DrawText(statsText, 
+                SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2,
+                10, 
+                20, 
+                BLACK);
+
+        // Then handle turn display
         if (currentPlayerTurn == PLAYER_X_TURN) {
-            turnText = "Player X's Turn";
-            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, 20, 30, BLUE);
-        } 
-        else {
-            if (isTwoPlayer) {
-                turnText = "Player O's Turn";
-            } else {
-                turnText = "AI's Turn";
-            }
-            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, 20, 30, RED);
+            const char* turnText = "Player X's Turn";
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, 40, 30, BLUE);
+        } else {
+            const char* turnText = isTwoPlayer ? "Player O's Turn" : "AI's Turn";
+            Color turnColor = isTwoPlayer ? RED : RED;
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, 40, 30, turnColor);
         }
     }
 }
@@ -610,6 +680,49 @@ void DrawDifficultySelect() {
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
+// Draw the AI model selection screen
+void DrawModelSelect() {
+    const char* title = "Select AI Model";
+    DrawText(title, 
+        SCREEN_WIDTH/2 - MeasureText(title, 40)/2,
+        SCREEN_HEIGHT/3,
+        40,
+        BLACK);
+        
+    Rectangle nbBtn = {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    };
+    
+    Rectangle lrBtn = {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    };
+    
+    // Add back button at top left
+    Rectangle backBtn = {
+        20,                // Left margin
+        10,                // Top margin  
+        SCREEN_WIDTH/6,    // Width (100px at 600px screen width)
+        30                 // Height
+    };
+
+    Vector2 mousePos = GetMousePosition();
+    bool nbHover = CheckCollisionPointRec(mousePos, nbBtn);
+    bool lrHover = CheckCollisionPointRec(mousePos, lrBtn);
+    bool backHover = CheckCollisionPointRec(mousePos, backBtn);
+
+    DrawButton(nbBtn, "Naive Bayes", 20, nbHover);
+    DrawButton(lrBtn, "Linear Regression", 20, lrHover);
+    DrawButton(backBtn, "Back", 20, backHover);
+    
+    SetMouseCursor((nbHover || lrHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+}
+
 // Game Functions
 // initialize the game
 void InitGame() {
@@ -620,6 +733,7 @@ void InitGame() {
     currentPlayerTurn = PLAYER_X_TURN;
 }
 
+// probability classes in model_weights.txt
 void load_model(NaiveBayesModel *model, FILE *file) {
     // Read class probabilities
     fscanf(file, "Class Probabilities:\n");
@@ -638,6 +752,7 @@ void load_model(NaiveBayesModel *model, FILE *file) {
     }
 }
 
+// load the ML model into model_weights.txt
 void LoadNaiveBayesModel()
 {
     FILE *file = fopen("naivebayes_ml/model_weights.txt", "r");  // Adjust path if necessary
@@ -688,7 +803,8 @@ void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Soun
             // Call Naive Bayes AI for Easy mode, and Minimax for Medium and Hard
             if (currentDifficulty == EASY) {
                 AITurnNaiveBayes(victorySound, loseSound, drawSound);
-            } else {
+            } 
+            else {
                 AITurn(victorySound, loseSound, drawSound);
             }
         }
@@ -704,6 +820,20 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
         int row = (int)(mousePos.y / CELL_SIZE);
         int col = (int)(mousePos.x / CELL_SIZE);
 
+        // When updating stats, use the current mode's counter:
+        ModeStats* currentStats = NULL;
+        switch(currentDifficulty) {
+            case EASY:
+                currentStats = &easyStats;
+                break;
+            case MEDIUM:
+                currentStats = &mediumStats;
+                break;
+            case HARD:
+                currentStats = &hardStats;
+                break;
+        }
+
         if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
         {
             if (grid[row][col] == EMPTY)
@@ -718,8 +848,13 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                     // Play sound immediately when a winner is detected
                     if (!isTwoPlayer) {
                         if (winner == PLAYER_X) {
+                            currentStats->playerWins++;
+                            currentStats->totalGames++;
                             PlaySound(victorySound);  // Play victory sound for Player X
-                        } else if (winner == PLAYER_O) {
+                        } 
+                        else if (winner == PLAYER_O) {
+                            currentStats->aiWins++;
+                            currentStats->totalGames++;
                             PlaySound(loseSound);  // Play lose sound for Player O
                         }
                     } else {
@@ -731,6 +866,8 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                     gameOver = true;
                     gameState = GAME_OVER;
                     winner = EMPTY;  // No winner in a draw
+                    currentStats->draws++;
+                    currentStats->totalGames++;
                     PlaySound(drawSound);  // Play draw sound
                 }
                 else
@@ -751,8 +888,12 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
 
     // Ensure this function only applies in medium and hard modes
     if (currentDifficulty == EASY) {
-        printf("Easy mode detected: Minimax is not running in Easy mode. Switching to Naive Bayes or other Easy mode AI.\n");
-        return;
+        if (currentModel == NAIVE_BAYES) {
+            AITurnNaiveBayes(victorySound, loseSound, drawSound);
+        } 
+        else {
+            AITurnLinearRegression(victorySound, loseSound, drawSound);  // New function to implement
+        }
     }
 
     int bestScore = -1000;
@@ -813,6 +954,24 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
         winner = PLAYER_O;
         gameState = GAME_OVER;
         
+        // Get the current mode's stats
+        ModeStats* currentStats;
+        switch(currentDifficulty) {
+            case EASY:
+                currentStats = &easyStats;
+                break;
+            case MEDIUM:
+                currentStats = &mediumStats;
+                break;
+            case HARD:
+                currentStats = &hardStats;
+                break;
+        }
+
+        // Update the correct counter
+        currentStats->aiWins++;
+        currentStats->totalGames++;
+
         // Play sound immediately when a winner is detected
         if (!isTwoPlayer) {
             PlaySound(loseSound);  // Play lose sound for Player O
@@ -832,15 +991,16 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound)
     }
 }
 
+// Naive Bayes AI Turn function
 void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound)
 {
     // Ensure this function only applies in easy mode
     if (currentDifficulty != EASY) {
-        printf("Naive Bayes is running.\n");
+        printf("Naive Bayes is not running.\n");
         return;
     }
 
-    printf("Naive Bayes AI Turn: Difficulty Level - Easy\n");
+    printf("\nNaive Bayes AI Turn: Difficulty Level - Easy\n");
 
     char board_str[FEATURES + 1];
     for (int i = 0, k = 0; i < GRID_SIZE; i++) {
@@ -868,10 +1028,26 @@ void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound)
                 gameOver = true;
                 winner = PLAYER_O;
                 gameState = GAME_OVER;
+
+                // Get current stats for Easy mode
+                ModeStats* currentStats = &easyStats;
+                currentStats->aiWins++;
+                currentStats->totalGames++;
+
+                // Play lose sound when AI wins
+                PlaySound(loseSound);
                 printf("Naive Bayes AI wins the game.\n");
             } else if (CheckDraw()) {
                 gameOver = true;
                 gameState = GAME_OVER;
+
+                // Update draw stats
+                ModeStats* currentStats = &easyStats;
+                currentStats->draws++;
+                currentStats->totalGames++;
+
+                // Play draw sound
+                PlaySound(drawSound);
                 printf("Game ended in a draw.\n");
             } else {
                 currentPlayerTurn = PLAYER_X_TURN;
@@ -881,6 +1057,33 @@ void AITurnNaiveBayes(Sound victorySound, Sound loseSound, Sound drawSound)
         }
     } else {
         printf("Naive Bayes AI couldn't find a valid move.\n");
+    }
+}
+
+// Linear Regression or another AI Turn function
+void AITurnLinearRegression(Sound victorySound, Sound loseSound, Sound drawSound) {
+    printf("Linear Regression AI Turn\n");
+    // Implement your linear regression logic here
+    // For now, just make a random valid move
+    int row, col;
+    do {
+        row = GetRandomValue(0, GRID_SIZE - 1);
+        col = GetRandomValue(0, GRID_SIZE - 1);
+    } while (grid[row][col] != EMPTY);
+    
+    grid[row][col] = PLAYER_O;
+    
+    if (CheckWin(PLAYER_O)) {
+        gameOver = true;
+        winner = PLAYER_O;
+        gameState = GAME_OVER;
+        PlaySound(loseSound);
+    } else if (CheckDraw()) {
+        gameOver = true;
+        gameState = GAME_OVER;
+        PlaySound(drawSound);
+    } else {
+        currentPlayerTurn = PLAYER_X_TURN;
     }
 }
 
