@@ -151,14 +151,14 @@ int main(void)
     split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO);
 
     // Train model
-    NaiveBayesModel model;
-    train_model(&model, train_boards, train_outcomes, train_size);
+    NaiveBayesModel NBmodel;
+    train_NBmodel(&NBmodel, train_boards, train_outcomes, train_size);
 
     // Save model weights to a file
-    save_model(&model, "NBmodel/NBmodel_weights.txt");
+    save_NBmodel(&NBmodel, "NBmodel/NBmodel_weights.txt");
 
     // Test model
-    test_model(&model, test_boards, test_outcomes, test_size);
+    test_NBmodel(&NBmodel, test_boards, test_outcomes, test_size);
     // End of Machine Learning
 
 
@@ -212,7 +212,7 @@ int main(void)
         }
         else if (gameState == GAME) 
         {
-            UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound, &model);
+            UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound, &NBmodel);
         }
         else if (gameState == GAME_OVER)
         {

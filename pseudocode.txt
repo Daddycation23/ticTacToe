@@ -309,3 +309,20 @@ FUNCTION HandlePlayerTurn()
     ENDIF
     RETURN false
 ENDFUNCTION
+
+FUNCTION load_data(filename, boards, outcomes, total_records)
+    file_ptr ← fopen(filename, "r")
+    IF (file_ptr = NULL)
+        PRINT "Failed to open file"
+    ENDIF
+
+    WHILE line[50] ← file_ptr
+        board[10] ← line[0], line[1], line[2], line[3], line[4], line[5], line[6], line[7], line[8], line[9]
+        outcome ← line.outcome
+
+        boards[total_records] ← board[10]
+        outcomes[total_records] ← outcome
+        total_records ← total_records + 1
+    END WHILE
+    file_ptr ← NULL
+ENDFUNCTION

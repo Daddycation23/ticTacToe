@@ -102,12 +102,12 @@ void DrawGameOver();
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
-// Function prototypes
+// Function prototypes for Naive Bayes
 void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records);
 void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_records, char train_boards[][NUM_POSITIONS + 1], int train_outcomes[], char test_boards[][NUM_POSITIONS + 1], int test_outcomes[], int *train_size, int *test_size, float ratio);
-void train_model(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
-void save_model(const NaiveBayesModel *model, const char *filename);
-void test_model(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
+void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
+void save_NBmodel(const NaiveBayesModel *model, const char *filename);
+void test_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
 double calculate_probability(NaiveBayesModel *model, const char board[], int outcome);
 int predict_outcome(NaiveBayesModel *model, const char board[]);
 int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol);
