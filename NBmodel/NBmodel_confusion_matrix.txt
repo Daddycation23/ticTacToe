@@ -1,0 +1,18 @@
+
+
+Probability of error for Training dataset: 29.63 (227/766 incorrect predictions)
+
+Confusion Matrix values:
+Number of True Positive: 422
+Number of False Positive: 152
+Number of True Negative: 117
+Number of False Negative: 75
+
+
+Probability of error for Testing dataset: 27.08 (52/192 incorrect predictions)
+
+Confusion Matrix values:
+Number of True Positive: 110
+Number of False Positive: 33
+Number of True Negative: 30
+Number of False Negative: 19

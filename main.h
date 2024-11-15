@@ -107,7 +107,7 @@ void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outco
 void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_records, char train_boards[][NUM_POSITIONS + 1], int train_outcomes[], char test_boards[][NUM_POSITIONS + 1], int test_outcomes[], int *train_size, int *test_size, float ratio);
 void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
 void save_NBmodel(const NaiveBayesModel *model, const char *filename);
-void test_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
+void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
 double calculate_probability(NaiveBayesModel *model, const char board[], int outcome);
 int predict_outcome(NaiveBayesModel *model, const char board[]);
 int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol);

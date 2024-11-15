@@ -72,18 +72,47 @@ void save_NBmodel(const NaiveBayesModel *model, const char *filename) {
 }
 
 // Function to test accuracy of model
-void test_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size) {
-    int correct_predictions = 0;
+void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size) {
+    int true_positive = 0;
+    int false_positive = 0;
+    int true_negative = 0;
+    int false_negative = 0;
+    int error_count = 0;
 
     for (int i = 0; i < size; i++) {
         int predicted_outcome = predict_outcome(model, boards[i]);
-        if (predicted_outcome == outcomes[i]) {
-            correct_predictions++;
+        if (outcomes[i] == POSITIVE && predicted_outcome == POSITIVE ) {
+            true_positive++;
         }
+        else if (outcomes[i] == POSITIVE && predicted_outcome == NEGATIVE ) {
+            false_negative++;
+            error_count++;
+        }
+        else if (outcomes[i] == NEGATIVE && predicted_outcome == NEGATIVE ) {
+            true_negative++;
+        }
+        else {
+            false_positive++;
+            error_count++;
+        };
     }
 
-    double accuracy = (double)correct_predictions / size * 100.0;
-    printf("Test Accuracy: %.2f%% (%d/%d correct predictions)\n", accuracy, correct_predictions, size);
+    double prob_of_error = (double)error_count / size * 100;
+
+    FILE *file_ptr = fopen(filename, mode);      // Open file of dataset to read
+    if (file_ptr == NULL) {                     // Check if its an exisiting file, else will send an error
+        perror("Failed to open file");
+        exit(1);
+    }
+
+    fprintf(file_ptr, "\n\nProbability of error for %s dataset: %.2f (%d/%d incorrect predictions)\n\n", type, prob_of_error, error_count, size);
+    fprintf(file_ptr, "Confusion Matrix values:\n");
+    fprintf(file_ptr, "Number of True Positive: %d\n", true_positive);
+    fprintf(file_ptr, "Number of False Positive: %d\n", false_positive);
+    fprintf(file_ptr, "Number of True Negative: %d\n", true_negative);
+    fprintf(file_ptr, "Number of False Negative: %d", false_negative);
+
+    fclose(file_ptr);       // Close file
 }
 
 // Function to calculate the posterior probability of the given/set outcome based on the given board layout. For example, if user set outcome argument as "positive", the function would calculate how probable the given board layout would lead to a "postive" outcome.

@@ -33,7 +33,7 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
     // Shuffle the dataset using Fisher-Yates algorithm 
     srand(time(NULL));
     for (int i = total_records-1; i > 0; i--) { 
-        int j = rand() % (i + 1);   // Get unique randome number
+        int j = rand() % (i + 1);   // Get unique random number
  
         // Swap boards[i] and boards[j] 
         char temp_board[10]; 

@@ -1,76 +1,76 @@
 Class Probabilities:
-P(Positive): 0.655352
-P(Negative): 0.344648
+P(Positive): 0.648825
+P(Negative): 0.351175
 
 Position 1:
-P(x | Positive): 0.467327
-P(x | Negative): 0.374532
-P(o | Positive): 0.300990
-P(o | Negative): 0.419476
-P(b | Positive): 0.231683
-P(b | Negative): 0.205993
+P(x | Positive): 0.478000
+P(x | Negative): 0.375000
+P(o | Positive): 0.306000
+P(o | Negative): 0.426471
+P(b | Positive): 0.216000
+P(b | Negative): 0.198529
 
 Position 2:
-P(x | Positive): 0.364356
-P(x | Negative): 0.445693
-P(o | Positive): 0.358416
-P(o | Negative): 0.307116
-P(b | Positive): 0.277228
-P(b | Negative): 0.247191
+P(x | Positive): 0.356000
+P(x | Negative): 0.459559
+P(o | Positive): 0.360000
+P(o | Negative): 0.290441
+P(b | Positive): 0.284000
+P(b | Negative): 0.250000
 
 Position 3:
-P(x | Positive): 0.481188
-P(x | Negative): 0.359551
-P(o | Positive): 0.300990
-P(o | Negative): 0.441948
-P(b | Positive): 0.217822
-P(b | Negative): 0.198502
+P(x | Positive): 0.486000
+P(x | Negative): 0.363971
+P(o | Positive): 0.292000
+P(o | Negative): 0.437500
+P(b | Positive): 0.222000
+P(b | Negative): 0.198529
 
 Position 4:
-P(x | Positive): 0.344554
-P(x | Negative): 0.471910
-P(o | Positive): 0.380198
-P(o | Negative): 0.299625
-P(b | Positive): 0.275248
-P(b | Negative): 0.228464
+P(x | Positive): 0.352000
+P(x | Negative): 0.430147
+P(o | Positive): 0.382000
+P(o | Negative): 0.330882
+P(b | Positive): 0.266000
+P(b | Negative): 0.238971
 
 Position 5:
-P(x | Positive): 0.586139
-P(x | Negative): 0.269663
-P(o | Positive): 0.237624
-P(o | Negative): 0.576779
-P(b | Positive): 0.176238
-P(b | Negative): 0.153558
+P(x | Positive): 0.582000
+P(x | Negative): 0.275735
+P(o | Positive): 0.242000
+P(o | Negative): 0.584559
+P(b | Positive): 0.176000
+P(b | Negative): 0.139706
 
 Position 6:
-P(x | Positive): 0.350495
-P(x | Negative): 0.460674
-P(o | Positive): 0.370297
-P(o | Negative): 0.310861
-P(b | Positive): 0.279208
-P(b | Negative): 0.228464
+P(x | Positive): 0.350000
+P(x | Negative): 0.466912
+P(o | Positive): 0.366000
+P(o | Negative): 0.327206
+P(b | Positive): 0.284000
+P(b | Negative): 0.205882
 
 Position 7:
-P(x | Positive): 0.469307
-P(x | Negative): 0.355805
-P(o | Positive): 0.308911
-P(o | Negative): 0.449438
-P(b | Positive): 0.221782
-P(b | Negative): 0.194757
+P(x | Positive): 0.468000
+P(x | Negative): 0.378676
+P(o | Positive): 0.296000
+P(o | Negative): 0.437500
+P(b | Positive): 0.236000
+P(b | Negative): 0.183824
 
 Position 8:
-P(x | Positive): 0.370297
-P(x | Negative): 0.438202
-P(o | Positive): 0.372277
-P(o | Negative): 0.299625
-P(b | Positive): 0.257426
-P(b | Negative): 0.262172
+P(x | Positive): 0.354000
+P(x | Negative): 0.466912
+P(o | Positive): 0.360000
+P(o | Negative): 0.294118
+P(b | Positive): 0.286000
+P(b | Negative): 0.238971
 
 Position 9:
-P(x | Positive): 0.481188
-P(x | Negative): 0.393258
-P(o | Positive): 0.291089
-P(o | Negative): 0.419476
-P(b | Positive): 0.227723
-P(b | Negative): 0.187266
+P(x | Positive): 0.474000
+P(x | Negative): 0.386029
+P(o | Positive): 0.302000
+P(o | Negative): 0.422794
+P(b | Positive): 0.224000
+P(b | Negative): 0.191176
 
