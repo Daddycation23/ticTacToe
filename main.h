@@ -9,7 +9,6 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-#include "naivebayes.h" 
 
 #define SCREEN_WIDTH 600
 #define SCREEN_HEIGHT 600
@@ -24,6 +23,12 @@
 #define ROTATION_SPEED 0.02f  // Speed of rotation
 #define JUMP_SPEED 0.02f  // Constant jump speed
 #define JUMP_DELAY 0.7f  // Constant delay between jumps
+
+#define NUM_POSITIONS 9
+#define NUM_OUTCOMES 2 // positive or negative
+#define POSITIVE 0
+#define NEGATIVE 1
+#define RATIO 0.8
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
@@ -62,18 +67,26 @@ typedef struct {
     int totalGames;
 } ModeStats;
 
-ModeStats mediumStats = {0, 0, 0, 0};
-ModeStats hardStats = {0, 0, 0, 0};
-ModeStats naiveBayesStats = {0, 0, 0, 0};
-ModeStats decisionTreeStats = {0, 0, 0, 0};
+typedef struct {
+    double x_probs[NUM_POSITIONS][NUM_OUTCOMES];
+    double o_probs[NUM_POSITIONS][NUM_OUTCOMES];
+    double b_probs[NUM_POSITIONS][NUM_OUTCOMES];
+    double class_probs[NUM_OUTCOMES];
+} NaiveBayesModel;
 
-Sound buttonClickSound;
-Sound popSound;
-Sound victorySound;
-Sound loseSound;
-Sound drawSound; 
-Sound mainMenuSound;
-Sound playSound;
+// Declare variables as extern
+extern ModeStats mediumStats;
+extern ModeStats hardStats;
+extern ModeStats naiveBayesStats;
+extern ModeStats decisionTreeStats;
+
+extern Sound buttonClickSound;
+extern Sound popSound;
+extern Sound victorySound;
+extern Sound loseSound;
+extern Sound drawSound;
+extern Sound mainMenuSound;
+extern Sound playSound;
 
 extern GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 extern FallingSymbol symbols[MAX_SYMBOLS];
@@ -91,14 +104,13 @@ extern float titleAnimSpeed;
 extern float buttonVibrationOffset;
 extern float vibrationSpeed;
 extern float vibrationAmount;
-extern AIModel currentModel;
-extern NaiveBayesModel model;
 
 extern int playerWins;
 extern int aiWins;
 extern int draws;
 extern int totalGames;
 
+// Function prototypes
 void DrawSymbols();
 void DrawTitleWords();
 void DrawGame();
@@ -113,18 +125,28 @@ void InitSymbols();
 void InitTitleWords();
 void UpdateSymbols();
 void UpdateTitleWords();
-void UpdateGame();
-void UpdateGameOver();
-bool HandlePlayerTurn();
+void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);
+void UpdateGameOver(Sound buttonClickSound);
+bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
+void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);
 bool CheckWin(Cell player);
 bool CheckDraw();
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
-void AITurn();
-void AITurnNaiveBayes();
-void LoadNaiveBayesModel();
-void AITurnDecisionTree();
+// Naive Bayes functions
+void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records);
+void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_records, char train_boards[][NUM_POSITIONS + 1], int train_outcomes[], char test_boards[][NUM_POSITIONS + 1], int test_outcomes[], int *train_size, int *test_size, float ratio);
+void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
+void save_NBmodel(const NaiveBayesModel *model, const char *filename);
+void test_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
+double calculate_probability(NaiveBayesModel *model, const char board[], int outcome);
+int predict_outcome(NaiveBayesModel *model, const char board[]);
+int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol);
 
+// Utility functions
+int outcome_index(const char *outcome);
+void divide(int dividend, int divisor, int *quo, int *rem);
+void AITurnDecisionTree();
 
 #endif // MAIN_H

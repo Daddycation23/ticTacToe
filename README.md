@@ -79,7 +79,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
    ```
 2. **Build**: Compile the program using a C compiler with Raylib linked.
    ```bash
-   gcc -o main main.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+   gcc -o main main.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
    ```
 3. **Run**: Execute the compiled program.
    ```bash

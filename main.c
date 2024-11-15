@@ -1,7 +1,6 @@
 #include "main.h"
-#include "naivebayes.h" 
 
-// Declare global variables
+// Define the global arrays
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
 TitleWord titleWords[5];
@@ -18,10 +17,25 @@ float titleAnimSpeed = 2.0f; // Animation speed for title cells
 float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
 float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
 float vibrationAmount = 2.0f; // Amount of vibration
-NaiveBayesModel model;
 AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
 int totalGames;
 int aiWins;
+
+#include "main.h"
+
+// Define variables
+ModeStats mediumStats = {0, 0, 0, 0};
+ModeStats hardStats = {0, 0, 0, 0};
+ModeStats naiveBayesStats = {0, 0, 0, 0};
+ModeStats decisionTreeStats = {0, 0, 0, 0};
+
+Sound buttonClickSound;
+Sound popSound;
+Sound victorySound;
+Sound loseSound;
+Sound drawSound; 
+Sound mainMenuSound;
+Sound playSound;
 
 // Initialize the title words
 void InitTitleWords() {
@@ -118,13 +132,13 @@ int main(void)
     SetWindowIcon(icon);  // Set the window icon
     UnloadImage(icon);  // Unload the image after setting the icon
 
-    buttonClickSound = LoadSound("assets\\ButtonClicked.mp3");  // Load the button click sound
-    popSound = LoadSound("assets\\Pop.mp3");  // Load the pop sound
-    victorySound = LoadSound("assets\\FFVictory.mp3");  // Load the victory sound
-    loseSound = LoadSound("assets\\MarioLose.mp3");  // Load the lose sound
-    drawSound = LoadSound("assets\\Draw.mp3");  // Load the draw sound
-    mainMenuSound = LoadSound("assets\\MainMenu.mp3");  // Load the main menu sound
-    playSound = LoadSound("assets\\Play.mp3");  // Load the play sound
+    Sound buttonClickSound = LoadSound("assets\\ButtonClicked.mp3");  // Load the button click sound
+    Sound popSound = LoadSound("assets\\Pop.mp3");  // Load the pop sound
+    Sound victorySound = LoadSound("assets\\FFVictory.mp3");  // Load the victory sound
+    Sound loseSound = LoadSound("assets\\MarioLose.mp3");  // Load the lose sound
+    Sound drawSound = LoadSound("assets\\Draw.mp3");  // Load the draw sound
+    Sound mainMenuSound = LoadSound("assets\\MainMenu.mp3");  // Load the main menu sound
+    Sound playSound = LoadSound("assets\\Play.mp3");  // Load the play sound
 
     // After loading each sound, set its volume (between 0.0f to 1.0f)
     SetSoundVolume(buttonClickSound, 0.3f);  // 30% volume
@@ -137,6 +151,34 @@ int main(void)
 
     InitSymbols();  // Initialize the falling symbols
     InitTitleWords();  // Initialize the title words
+
+    // Naive Bayes Machine Learning for easy mode
+    char boards[1000][NUM_POSITIONS + 1];       // Array to store attrbutes of tic-tac-toe.data dataset
+    int outcomes[1000];                         // Array to store outcomes of tic-tac-toe.data dataset
+    int total_records = 0;                      // Count for number of lines in dataset
+
+    // Load data
+    load_data("tic-tac-toe.data", boards, outcomes, &total_records);
+
+    // Split data
+    char train_boards[800][NUM_POSITIONS + 1];  // Array for attributes of training dataset
+    int train_outcomes[800];                    // Array for outcomes of training dataset
+    char test_boards[200][NUM_POSITIONS + 1];   // Array for attributes of testing dataset
+    int test_outcomes[200];                     // Array for outcomes of testing dataset
+    int train_size = 0, test_size = 0;          // Count number of lines in training and testing dataset respectively
+
+    split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO);
+
+    // Train model
+    NaiveBayesModel NBmodel;
+    train_NBmodel(&NBmodel, train_boards, train_outcomes, train_size);
+
+    // Save model weights to a file
+    save_NBmodel(&NBmodel, "NBmodel/NBmodel_weights.txt");
+
+    // Test model
+    test_NBmodel(&NBmodel, test_boards, test_outcomes, test_size);
+    // End of Machine Learning
 
     while (!WindowShouldClose())
     {
@@ -188,11 +230,11 @@ int main(void)
         }
         else if (gameState == GAME) 
         {
-            UpdateGame();   // Update the game state
+            UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound, &NBmodel);
         }
         else if (gameState == GAME_OVER)
         {
-            UpdateGameOver();   // Update the game over state
+            UpdateGameOver(buttonClickSound);
         }
         else if (gameState == DIFFICULTY_SELECT) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -657,7 +699,7 @@ void DrawDifficultySelect() {
         BUTTON_HEIGHT
     };
 
-    // back button at top left
+    // Add back button at top left
     Rectangle backBtn = {
         20,                // Left margin
         10,                // Top margin  
@@ -742,40 +784,8 @@ void InitGame() {
     currentPlayerTurn = PLAYER_X_TURN;
 }
 
-// probability classes in model_weights.txt
-void load_model(NaiveBayesModel *model, FILE *file) {
-    // Read class probabilities
-    fscanf(file, "Class Probabilities:\n");
-    fscanf(file, "P(Positive): %lf\n", &model->class_probs[POSITIVE]);
-    fscanf(file, "P(Negative): %lf\n", &model->class_probs[NEGATIVE]);
-
-    // Read position probabilities
-    for (int i = 0; i < NUM_POSITIONS; i++) {
-        fscanf(file, "Position %d:\n", &i);
-        fscanf(file, "P(x | Positive): %lf\n", &model->x_probs[i][POSITIVE]);
-        fscanf(file, "P(x | Negative): %lf\n", &model->x_probs[i][NEGATIVE]);
-        fscanf(file, "P(o | Positive): %lf\n", &model->o_probs[i][POSITIVE]);
-        fscanf(file, "P(o | Negative): %lf\n", &model->o_probs[i][NEGATIVE]);
-        fscanf(file, "P(b | Positive): %lf\n", &model->b_probs[i][POSITIVE]);
-        fscanf(file, "P(b | Negative): %lf\n", &model->b_probs[i][NEGATIVE]);
-    }
-}
-
-// load the ML model into model_weights.txt
-void LoadNaiveBayesModel()
-{
-    FILE *file = fopen("naivebayes_ml/model_weights.txt", "r");  // Adjust path if necessary
-    if (file) {
-        load_model(&model, file);  // Assuming `load_model` is the function in naivebayes.h to load the model
-        fclose(file);
-        printf("Model loaded successfully.\n");
-    } else {
-        printf("Failed to load model from 'model_weights.txt'. Make sure the file is available.\n");
-    }
-}
-
 // Update the game
-void UpdateGame()
+void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
 {
     if (gameOver) return;
 
@@ -795,7 +805,7 @@ void UpdateGame()
     // Handle game moves
     if (currentPlayerTurn == PLAYER_X_TURN)
     {
-        if (HandlePlayerTurn()) {
+        if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
             PlaySound(popSound);  // Play sound when player moves
         }
     }
@@ -803,7 +813,7 @@ void UpdateGame()
     {
         if (isTwoPlayer)
         {
-            if (HandlePlayerTurn()) {
+            if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
                 PlaySound(popSound);  // Play sound when player moves
             }
         }
@@ -811,17 +821,17 @@ void UpdateGame()
         {
             // Call Naive Bayes AI for Easy mode, and Minimax for Medium and Hard
             if (currentDifficulty == EASY) {
-                AITurnNaiveBayes();
+                AITurn(victorySound, loseSound, drawSound, model);
             } 
             else {
-                AITurn();
+                AITurnDecisionTree();
             }
         }
     }
 }
 
 // Handle the player's turn
-bool HandlePlayerTurn()
+bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
 {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
@@ -894,28 +904,25 @@ bool HandlePlayerTurn()
     return false;  // No move was made
 }
 
-// AI's turn using MiniMax algorithm
-void AITurn()
+// AI's turn using MiniMax algorithms and Machine Learning models
+void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
 {
-    printf("Minimax is running.\n");
+    int bestScore = -1000;
+    int bestRow = -1;
+    int bestCol = -1;
 
     // Ensure this function only applies in medium and hard modes
     if (currentDifficulty == EASY) {
         if (currentModel == NAIVE_BAYES) {
-            AITurnNaiveBayes();
+            predict_move(model, grid, &bestRow, &bestCol);
         } 
         else {
             AITurnDecisionTree();  // New function to implement
         }
     }
 
-    int bestScore = -1000;
-    int bestRow = -1;
-    int bestCol = -1;
-
     // Medium mode: use Minimax with limited depth search of 4
     if (currentDifficulty == MEDIUM) {
-        printf("Running Minimax in Medium mode with depth limit 4.\n");
         int depthLimit = 4; // Set a depth limit for medium difficulty
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
@@ -935,7 +942,6 @@ void AITurn()
     }
     // Hard mode: full Minimax search
     else if (currentDifficulty == HARD) {
-        printf("Running Minimax in Hard mode with full depth limit 9.\n");
         int depthLimit = 9; // Full depth for hard mode
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
@@ -956,11 +962,8 @@ void AITurn()
 
     // Ensure a move is made
     if (bestRow != -1 && bestCol != -1) {
-        printf("Best move found at row %d, col %d with score %d.\n", bestRow, bestCol, bestScore);
         grid[bestRow][bestCol] = PLAYER_O;
-    } else {
-        printf("No valid move found.\n");
-    }
+    } 
 
     if (CheckWin(PLAYER_O)) {
         gameOver = true;
@@ -1028,75 +1031,6 @@ void AITurn()
     } 
     else {
         currentPlayerTurn = PLAYER_X_TURN;
-    }
-}
-
-// Naive Bayes AI Turn function
-void AITurnNaiveBayes()
-{
-    // Ensure this function only applies in easy mode
-    if (currentDifficulty != EASY) {
-        printf("Naive Bayes is not running.\n");
-        return;
-    }
-
-    printf("\nNaive Bayes AI Turn: Difficulty Level - Easy\n");
-
-    char board_str[FEATURES + 1];
-    for (int i = 0, k = 0; i < GRID_SIZE; i++) {
-        for (int j = 0; j < GRID_SIZE; j++, k++) {
-            board_str[k] = (grid[i][j] == PLAYER_X) ? 'x' :
-                           (grid[i][j] == PLAYER_O) ? 'o' : 'b';
-        }
-    }
-    board_str[FEATURES] = '\0';
-
-    int move = predict_move(&model, board_str);
-    printf("Naive Bayes predicted move: %d\n", move);
-    
-    if (move != -1) {
-        int row = move / GRID_SIZE;
-        int col = move % GRID_SIZE;
-
-        printf("Naive Bayes AI selected move at row %d, col %d\n", row, col);
-
-        if (grid[row][col] == EMPTY) {
-            grid[row][col] = PLAYER_O; // AI makes its move
-            printf("Naive Bayes AI move applied on board at (%d, %d).\n", row, col);
-
-            if (CheckWin(PLAYER_O)) {
-                gameOver = true;
-                winner = PLAYER_O;
-                gameState = GAME_OVER;
-
-                // Get current stats for Easy mode
-                ModeStats* currentStats = &naiveBayesStats;
-                currentStats->aiWins++;
-                currentStats->totalGames++;
-
-                // Play lose sound when AI wins
-                PlaySound(loseSound);
-                printf("Naive Bayes AI wins the game.\n");
-            } else if (CheckDraw()) {
-                gameOver = true;
-                gameState = GAME_OVER;
-
-                // Update draw stats
-                ModeStats* currentStats = &naiveBayesStats;
-                currentStats->draws++;
-                currentStats->totalGames++;
-
-                // Play draw sound
-                PlaySound(drawSound);
-                printf("Game ended in a draw.\n");
-            } else {
-                currentPlayerTurn = PLAYER_X_TURN;
-            }
-        } else {
-            printf("Error: Naive Bayes AI chose an invalid move at (%d, %d).\n", row, col);
-        }
-    } else {
-        printf("Naive Bayes AI couldn't find a valid move.\n");
     }
 }
 
@@ -1170,7 +1104,7 @@ bool CheckDraw()
 }
 
 // update the game when its over
-void UpdateGameOver() {
+void UpdateGameOver(Sound buttonClickSound) {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         Vector2 mousePos = GetMousePosition();
         
@@ -1267,5 +1201,5 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]) {
     return 0; // No winner
 }
 
-//  gcc -o main main.c naivebayes_ml/naivebayesModel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+// gcc -o main main.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
 // ./main
