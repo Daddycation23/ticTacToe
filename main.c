@@ -546,7 +546,7 @@ void DrawGameOver() {
         resultText = isTwoPlayer ? "Player X Wins!" : "You win!";
         resultColor = BLUE;
     } else if (winner == PLAYER_O) {
-        resultText = isTwoPlayer ? "Player O Wins!" : "U so noob!";
+        resultText = isTwoPlayer ? "Player O Wins!" : "You lose!";
         resultColor = RED;
     } else {
         resultText = "It's a Draw!";
