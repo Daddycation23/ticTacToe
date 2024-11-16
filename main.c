@@ -37,90 +37,6 @@ Sound drawSound;
 Sound mainMenuSound;
 Sound playSound;
 
-// Initialize the title words
-void InitTitleWords() {
-    const char* words[] = {"Tic", "-", "Tac", "-", "Toe"};
-    int startX = SCREEN_WIDTH / 2 - MeasureText("Tic-Tac-Toe", 40) / 2;
-    int startY = SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20;
-    int spacing = 10;  // Space between words and hyphens
-
-    for (int i = 0; i < 5; i++) {
-        titleWords[i].word = words[i];
-        titleWords[i].position = (Vector2){ startX, startY };
-        titleWords[i].targetPosition = (Vector2){ startX, startY - 20 };
-        titleWords[i].isJumping = false;
-        titleWords[i].jumpSpeed = JUMP_SPEED;
-        startX += MeasureText(words[i], 40) + spacing;
-    }
-}
-
-// Initialize the symbols
-void InitSymbols() {
-    for (int i = 0; i < MAX_SYMBOLS; i++) {
-        symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
-        symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
-        symbols[i].rotation = GetRandomValue(0, 360);  // Random initial rotation
-    }
-}
-
-// Update the title words
-void UpdateTitleWords() {
-    static int currentWord = 0;
-    static float jumpDelay = 0.0f;
-
-    jumpDelay += GetFrameTime();
-    if (jumpDelay > JUMP_DELAY) {  // Delay between each word's jump
-        if (!titleWords[currentWord].isJumping) {
-            titleWords[currentWord].isJumping = true;
-            jumpDelay = 0.0f;
-        }
-    }
-
-    for (int i = 0; i < 5; i++) {
-        if (titleWords[i].isJumping) {
-            titleWords[i].position.y -= titleWords[i].jumpSpeed;
-            if (titleWords[i].position.y <= titleWords[i].targetPosition.y) {
-                titleWords[i].jumpSpeed = -titleWords[i].jumpSpeed;  // Reverse direction
-            }
-            if (titleWords[i].position.y >= SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20) {
-                titleWords[i].position.y = SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20;
-                titleWords[i].isJumping = false;
-                titleWords[i].jumpSpeed = JUMP_SPEED;
-                currentWord = (currentWord + 1) % 5;  // Move to the next word
-            }
-        }
-    }
-}
-
-// Update the symbols
-void UpdateSymbols() {
-    for (int i = 0; i < MAX_SYMBOLS; i++) {
-        symbols[i].position.y += SYMBOL_SPEED;
-        symbols[i].rotation += ROTATION_SPEED;  // Update rotation
-        if (symbols[i].position.y > SCREEN_HEIGHT) {
-            symbols[i].position.y = GetRandomValue(-SCREEN_HEIGHT, 0);
-            symbols[i].position.x = GetRandomValue(0, SCREEN_WIDTH);
-            symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
-            symbols[i].rotation = GetRandomValue(0, 360);  // Reset rotation
-        }
-    }
-}
-
-// Draw the title words
-void DrawTitleWords() {
-    for (int i = 0; i < 5; i++) {
-        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK);
-    }
-}
-
-// Draw the symbols
-void DrawSymbols() {
-    for (int i = 0; i < MAX_SYMBOLS; i++) {
-        Vector2 origin = {10, 10};  // Center of rotation
-        DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED);
-    }
-}
-
 // Main function
 int main(void)
 {
@@ -357,6 +273,90 @@ int main(void)
     return 0;
 }
 
+// Initialize the title words
+void InitTitleWords() {
+    const char* words[] = {"Tic", "-", "Tac", "-", "Toe"};
+    int startX = SCREEN_WIDTH / 2 - MeasureText("Tic-Tac-Toe", 40) / 2;
+    int startY = SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20;
+    int spacing = 10;  // Space between words and hyphens
+
+    for (int i = 0; i < 5; i++) {
+        titleWords[i].word = words[i];
+        titleWords[i].position = (Vector2){ startX, startY };
+        titleWords[i].targetPosition = (Vector2){ startX, startY - 20 };
+        titleWords[i].isJumping = false;
+        titleWords[i].jumpSpeed = JUMP_SPEED;
+        startX += MeasureText(words[i], 40) + spacing;
+    }
+}
+
+// Initialize the symbols
+void InitSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        symbols[i].position = (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) };
+        symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+        symbols[i].rotation = GetRandomValue(0, 360);  // Random initial rotation
+    }
+}
+
+// Update the title words
+void UpdateTitleWords() {
+    static int currentWord = 0;
+    static float jumpDelay = 0.0f;
+
+    jumpDelay += GetFrameTime();
+    if (jumpDelay > JUMP_DELAY) {  // Delay between each word's jump
+        if (!titleWords[currentWord].isJumping) {
+            titleWords[currentWord].isJumping = true;
+            jumpDelay = 0.0f;
+        }
+    }
+
+    for (int i = 0; i < 5; i++) {
+        if (titleWords[i].isJumping) {
+            titleWords[i].position.y -= titleWords[i].jumpSpeed;
+            if (titleWords[i].position.y <= titleWords[i].targetPosition.y) {
+                titleWords[i].jumpSpeed = -titleWords[i].jumpSpeed;  // Reverse direction
+            }
+            if (titleWords[i].position.y >= SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20) {
+                titleWords[i].position.y = SCREEN_HEIGHT / 5 + TITLE_GRID_SIZE * 50 + 20;
+                titleWords[i].isJumping = false;
+                titleWords[i].jumpSpeed = JUMP_SPEED;
+                currentWord = (currentWord + 1) % 5;  // Move to the next word
+            }
+        }
+    }
+}
+
+// Update the symbols
+void UpdateSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        symbols[i].position.y += SYMBOL_SPEED;
+        symbols[i].rotation += ROTATION_SPEED;  // Update rotation
+        if (symbols[i].position.y > SCREEN_HEIGHT) {
+            symbols[i].position.y = GetRandomValue(-SCREEN_HEIGHT, 0);
+            symbols[i].position.x = GetRandomValue(0, SCREEN_WIDTH);
+            symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+            symbols[i].rotation = GetRandomValue(0, 360);  // Reset rotation
+        }
+    }
+}
+
+// Draw the title words
+void DrawTitleWords() {
+    for (int i = 0; i < 5; i++) {
+        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK);
+    }
+}
+
+// Draw the symbols
+void DrawSymbols() {
+    for (int i = 0; i < MAX_SYMBOLS; i++) {
+        Vector2 origin = {10, 10};  // Center of rotation
+        DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED);
+    }
+}
+
 // Drawing of the Game Designs
 // Draw the game
 void DrawGame()
@@ -467,9 +467,8 @@ void DrawGame()
             const char* turnText = "Player X's Turn";
             DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, BLUE);
         } else {
-            const char* turnText = isTwoPlayer ? "Player O's Turn" : "AI's Turn";
-            Color turnColor = isTwoPlayer ? RED : RED;
-            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, turnColor);
+            const char* turnText = "Player O's Turn";
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, RED);
         }
     }
 }
@@ -478,9 +477,6 @@ void DrawGame()
 void DrawMenu() {
     const int titleFontSize = 40;
     const int buttonFontSize = 20;
-    
-    // Title
-    const char* title = "";
     const int cellSize = 50;  // larger cells for better visibility
     const int gridWidth = TITLE_GRID_SIZE * cellSize;
     const int gridHeight = TITLE_GRID_SIZE * cellSize;
@@ -502,7 +498,7 @@ void DrawMenu() {
 
             // Handle the X and O symbols
             if (!titleSymbols[i][j].active && GetRandomValue(0, 100) < 2) {
-                titleSymbols[i][j].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+                titleSymbols[i][j].symbol = GetRandomValue(0, 1) ? 'X' : 'O'; 
                 titleSymbols[i][j].alpha = 0;
                 titleSymbols[i][j].active = true;
             }
@@ -525,13 +521,6 @@ void DrawMenu() {
             }
         }
     }
-
-    // Draw title text below the grid
-    DrawText(title, 
-        SCREEN_WIDTH/2 - MeasureText(title, titleFontSize)/2,
-        startY + gridHeight + 20,
-        titleFontSize,
-        BLACK);
     
     // Button rectangles
     Rectangle singlePlayerBtn = {

@@ -112,9 +112,43 @@ BEGIN
                 ENDIF
             ENDIF
         ENDIF
+        ELSEIF (gameState == MODEL_SELECT)
+            IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                mousePos ← GetMousePosition()
+
+                IF (mousePos.x >= 20 && mousePos.x <= SCREEN_WIDTH/6 && mousePos.y >= 10 && mousePos.y <= 40)
+                    PlaySound(buttonClickSound)
+                    gameState ← DIFFICULTY_SELECT
+                ENDIF
+
+                nbBtn = SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+                        SCREEN_HEIGHT/2,
+                        BUTTON_WIDTH,
+                        BUTTON_HEIGHT
+
+                dtBtn = SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+                        SCREEN_HEIGHT/2,
+                        BUTTON_WIDTH,
+                        BUTTON_HEIGHT
+
+                IF (CheckCollisionPointRec(mousePos, nbBtn))
+                    PlaySound(buttonClickSound)
+                    currentModel ← NAIVE_BAYES
+                    gameState ← GAME
+                    InitGame()
+                ENDIF
+
+                ELSEIF (CheckCollisionPointRec(mousePos, dtBtn))
+                    PlaySound(buttonClickSound)
+                    currentModel ← DECISION_TREE
+                    gameState ← GAME
+                    InitGame()
+                ENDIF
+            ENDIF
+        ENDIF
 
         BeginDrawing()
-        ClearBackground()
+        ClearBackground(RAYWHITE)
 
         SWITCH(gameState)
             CASE MENU
@@ -126,6 +160,10 @@ BEGIN
                 DrawSymbols()
                 DrawDifficultySelect()
                 BREAK 
+            CASE MODEL_SELECT
+                DrawSymbols()
+                DrawModelSelect()
+                BREAK
             CASE GAME
                 DrawGame()
                 BREAK 
@@ -164,6 +202,14 @@ FUNCTION InitTitleWords()
     ENDFOR
 ENDFUNCTION
 
+FUNCTION InitSymbols()
+    FOR i = 0 to MAX_SYMBOLS - 1 do
+        symbols[i].position ← (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) }
+        symbols[i].symbol ← GetRandomValue(0, 1) ? 'X' : 'O'
+        symbols[i].rotation ← GetRandomValue(0, 360)
+    ENDFOR
+ENDFUNCTION
+
 FUNCTION UpdateTitleWords()
     currentWord ← 0
     jumpDelay ← 0.0f
@@ -194,20 +240,6 @@ FUNCTION UpdateTitleWords()
     ENDFOR
 ENDFUNCTION
 
-FUNCTION DrawTitleWords()
-    FOR i = 0 to 4 do
-        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK)
-    ENDFOR
-ENDFUNCTION
-
-FUNCTION InitSymbols()
-    FOR i = 0 to MAX_SYMBOLS - 1 do
-        symbols[i].position ← (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) }
-        symbols[i].symbol ← GetRandomValue(0, 1) ? 'X' : 'O'
-        symbols[i].rotation ← GetRandomValue(0, 360)
-    ENDFOR
-ENDFUNCTION
-
 FUNCTION UpdateSymbols()
     FOR i = 0 to MAX_SYMBOLS - 1 do 
         symbols[i].position.y ← symbols[i].position.y + SYMBOL_SPEED
@@ -215,9 +247,15 @@ FUNCTION UpdateSymbols()
         IF (symbols[i].position.y > SCREEN_HEIGHT)
             symbols[i].position.y ← GetRandomValue(-SCREEN_HEIGHT, 0)
             symbols[i].position.x ← GetRandomValue(0, SCREEN_WIDTH)
-            symbols[i].symbol ← GetRandomValue(0, 1) ? 'X' : 'O'
+            symbols[i].symbol ← IF GetRandomValue(0, 1) ? 'X' : 'O'
             symbols[i].rotation ← GetRandomValue(0, 360)
         ENDIF
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION DrawTitleWords()
+    FOR i = 0 to 4 do
+        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK)
     ENDFOR
 ENDFUNCTION
 
@@ -227,6 +265,103 @@ FUNCTION DrawSymbols()
         DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED)
     ENDFOR
 ENDFUNCTION
+
+FUNCTION DrawGame()
+    mousePos ← GetMousePosition()
+    isQuitHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
+
+    IF (!gameOver && isQuitHovered)
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
+    ENDIF
+
+    ELSEIF (!gameOver)
+        SetMouseCursor(MOUSE_CURSOR_DEFAULT)
+    ENDIF
+
+    FOR i = 0 to GRID_SIZE - 1 do
+        FOR j = 0 to GRID_SIZE - 1
+            cell ← {(j * CELL_SIZE), (i * CELL_SIZE), CELL_SIZE, CELL_SIZE}
+            isHovered ← !gameOver && grid[i][j] == EMPTY && CheckCollisionPointRec(mousePos, cell)
+            DrawRectangleRec(cell, isHovered ? DARKGRAY : LIGHTGRAY)
+
+            IF (grid[i][j] == PLAYER_X)
+                text ← "X"
+                fontSize ← 100
+                textWidth ← MeasureText(text, fontSize)
+                textHeight ← fontSize * 0.75f
+                textX ← cell.x + (CELL_SIZE - textWidth) / 2
+                textY ← cell.y + (CELL_SIZE - textHeight) / 2
+                DrawText(text, textX, textY, fontSize, BLUE)
+            ENDIF
+
+            ELSEIF
+                text ← "O"
+                fontSize ← 100
+                textWidth ← MeasureText(text, fontSize)
+                textHeight ← fontSize * 0.75f
+                textX ← cell.x + (CELL_SIZE - textWidth) / 2
+                textY ← cell.y + (CELL_SIZE - textHeight) / 2
+                DrawText(text, textX, textY, fontSize, RED)
+            ENDIF
+        ENDIF
+    ENDIF
+
+    FOR int = 1 to GRID_SIZE - 1 do 
+        DrawLine(i * CELL_SIZE, 0, i * CELL_SIZE, SCREEN_HEIGHT, BLACK)
+        DrawLine(0, i * CELL_SIZE, SCREEN_WIDTH, i * CELL_SIZE, BLACK)
+    ENDFOR
+
+    quitBtn ← {SCREEN_WIDTH - 80, 10, 70, 30}
+    isQuitHovered ← CheckCollisionPointRec(mousePos, quitBtn)
+    DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered)
+
+    IF (!gameOver)
+        IF (!isTwoPlayer)
+            statsText[100]
+            ModeStats* currentStats
+
+            SWITCH(currentDifficulty)
+                CASE EASY
+                    IF (currentModel == NAIVE_BAYES)
+                        currentStats ← &naiveBayesStats
+                    ENDIF
+                    ELSE
+                        currentStats ← &decisionTreeStats
+                    ENDIF
+                    BREAK
+                CASE MEDIUM
+                    currentStats ← &mediumStats
+                    BREAK
+                CASE HARD
+                    currentStats ← &hardStats
+                    BREAK
+            ENDSWITCH
+
+            PRINT (statsText, "Player: %d | AI: %d | Draws: %d", 
+                    currentStats->playerWins, 
+                    currentStats->aiWins, 
+                    currentStats->draws)
+            
+            DrawText(statsText, SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2, 10, 20, BLACK)
+        ENDIF
+
+        yPos ← isTwoPlayer ? 20 : 40
+        IF (currentPlayerTurn == PLAYER_X_TURN)
+            const char* turnText ← "Player X's Turn"
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, BLUE)
+        ENDIF
+
+        ELSE
+            const char* turnText ← "Player O's Turn"
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, RED)
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION DrawMenu()
+    titleFontSize ← 40
+    buttonFontSize ← 20 
+    char* title 
 
 FUNCTION UpdateGame()
     IF (gameOver)
