@@ -21,8 +21,6 @@ AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
 int totalGames;
 int aiWins;
 
-#include "main.h"
-
 // Define variables
 ModeStats mediumStats = {0, 0, 0, 0};
 ModeStats hardStats = {0, 0, 0, 0};
