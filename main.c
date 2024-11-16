@@ -787,44 +787,60 @@ void InitGame() {
 // Update the game
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
 {
-    if (gameOver) return;
+    if (gameOver) return;  // Exit if game is already over
 
-    // Quit button click
+    // Handle quit button click
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         Vector2 mousePos = GetMousePosition();
         if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
             mousePos.y >= 10 && mousePos.y <= 40)
         {
-            PlaySound(buttonClickSound);  // Play sound on button click
+            PlaySound(buttonClickSound);
             gameState = MENU;
             return;
         }
     }
 
-    // Handle game moves
+    // Handle moves based on whose turn it is
     if (currentPlayerTurn == PLAYER_X_TURN)
     {
+        // Handle human player X's turn
         if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
-            PlaySound(popSound);  // Play sound when player moves
+            PlaySound(popSound);
         }
     }
     else if (currentPlayerTurn == PLAYER_O_TURN)
     {
         if (isTwoPlayer)
         {
+            // In 2 player mode, handle human player O's turn
             if (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) {
-                PlaySound(popSound);  // Play sound when player moves
+                PlaySound(popSound);
             }
         }
         else
         {
-            // Call Naive Bayes AI for Easy mode, and Minimax for Medium and Hard
-            if (currentDifficulty == EASY) {
-                AITurn(victorySound, loseSound, drawSound, model);
-            } 
-            else {
-                AITurnDecisionTree();
+            // In single player mode, handle AI's turn based on difficulty
+            switch(currentDifficulty) {
+                case EASY:
+                    // Use ML models (Naive Bayes or Decision Tree) for EASY mode
+                    if (currentModel == NAIVE_BAYES) {
+                        AITurn(victorySound, loseSound, drawSound, model);  // Naive Bayes
+                    } else {
+                        AITurnDecisionTree();  // Decision Tree
+                    }
+                    break;
+                    
+                case MEDIUM:
+                    // Use limited depth Minimax for MEDIUM
+                    AITurn(victorySound, loseSound, drawSound, model);  // This uses depthLimit = 4
+                    break;
+                    
+                case HARD:
+                    // Use full depth Minimax for HARD
+                    AITurn(victorySound, loseSound, drawSound, model);  // This uses depthLimit = 9
+                    break;
             }
         }
     }
