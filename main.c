@@ -499,14 +499,14 @@ void DrawMenu() {
             // Handle the X and O symbols
             if (!titleSymbols[i][j].active && GetRandomValue(0, 100) < 2) {
                 titleSymbols[i][j].symbol = GetRandomValue(0, 1) ? 'X' : 'O'; 
-                titleSymbols[i][j].alpha = 0;
+                titleSymbols[i][j].alpha = 0; // reset to transparent
                 titleSymbols[i][j].active = true;
             }
 
             if (titleSymbols[i][j].active) {
                 titleSymbols[i][j].alpha += GetFrameTime() * 2;
                 if (titleSymbols[i][j].alpha > 1.0f) {
-                    titleSymbols[i][j].alpha = 0;
+                    titleSymbols[i][j].alpha = 0; // reset to transparent
                     titleSymbols[i][j].active = false;
                 }
 
@@ -1032,7 +1032,6 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
         currentStats->totalGames++;
 
         PlaySound(drawSound);  // Play draw sound
-        printf("Game ended in a draw.\n");
     } 
     else {
         currentPlayerTurn = PLAYER_X_TURN;

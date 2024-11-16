@@ -361,16 +361,258 @@ ENDFUNCTION
 FUNCTION DrawMenu()
     titleFontSize ← 40
     buttonFontSize ← 20 
-    char* title 
+    cellSize ← 50;  // larger cells for better visibility
+    gridWidth ← TITLE_GRID_SIZE * cellSize
+    gridHeight ← TITLE_GRID_SIZE * cellSize
+    startX ← SCREEN_WIDTH/2 - gridWidth/2
+    startY ← SCREEN_HEIGHT/5
+
+    FOR i = 0 to TITLE_GRID_SIZE - 1
+        FOR j = 0 to TITLE_GRID_SIZE - 1
+            cell = {
+                startX + j * cellSize,
+                startY + i * cellSize,
+                cellSize,
+                cellSize
+            }
+            DrawRectangleLinesEx(cell, 2, BLACK)
+
+            IF (!titleSymbols[i][j].active && GetRandomValue(0, 100) < 2)
+                titleSymbols[i][j].symbol ← GetRandomValue(0, 1) ? 'X' : 'O'
+                titleSymbols[i][j].alpha ← 0
+                titleSymbols[i][j].active ← true
+            ENDIF
+
+            IF (titleSymbols[i][j].active)
+                titleSymbols[i][j].alpha ← titleSymbols[i][j].alpha + GetFrameTime() * 2
+                IF (titleSymbols[i][j].alpha > 1.0f) 
+                    titleSymbols[i][j].alpha ← 0
+                    titleSymbols[i][j].active ← false
+                ENDIF
+
+                symbolColor ← titleSymbols[i][j].symbol == 'X' ? BLUE : RED
+                symbolColor.a ← (titleSymbols[i][j].alpha * 255)
+
+                textPos ← {
+                    cell.x + (cellSize - MeasureText(&titleSymbols[i][j].symbol, 40))/2,
+                    cell.y + (cellSize - 40)/2
+                }
+                DrawText(&titleSymbols[i][j].symbol, textPos.x, textPos.y, 40, symbolColor)
+            ENDIF
+        ENDFOR
+    ENDFOR
+
+    singlePlayerBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+
+    twoPlayerBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+
+    exitBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 3,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+
+    mousePos ← GetMousePosition()
+    singlePlayerHover ← CheckCollisionPointRec(mousePos, singlePlayerBtn)
+    twoPlayerHover ← CheckCollisionPointRec(mousePos, twoPlayerBtn)
+    exitHover ← CheckCollisionPointRec(mousePos, exitBtn)
+    DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover)
+    DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover)
+    DrawButton(exitBtn, "Exit", buttonFontSize, exitHover)
+    SetMouseCursor((singlePlayerHover || twoPlayerHover || exitHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
+ENDFUNCTION
+
+FUNCTION DrawGameOver()
+    titleFontSize ← 40
+    buttonFontSize ← 20
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 100})
+    char* resultText
+    resultColor
+
+    IF (winner == PLAYER_X)
+        resultText ← isTwoPlayer ? "Player X Wins!" : "You win!"
+        resultColor ← BLUE
+    ENDIF
+
+    ELSEIF (winner == PLAYER_O)
+        resultText ← isTwoPlayer ? "Player O Wins!" : "You lose!"
+        resultColor ← RED
+    ENDIF
+
+    ELSE 
+        resultText ← "It's a Draw!"
+        resultColor ← DARKGRAY
+    ENDIF
+
+    textWidth ← MeasureText(resultText, titleFontSize)
+    DrawRectangle(
+        SCREEN_WIDTH/2 - textWidth/2 - 10,
+        SCREEN_HEIGHT/3 - 10,
+        textWidth + 20,
+        titleFontSize + 20,
+        WHITE
+        )
+    DrawText(
+        resultText, 
+        SCREEN_WIDTH/2 - textWidth/2,
+        SCREEN_HEIGHT/3,
+        titleFontSize,
+        resultColor
+        )
+    retryBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + 40, 
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+        }
+    menuBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + 100, 
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+        }
+    mousePos ← GetMousePosition()
+    isHoveringMenu ← CheckCollisionPointRec(mousePos, menuBtn)
+    isHoveringRetry ← CheckCollisionPointRec(mousePos, retryBtn)
+    DrawButton(retryBtn, "Retry", buttonFontSize, isHoveringRetry)
+    DrawButton(menuBtn, "Back to Menu", buttonFontSize, isHoveringMenu)
+    SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
+ENDFUNCTION
+
+FUNCTION DrawButton()
+    vibrationBounds ← bounds
+
+    IF (isHovered)
+        buttonVibrationOffset ← sinf(GetTime() * vibrationSpeed) * vibrationAmount
+        vibrationBounds.x ← vibrationBounds.x + buttonVibrationOffset
+    ENDIF
+
+    DrawRectangleRec(vibrationBounds, isHovered ? GRAY : LIGHTGRAY)
+    DrawRectangleLinesEx(vibrationBounds, 2, BLACK)
+    DrawText(
+        text,
+        vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2, 
+        vibrationBounds.y + (vibrationBounds.height - fontSize)/2, 
+        fontSize,
+        BLACK
+    )
+ENDFUNCTION
+
+FUNCTION DrawDifficultySelect()
+    titleFontSize ← 40
+    buttonFontSize ← 20 
+    title ← "Select Difficulty"
+    DrawText(
+        title, 
+        SCREEN_WIDTH/2 - MeasureText(title, titleFontSize)/2, 
+        SCREEN_HEIGHT/3,
+        titleFontSize,
+        BLACK
+        )
+    
+    easyBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+
+    mediumBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+
+    hardBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+
+    backBtn ← {
+        20,                
+        10,                 
+        SCREEN_WIDTH/6,    
+        30                 
+    }
+
+    mousePos ← GetMousePosition()
+    easyHover ← CheckCollisionPointRec(mousePos, easyBtn)
+    mediumHover ← CheckCollisionPointRec(mousePos, mediumBtn)
+    hardHover ← CheckCollisionPointRec(mousePos, hardBtn)
+    backHover ← CheckCollisionPointRec(mousePos, backBtn)
+    DrawButton(easyBtn, "Easy", buttonFontSize, easyHover)
+    DrawButton(mediumBtn, "Medium", buttonFontSize, mediumHover)
+    DrawButton(hardBtn, "Hard", buttonFontSize, hardHover)
+    DrawButton(backBtn, "Back", buttonFontSize, backHover)
+    SetMouseCursor((easyHover || mediumHover || hardHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
+ENDFUNCTION
+
+FUNCTION DrawModelSelect()
+    char* title ← "Select AI Model"
+    DrawText(
+        SCREEN_WIDTH/2 - MeasureText(title, 40)/2,
+        SCREEN_HEIGHT/3,
+        40,
+        BLACK
+    )
+    nbBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+    dtBtn ← {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    }
+    backBtn ← {
+        20,                
+        10,                 
+        SCREEN_WIDTH/6,    
+        30                 
+    }
+    mousePos ← GetMousePosition();
+    nbHover ← CheckCollisionPointRec(mousePos, nbBtn)
+    dtHover ← CheckCollisionPointRec(mousePos, dtBtn)
+    backHover ← CheckCollisionPointRec(mousePos, backBtn)
+    DrawButton(nbBtn, "Naive Bayes", 20, nbHover)
+    DrawButton(dtBtn, "Decision Tree", 20, dtHover)
+    DrawButton(backBtn, "Back", 20, backHover)
+    SetMouseCursor((nbHover || dtHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
+ENDFUNCTION
+
+FUNCTION InitGame()
+    StopSound(victorySound)
+    StopSound(loseSound)
+    StopSound(drawSound)
+    memset(grid, EMPTY, sizeof(grid))
+    gameOver ← false
+    winner ← EMPTY
+    currentPlayerTurn ← PLAYER_X_TURN
+ENDFUNCTION
 
 FUNCTION UpdateGame()
-    IF (gameOver)
-        RETURN 
+    IF (gameOver) RETURN 
 
     IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         mousePos ← GetMousePosition()
-        IF (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
-            mousePos.y >= 10 && mousePos.y <= 40)
+        IF (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
             PlaySound(buttonClickSound)
             gameState ← MENU
             RETURN 
@@ -391,7 +633,24 @@ FUNCTION UpdateGame()
         ENDIF
 
         ELSE
-            AITurn()
+            SWITCH(currentDifficulty)
+                CASE EASY
+                    IF (currentModel == NAIVE_BAYES)
+                        AITurn()
+                    ENDIF
+                    ELSE
+                        AITurnDecisionTree()
+                    ENDIF
+                    BREAK
+                
+                CASE MEDIUM
+                    AITurn()
+                    BREAK
+
+                CASE HARD
+                    AITurn()
+                    BREAK
+            ENDSWITCH
         ENDIF
     ENDIF
 ENDFUNCTION
@@ -401,12 +660,29 @@ FUNCTION HandlePlayerTurn()
         mousePos ← GetMousePosition()
         row ← (int)(mousePos.y / CELL_SIZE)
         col ← (int)(mousePos.x / CELL_SIZE)
+        ModeStats* currentStats ← NULL
+        SWITCH(currentDifficulty)
+            CASE EASY
+                IF (currentModel == NAIVE_BAYES)
+                    currentStats ← &naiveBayesStats
+                ENDIF
+                ELSE
+                    currentStats ← &decisionTreeStats
+                ENDIF
+                BREAK
+            
+            CASE MEDIUM
+                currentStats ← &mediumStats
+                BREAK
+            
+            CASE HARD
+                currentStats ← &hardStats
+                BREAK
+        ENDSWITCH
 
         IF (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
-
             IF (grid[row][col] == EMPTY)
                 grid[row][col] ← (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O
-
                 IF (CheckWin(grid[row][col]))
                     gameOver ← true
                     winner ← grid[row][col]
@@ -414,10 +690,14 @@ FUNCTION HandlePlayerTurn()
 
                     IF (!isTwoPlayer)
                         IF (winner == PLAYER_X)
+                            currentStats → playerWins + 1
+                            currentStats → totalGames + 1
                             PlaySound(victorySound)
                         ENDIF
 
                         ELSEIF (winner == PLAYER_O)
+                            currentStats → aiWins + 1
+                            currentStats → totalGames + 1
                             PlaySound(loseSound)
                         ENDIF
                     ENDIF
@@ -431,6 +711,8 @@ FUNCTION HandlePlayerTurn()
                     gameOver ← true
                     gameState ← GAME_OVER
                     winner ← EMPTY
+                    currentStats → draws + 1
+                    currentStats → totalGames + 1
                     PlaySound(drawSound)
                 ENDIF
 
@@ -444,3 +726,127 @@ FUNCTION HandlePlayerTurn()
     ENDIF
     RETURN false
 ENDFUNCTION
+
+FUNCTION AITurn()
+    bestScore ← -1000
+    bestRow ← -1
+    bestCol ← -1
+    IF (currentDifficulty == EASY)
+        IF (currentModel == NAIVE_BAYES)
+            predict_move()
+        ENDIF
+        ELSE
+            AITurnDecisionTree()
+        ENDIF
+    ENDIF
+
+    IF (currentDifficulty == MEDIUM)
+        depthLimit ← 4
+        FOR i = 0 to GRID_SIZE - 1 do
+            FOR j = 0 to GRID_SIZE - 1 do
+                IF (grid[i][j] == EMPTY)
+                    grid[i][j] ← PLAYER_O
+                    score ← MiniMax()
+                    grid[i][j] ← EMPTY
+
+                    IF (score > bestScore)
+                        bestScore ← score
+                        bestRow ← i 
+                        bestCol ← j 
+                    ENDIF
+                ENDIF
+            ENDFOR
+        ENDFOR
+    ENDIF
+
+    ELSEIF (currentDifficulty == HARD)
+        depthLimit ← 9
+        FOR i = 0 to GRID_SIZE - 1 do
+            FOR j = 0 to GRID_SIZE - 1 do
+                IF (grid[i][j] == EMPTY)
+                    grid[i][j] ← PLAYER_O
+                    score ← MiniMax()
+                    grid[i][j] ← EMPTY
+
+                    IF (score > bestScore)
+                        bestScore ← score
+                        bestRow ← i 
+                        bestCol ← j 
+                    ENDIF
+                ENDIF
+            ENDFOR
+        ENDFOR
+    ENDIF
+
+    IF (bestRow != -1 && bestCol != -1)
+        grid[bestRow][bestCol] = PLAYER_O
+    ENDIF
+
+    IF (CheckWin(PLAYER_O))
+        gameOver ← true
+        winner ← PLAYER_O
+        gameState ← GAME_OVER
+        ModeStats* currentStats
+        SWITCH(currentDifficulty)
+            CASE EASY
+                IF (currentModel == NAIVE_BAYES)
+                    currentStats ← &naiveBayesStats
+                ENDIF
+                ELSE
+                    currentStats ← &decisionTreeStats
+                ENDIF
+                BREAK
+            
+            CASE MEDIUM
+                currentStats ← &mediumStats
+                BREAK
+
+            CASE HARD   
+                currentStats ← &hardStats
+                BREAK
+        ENDSWITCH
+
+        currentStats → aiWins + 1
+        currentStats → totalGames + 1
+        IF (!isTwoPlayer)
+            PlaySound(loseSound)
+        ENDIF
+        ELSE
+            PlaySound(victorySound)
+        ENDIF
+    ENDIF
+
+    ELSEIF (CheckDraw())
+        gameOver ← true
+        gameState ← GAME_OVER
+        ModeStats* currentStats
+        SWITCH(currentDifficulty)
+            CASE EASY
+                IF (currentModel == NAIVE_BAYES)
+                    currentStats ← &naiveBayesStats
+                ENDIF
+                ELSE
+                    currentStats ← &decisionTreeStats
+                ENDIF
+                BREAK
+
+            CASE MEDIUM
+                currentStats ← &mediumStats
+                BREAK
+
+            CASE HARD
+                currentStats ← &hardStats
+                BREAK
+        ENDSWITCH
+
+        currentStats → draws + 1
+        currentStats → totalGames + 1
+        PlaySound(drawSound)
+    ENDIF
+
+    ELSE
+        currentPlayerTurn ← PLAYER_X_TURN
+    ENDIF
+ENDFUNCTION
+
+ 
