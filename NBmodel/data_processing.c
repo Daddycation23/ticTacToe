@@ -65,7 +65,7 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
     }
 }
 
-// Utility function to convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1) ).
+// Utility function to convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
 int outcome_index(const char *outcome) {
     return (strcmp(outcome, "positive") == 0) ? POSITIVE : NEGATIVE;
 }
