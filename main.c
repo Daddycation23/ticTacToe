@@ -362,13 +362,8 @@ void DrawSymbols() {
 void DrawGame()
 {
     Vector2 mousePos = GetMousePosition();
-    
-    // Update hint button position to top right
-    bool isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
-                         mousePos.y >= 10 && mousePos.y <= 40);
-    // Update quit button position to top left 
-    bool isQuitHovered = (mousePos.x >= 20 && mousePos.x <= 90 &&
-                         mousePos.y >= 10 && mousePos.y <= 40);
+    bool isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40); 
+    bool isQuitHovered = (mousePos.x >= 20 && mousePos.x <= 90 && mousePos.y >= 10 && mousePos.y <= 40);
     
     // Only set cursor for button if we're not in game over state
     if (!gameOver && isQuitHovered) {
@@ -403,10 +398,15 @@ void DrawGame()
             // Draw the cell with appropriate color
             Color cellColor;
             if (isWinningCell) {
-                cellColor = (Color){ 144, 238, 144, 255 }; // Light yellow highlight for winning cells
+                if (!isTwoPlayer && winner == PLAYER_O) {
+                    cellColor = (Color){ 255, 200, 200, 255 }; // Light red highlight for AI wins
+                } else {
+                    cellColor = (Color){ 144, 238, 144, 255 }; // Light green highlight for player wins
+                }
             } else {
                 cellColor = isHovered ? DARKGRAY : LIGHTGRAY;
             }
+            
             DrawRectangleRec(cell, cellColor);
 
             if (grid[i][j] == PLAYER_X)
@@ -439,14 +439,14 @@ void DrawGame()
         DrawLine(0, i * CELL_SIZE, SCREEN_WIDTH, i * CELL_SIZE, BLACK);
     }
 
-    // Update hint button position
+    // Hint button position
     Rectangle hintBtn = {
         SCREEN_WIDTH - 80, 10,  // moved to top right
         70, 30
     };
     DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered);
 
-    // Update quit button position
+    // Quit button position
     Rectangle quitBtn = {
         20, 10,  // moved to top left
         70, 30
@@ -1102,9 +1102,9 @@ bool CheckWin(Cell player)
 // Check if the game is a draw
 bool CheckDraw()
 {
-    for (int i = 0; i < GRID_SIZE; i++)
+    for (int i = 0; i < GRID_SIZE; i++) // Check rows
     {
-        for (int j = 0; j < GRID_SIZE; j++)
+        for (int j = 0; j < GRID_SIZE; j++) // Check columns
         {
             if (grid[i][j] == EMPTY) return false; // If there's an empty cell, it's not a draw
         }

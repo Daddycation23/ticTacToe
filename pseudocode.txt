@@ -250,10 +250,15 @@ ENDFUNCTION
 
 FUNCTION DrawGame()
     mousePos ← GetMousePosition()
+    isHintHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
     isQuitHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
 
     IF (!gameOver && isQuitHovered)
         SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
+    ENDIF
+    ELSEIF (!gameOver && isHintHovered)
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
+    ENDIF
     ELSEIF (!gameOver)
         SetMouseCursor(MOUSE_CURSOR_DEFAULT)
     ENDIF
@@ -261,7 +266,30 @@ FUNCTION DrawGame()
     FOR i = 0 to GRID_SIZE - 1 do
         FOR j = 0 to GRID_SIZE - 1
             cell ← {(j * CELL_SIZE), (i * CELL_SIZE), CELL_SIZE, CELL_SIZE}
+            isWinningCell ← false
+            IF (gameOver && winner != EMPTY)
+                FOR k = 0 to 2 do  
+                    IF (winningCells[k][0] == i && winningCells[k][1] == j)
+                        isWinningCell ← true
+                        BREAK
+                    ENDIF
+                ENDFOR
+            ENDIF
+
             isHovered ← !gameOver && grid[i][j] == EMPTY && CheckCollisionPointRec(mousePos, cell)
+
+            IF (isWinningCell)
+                IF (!isTwoPlayer && winner == PLAYER_O)
+                    cellColor ← (Color){255, 200, 200, 255}
+                ENDIF
+                ELSE
+                    cellColor ← (Color){144, 238, 144, 255}
+                ENDIF
+            ENDIF
+            ELSE
+                cellColor ← isHovered ? DARKGRAY : LIGHTGRAY
+            ENDIF
+
             DrawRectangleRec(cell, isHovered ? DARKGRAY : LIGHTGRAY)
 
             IF (grid[i][j] == PLAYER_X)
@@ -289,8 +317,9 @@ FUNCTION DrawGame()
         DrawLine(0, i * CELL_SIZE, SCREEN_WIDTH, i * CELL_SIZE, BLACK)
     ENDFOR
 
+    hintBtn ← {SCREEN_WIDTH - 80, 10, 70, 30}
+    DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered)
     quitBtn ← {SCREEN_WIDTH - 80, 10, 70, 30}
-    isQuitHovered ← CheckCollisionPointRec(mousePos, quitBtn)
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered)
 
     IF (!gameOver)
