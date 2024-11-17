@@ -361,11 +361,12 @@ void DrawSymbols() {
 void DrawGame()
 {
     Vector2 mousePos = GetMousePosition();
-    // Hint button hover
+    
+    // Update hint button position to top right
     bool isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
-                         mousePos.y >= 50 && mousePos.y <= 80);
-    // Quit button hover 
-    bool isQuitHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
+                         mousePos.y >= 10 && mousePos.y <= 40);
+    // Update quit button position to top left 
+    bool isQuitHovered = (mousePos.x >= 20 && mousePos.x <= 90 &&
                          mousePos.y >= 10 && mousePos.y <= 40);
     
     // Only set cursor for button if we're not in game over state
@@ -420,27 +421,19 @@ void DrawGame()
         DrawLine(0, i * CELL_SIZE, SCREEN_WIDTH, i * CELL_SIZE, BLACK);
     }
 
-    // Hint button
+    // Update hint button position
     Rectangle hintBtn = {
-        SCREEN_WIDTH - 80, 50,  // position
-        70, 30                  // size
+        SCREEN_WIDTH - 80, 10,  // moved to top right
+        70, 30
     };
+    DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered);
 
-    // Use the existing mousePos variable instead of declaring a new one
-    // Update isHintHovered using CheckCollisionPointRec
-    isHintHovered = CheckCollisionPointRec(mousePos, hintBtn);
-    DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered);    // draw the hint button
-
-    // Quit button
+    // Update quit button position
     Rectangle quitBtn = {
-        SCREEN_WIDTH - 80, 10,  // position
-        70, 30                  // size
+        20, 10,  // moved to top left
+        70, 30
     };
-    
-    // Use the existing mousePos variable instead of declaring a new one
-    // Update isQuitHovered using CheckCollisionPointRec
-    isQuitHovered = CheckCollisionPointRec(mousePos, quitBtn);
-    DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);    // draw the quit button
+    DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);
 
     if (!gameOver) {
         // only display stats for single player mode
@@ -780,13 +773,13 @@ ModeStats* GetCurrentModeStats() {
 // Update the game
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
 {
-    if (gameOver) return;  // Exit if game is already over
+    if (gameOver) return;
     
-    // Handle quit button click
+    // Update quit button position check
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         Vector2 mousePos = GetMousePosition();
-        if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
+        if (mousePos.x >= 20 && mousePos.x <= 90 &&
             mousePos.y >= 10 && mousePos.y <= 40)
         {
             PlaySound(buttonClickSound);
@@ -848,14 +841,15 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
         Vector2 mousePos = GetMousePosition();
         int row = (int)(mousePos.y / CELL_SIZE); 
         int col = (int)(mousePos.x / CELL_SIZE);
-        // Handle hint button click
+        
+        // Update hint button position check
         if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
-            mousePos.y >= 50 && mousePos.y <= 80)
+            mousePos.y >= 10 && mousePos.y <= 40)
         {
             PlaySound(buttonClickSound);
             getHint();
-            row = hint.row; // overwrites the mouse position
-            col = hint.col; // overwrites the mouse position
+            row = hint.row;
+            col = hint.col;
         }
 
         // When updating stats, use the current mode's counter:
