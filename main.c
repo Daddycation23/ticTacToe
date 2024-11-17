@@ -1112,20 +1112,19 @@ void clearHint() {
 }
 // Get Hint for Player
 void getHint() {
+    int player = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
     int bestScore = -1000;
     int bestRow = -1;
     int bestCol = -1;
-    int hintPlayer = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
-    // printf("current player: %d\n", hintPlayer);
-    int depthLimit = 9; // Full depth for hinting
+    int depthLimit = 9; // Full depth
     for (int i = 0; i < GRID_SIZE; i++) {
         for (int j = 0; j < GRID_SIZE; j++) {
             if (grid[i][j] == EMPTY) {
-                grid[i][j] = hintPlayer;
+                grid[i][j] = PLAYER_O;
                 int score = Minimax(grid, false, 0, depthLimit, -1000, 1000);
                 grid[i][j] = EMPTY;
 
-                if ((hintPlayer == PLAYER_X && score < bestScore) || (hintPlayer == PLAYER_O && score > bestScore)) {
+                if (score > bestScore) {
                     bestScore = score;
                     bestRow = i;
                     bestCol = j;
@@ -1133,6 +1132,7 @@ void getHint() {
             }
         }
     }
+    // save best move
     if (bestRow != -1 && bestCol != -1) {
         hint.row = bestRow;
         hint.col = bestCol;
