@@ -722,11 +722,12 @@ FUNCTION AITurn()
         grid[bestRow][bestCol] = PLAYER_O
     ENDIF
 
+    currentStats ← GetCurrentModeStats()
+
     IF (CheckWin(PLAYER_O))
         gameOver ← true
         winner ← PLAYER_O
         gameState ← GAME_OVER
-        currentStats ← GetCurrentModeStats()
         currentStats → aiWins + 1
         currentStats → totalGames + 1
         IF (!isTwoPlayer)
@@ -737,7 +738,7 @@ FUNCTION AITurn()
     ELSEIF (CheckDraw())
         gameOver ← true
         gameState ← GAME_OVER
-        currentStats ← GetCurrentModeStats()
+        winner ← EMPTY
         currentStats → draws + 1
         currentStats → totalGames + 1
         PlaySound(drawSound)
