@@ -18,8 +18,8 @@ float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
 float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
 float vibrationAmount = 2.0f; // Amount of vibration
 AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
-int totalGames;
-int aiWins;
+int totalGames = 0;
+int aiWins = 0;
 struct GetHint hint;
 
 // Define variables
@@ -341,6 +341,7 @@ void UpdateSymbols() {
     }
 }
 
+// Drawing of the Game Designs
 // Draw the title words
 void DrawTitleWords() {
     for (int i = 0; i < 5; i++) {
@@ -356,7 +357,6 @@ void DrawSymbols() {
     }
 }
 
-// Drawing of the Game Designs
 // Draw the game
 void DrawGame()
 {
@@ -967,15 +967,15 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
     // Ensure a move is made
     if (bestRow != -1 && bestCol != -1) {
         grid[bestRow][bestCol] = PLAYER_O;
-    } 
+    }
+
+    // Get the current mode's stats
+    ModeStats* currentStats = GetCurrentModeStats();
 
     if (CheckWin(PLAYER_O)) {
         gameOver = true;
         winner = PLAYER_O;
         gameState = GAME_OVER;
-        
-        // Get the current mode's stats
-        ModeStats* currentStats = GetCurrentModeStats();
         
         // Update the stats counter
         currentStats->aiWins++;
@@ -992,9 +992,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
     else if (CheckDraw()) {
         gameOver = true;
         gameState = GAME_OVER;
-
-        // Get the current mode's stats
-        ModeStats* currentStats =  GetCurrentModeStats();
+        winner = EMPTY;
         
         // Update the stats counter
         currentStats->draws++;
@@ -1019,26 +1017,24 @@ void AITurnDecisionTree() {
     } while (grid[row][col] != EMPTY);
     
     grid[row][col] = PLAYER_O;
+
+    // Get current stats for Easy mode
+    ModeStats* currentStats = &decisionTreeStats;
     
     if (CheckWin(PLAYER_O)) {
         gameOver = true;
         winner = PLAYER_O;
         gameState = GAME_OVER;
-
-        // Get current stats for Easy mode
-        ModeStats* currentStats = &decisionTreeStats;
-        currentStats->aiWins++;
-        currentStats->totalGames++;
+        currentStats->aiWins++; // Increment AI wins
+        currentStats->totalGames++; // Increment total games
 
         PlaySound(loseSound);
     } else if (CheckDraw()) {
         gameOver = true;
         gameState = GAME_OVER;
-
-        // Update draw stats
-        ModeStats* currentStats = &decisionTreeStats;
-        currentStats->draws++;
-        currentStats->totalGames++;
+        winner = EMPTY;
+        currentStats->draws++; // Increment draws score
+        currentStats->totalGames++; // Increment total games
 
         PlaySound(drawSound);
     } else {
