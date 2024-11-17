@@ -155,22 +155,22 @@ BEGIN
                 DrawSymbols() 
                 DrawTitleWords()
                 DrawMenu()
-                BREAK 
+            BREAK 
             CASE DIFFICULTY_SELECT
                 DrawSymbols()
                 DrawDifficultySelect()
-                BREAK 
+            BREAK 
             CASE MODEL_SELECT
                 DrawSymbols()
                 DrawModelSelect()
-                BREAK
+            BREAK
             CASE GAME
                 DrawGame()
-                BREAK 
+            BREAK 
             CASE GAME_OVER
                 DrawGame()
                 DrawGameOver()
-                BREAK 
+            BREAK 
         ENDSWITCH
         EndDrawing()
     ENDWHILE
@@ -328,13 +328,13 @@ FUNCTION DrawGame()
                     ELSE
                         currentStats ← &decisionTreeStats
                     ENDIF
-                    BREAK
+                BREAK
                 CASE MEDIUM
                     currentStats ← &mediumStats
-                    BREAK
+                BREAK
                 CASE HARD
                     currentStats ← &hardStats
-                    BREAK
+                BREAK
             ENDSWITCH
 
             PRINT (statsText, "Player: %d | AI: %d | Draws: %d", 
@@ -641,15 +641,15 @@ FUNCTION UpdateGame()
                     ELSE
                         AITurnDecisionTree()
                     ENDIF
-                    BREAK
+                BREAK
                 
                 CASE MEDIUM
                     AITurn()
-                    BREAK
+                BREAK
 
                 CASE HARD
                     AITurn()
-                    BREAK
+                BREAK
             ENDSWITCH
         ENDIF
     ENDIF
@@ -779,7 +779,7 @@ FUNCTION AITurn()
     ENDIF
 
     IF (bestRow != -1 && bestCol != -1)
-        grid[bestRow][bestCol] = PLAYER_O
+        grid[bestRow][bestCol] ← PLAYER_O
     ENDIF
 
     IF (CheckWin(PLAYER_O))
@@ -795,15 +795,15 @@ FUNCTION AITurn()
                 ELSE
                     currentStats ← &decisionTreeStats
                 ENDIF
-                BREAK
+            BREAK
             
             CASE MEDIUM
                 currentStats ← &mediumStats
-                BREAK
+            BREAK
 
             CASE HARD   
                 currentStats ← &hardStats
-                BREAK
+            BREAK
         ENDSWITCH
 
         currentStats → aiWins + 1
@@ -828,15 +828,15 @@ FUNCTION AITurn()
                 ELSE
                     currentStats ← &decisionTreeStats
                 ENDIF
-                BREAK
+            BREAK
 
             CASE MEDIUM
                 currentStats ← &mediumStats
-                BREAK
+            BREAK
 
             CASE HARD
                 currentStats ← &hardStats
-                BREAK
+            BREAK
         ENDSWITCH
 
         currentStats → draws + 1
@@ -849,4 +849,7 @@ FUNCTION AITurn()
     ENDIF
 ENDFUNCTION
 
+FUNCTION MiniMax
+
+ENDFUNCTION
  

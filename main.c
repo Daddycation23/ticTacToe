@@ -1183,7 +1183,7 @@ void getHint() {
                 int score = Minimax(grid, false, 0, depthLimit, -1000, 1000);
                 grid[i][j] = EMPTY;
 
-                if (score > bestScore) {
+                if ((hintPlayer == PLAYER_X && score < bestScore) || (hintPlayer == PLAYER_O && score > bestScore)) {
                     bestScore = score;
                     bestRow = i;
                     bestCol = j;
@@ -1213,8 +1213,8 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
                     board[i][j] = PLAYER_O; // Set the cell to PLAYER_O
                     bestScore = fmax(bestScore, Minimax(board, false, depth + 1, depthLimit, alpha, beta)); // Update the best score
                     board[i][j] = EMPTY; // Reset the cell to EMPTY
-                    alpha = fmax(alpha, bestScore); // Update alpha
-                    if (beta <= alpha) break; // Beta cut-off (prune the branch, stoppint the recursion)
+                    alpha = fmax(alpha, bestScore); // Update alpha (maximize)
+                    if (beta <= alpha) break; // Beta cut-off (prune the branch, stopping the recursion)
                     
                 }
             }
@@ -1228,8 +1228,8 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
                     board[i][j] = PLAYER_X; // Set the cell to PLAYER_X
                     bestScore = fmin(bestScore, Minimax(board, true, depth + 1, depthLimit, alpha, beta)); // Update the best score
                     board[i][j] = EMPTY; // Reset the cell to EMPTY
-                    beta = fmin(beta, bestScore); // Update beta
-                    if (beta <= alpha) break; // Alpha cut-off (prune the branch, stoppint the recursion)
+                    beta = fmin(beta, bestScore); // Update beta (minimize)
+                    if (beta <= alpha) break; // Alpha cut-off (prune the branch, stopping the recursion)
                 }
             }
         }
