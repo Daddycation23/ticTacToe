@@ -67,6 +67,8 @@ typedef struct {
     int totalGames;
 } ModeStats;
 
+ModeStats* GetCurrentModeStats(void);
+
 typedef struct {
     double x_probs[NUM_POSITIONS][NUM_OUTCOMES];
     double o_probs[NUM_POSITIONS][NUM_OUTCOMES];
