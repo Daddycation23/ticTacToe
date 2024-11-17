@@ -73,12 +73,13 @@ void save_NBmodel(const NaiveBayesModel *model, const char *filename) {
 
 // Function to test accuracy of model
 void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size) {
-    int true_positive = 0;
-    int false_positive = 0;
-    int true_negative = 0;
-    int false_negative = 0;
-    int error_count = 0;
+    int true_positive = 0;      // Count of true positives
+    int false_positive = 0;     // Count of false positives
+    int true_negative = 0;      // Count of true negatives
+    int false_negative = 0;     // Count of false negatives
+    int error_count = 0;        // Count of prediction errors
 
+    // Loop to count for each of the 4 classes (TP, FP, TN, FN)
     for (int i = 0; i < size; i++) {
         int predicted_outcome = predict_outcome(model, boards[i]);
         if (outcomes[i] == POSITIVE && predicted_outcome == POSITIVE ) {
@@ -97,20 +98,26 @@ void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesMode
         };
     }
 
+    // Calculate probability of error
     double prob_of_error = (double)error_count / size * 100;
 
-    FILE *file_ptr = fopen(filename, mode);      // Open file of dataset to read
-    if (file_ptr == NULL) {                     // Check if its an exisiting file, else will send an error
+    FILE *file_ptr = fopen(filename, mode);     // Open text file to write
+    if (file_ptr == NULL) {                     // Check if can open or create file, else will send an error
         perror("Failed to open file");
         exit(1);
     }
+    
+    // Information to write in text file
+    if (strcmp(type, "Testing") == 0) fprintf(file_ptr, "\n\n");        // If writing for Testing dataset, indent two newlines for easier readability
 
-    fprintf(file_ptr, "\n\nProbability of error for %s dataset: %.2f (%d/%d incorrect predictions)\n\n", type, prob_of_error, error_count, size);
-    fprintf(file_ptr, "Confusion Matrix values:\n");
-    fprintf(file_ptr, "Number of True Positive: %d\n", true_positive);
-    fprintf(file_ptr, "Number of False Positive: %d\n", false_positive);
-    fprintf(file_ptr, "Number of True Negative: %d\n", true_negative);
-    fprintf(file_ptr, "Number of False Negative: %d", false_negative);
+    fprintf(file_ptr, "%s Dataset:\n", type);                                                               // Type of dataset (Training/Testing)
+    fprintf(file_ptr, "  Accuracy: %.2f%% (%d/%d)\n", 100 - prob_of_error, size - error_count, size);       // Prediction Accuracy of model on dataset
+    fprintf(file_ptr, "  Error: %.2f%% (%d/%d)\n", prob_of_error, error_count, size);                       // Probability of error of model on dataset
+    fprintf(file_ptr, "  Confusion Matrix:\n");                                                             // Confusion Matrix Values
+    fprintf(file_ptr, "    True Positive: %d\n", true_positive);                                            // Number of True Positive predicted by model
+    fprintf(file_ptr, "    False Positive: %d\n", false_positive);                                          // Number of False Positive predicted by model
+    fprintf(file_ptr, "    True Negative: %d\n", true_negative);                                            // Number of True Negative predicted by model
+    fprintf(file_ptr, "    False Negative: %d\n", false_negative);                                          // Number of False Negative predicted by model
 
     fclose(file_ptr);       // Close file
 }
