@@ -32,7 +32,7 @@
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
-typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER } GameState;
+typedef enum { MENU, DIFFICULTY_SELECT, MODEL_SELECT, GAME, GAME_OVER } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
 
 typedef struct {
@@ -55,6 +55,20 @@ typedef struct {
     float jumpSpeed;
 } TitleWord;
 
+typedef enum {
+    NAIVE_BAYES,
+    DECISION_TREE,
+} AIModel;
+
+typedef struct {
+    int playerWins;
+    int aiWins; 
+    int draws;
+    int totalGames;
+} ModeStats;
+
+ModeStats* GetCurrentModeStats(void);
+
 // Define model type such that it holds the probabilites of number of attributes for both outcomes respectively
 typedef struct {
     double x_probs[NUM_POSITIONS][NUM_OUTCOMES];
@@ -62,6 +76,27 @@ typedef struct {
     double b_probs[NUM_POSITIONS][NUM_OUTCOMES];
     double class_probs[NUM_OUTCOMES];
 } NaiveBayesModel;
+
+struct GetHint
+{
+    int row;
+    int col;
+};
+
+
+// Declare variables as extern
+extern ModeStats mediumStats;
+extern ModeStats hardStats;
+extern ModeStats naiveBayesStats;
+extern ModeStats decisionTreeStats;
+
+extern Sound buttonClickSound;
+extern Sound popSound;
+extern Sound victorySound;
+extern Sound loseSound;
+extern Sound drawSound;
+extern Sound mainMenuSound;
+extern Sound playSound;
 
 extern GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 extern FallingSymbol symbols[MAX_SYMBOLS];
@@ -80,26 +115,36 @@ extern float buttonVibrationOffset;
 extern float vibrationSpeed;
 extern float vibrationAmount;
 
+extern int playerWins;
+extern int aiWins;
+extern int draws;
+extern int totalGames;
+
+// Function prototypes
+void DrawSymbols();
+void DrawTitleWords();
+void DrawGame();
+void DrawDifficultySelect(void);
+void DrawModelSelect(void);
+void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
+void DrawMenu();
+void DrawGameOver();
+
 void InitGame();
 void InitSymbols();
-void UpdateSymbols();
-void DrawSymbols();
 void InitTitleWords();
+void UpdateSymbols();
 void UpdateTitleWords();
-void DrawTitleWords();
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);
 void UpdateGameOver(Sound buttonClickSound);
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);
-void DrawGame();
-void DrawDifficultySelect(void);
-void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
 bool CheckWin(Cell player);
 bool CheckDraw();
-void DrawMenu();
-void DrawGameOver();
+void getHint();
+void clearHint();
 
-int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
+int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
 // Function prototypes for Naive Bayes
@@ -115,5 +160,6 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
 // Utility functions
 int outcome_index(const char *outcome);
 void divide(int dividend, int divisor, int *quo, int *rem);
+void AITurnDecisionTree();
 
 #endif // MAIN_H
