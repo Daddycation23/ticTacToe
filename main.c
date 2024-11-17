@@ -20,6 +20,7 @@ float vibrationAmount = 2.0f; // Amount of vibration
 AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
 int totalGames;
 int aiWins;
+struct GetHint hint;
 
 // Define variables
 ModeStats mediumStats = {0, 0, 0, 0};
@@ -174,7 +175,7 @@ int main(void)
                     else if (mousePos.y >= SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20 && 
                              mousePos.y <= SCREEN_HEIGHT/2 + BUTTON_HEIGHT * 2 + 20) {
                         PlaySound(buttonClickSound);  // Play sound on button click
-                        currentDifficulty = MEDIUM;
+                        currentDifficulty = MEDIUM; // go to imperfect minimax
                         gameState = GAME;
                         InitGame();
                     }
@@ -182,7 +183,7 @@ int main(void)
                     else if (mousePos.y >= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 && 
                              mousePos.y <= SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2 + BUTTON_HEIGHT) {
                         PlaySound(buttonClickSound);  // Play sound on button click
-                        currentDifficulty = HARD;
+                        currentDifficulty = HARD; // go to perfect minimax
                         gameState = GAME;
                         InitGame();
                     }
@@ -360,13 +361,17 @@ void DrawSymbols() {
 void DrawGame()
 {
     Vector2 mousePos = GetMousePosition();
-    
+    // Hint button hover
+    bool isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
+                         mousePos.y >= 50 && mousePos.y <= 80);
     // Quit button hover 
     bool isQuitHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
                          mousePos.y >= 10 && mousePos.y <= 40);
     
-    // Only set cursor for quit button if we're not in game over state
+    // Only set cursor for button if we're not in game over state
     if (!gameOver && isQuitHovered) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+    } else if (!gameOver && isHintHovered) {
         SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
     } else if (!gameOver) {
         SetMouseCursor(MOUSE_CURSOR_DEFAULT);
@@ -415,6 +420,17 @@ void DrawGame()
         DrawLine(0, i * CELL_SIZE, SCREEN_WIDTH, i * CELL_SIZE, BLACK);
     }
 
+    // Hint button
+    Rectangle hintBtn = {
+        SCREEN_WIDTH - 80, 50,  // position
+        70, 30                  // size
+    };
+
+    // Use the existing mousePos variable instead of declaring a new one
+    // Update isHintHovered using CheckCollisionPointRec
+    isHintHovered = CheckCollisionPointRec(mousePos, hintBtn);
+    DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered);    // draw the hint button
+
     // Quit button
     Rectangle quitBtn = {
         SCREEN_WIDTH - 80, 10,  // position
@@ -424,7 +440,6 @@ void DrawGame()
     // Use the existing mousePos variable instead of declaring a new one
     // Update isQuitHovered using CheckCollisionPointRec
     isQuitHovered = CheckCollisionPointRec(mousePos, quitBtn);
-    
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);    // draw the quit button
 
     if (!gameOver) {
@@ -615,15 +630,15 @@ void DrawGameOver() {
     };
           
     Vector2 mousePos = GetMousePosition();
-    bool isHoveringMenu = CheckCollisionPointRec(mousePos, menuBtn);
-    bool isHoveringRetry = CheckCollisionPointRec(mousePos, retryBtn);
+    bool isMenuHovered = CheckCollisionPointRec(mousePos, menuBtn);
+    bool isRetryHovered = CheckCollisionPointRec(mousePos, retryBtn);
     
     // Draw buttons with hover effect
-    DrawButton(retryBtn, "Retry", buttonFontSize, isHoveringRetry);
-    DrawButton(menuBtn, "Back to Menu", buttonFontSize, isHoveringMenu);
+    DrawButton(retryBtn, "Retry", buttonFontSize, isRetryHovered);
+    DrawButton(menuBtn, "Back to Menu", buttonFontSize, isMenuHovered);
     
     // Set cursor
-    SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    SetMouseCursor((isMenuHovered || isRetryHovered) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
 // draw the buttons with hover effect
@@ -775,7 +790,7 @@ void InitGame() {
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
 {
     if (gameOver) return;  // Exit if game is already over
-
+    
     // Handle quit button click
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
@@ -835,12 +850,22 @@ void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Soun
 
 // Handle the player's turn
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)
-{
+{   
+    clearHint();
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         Vector2 mousePos = GetMousePosition();
-        int row = (int)(mousePos.y / CELL_SIZE);
+        int row = (int)(mousePos.y / CELL_SIZE); 
         int col = (int)(mousePos.x / CELL_SIZE);
+        // Handle hint button click
+        if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
+            mousePos.y >= 50 && mousePos.y <= 80)
+        {
+            PlaySound(buttonClickSound);
+            getHint();
+            row = hint.row; // overwrites the mouse position
+            col = hint.col; // overwrites the mouse position
+        }
 
         // When updating stats, use the current mode's counter:
         ModeStats* currentStats = NULL;
@@ -859,7 +884,7 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                 currentStats = &hardStats;
                 break;
         }
-
+        // check win after a grid is selected
         if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
         {
             if (grid[row][col] == EMPTY)
@@ -898,7 +923,7 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                 }
                 else
                 {
-                    currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN;
+                    currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN; // change player turn
                 }
                 return true;  // Move was made
             }
@@ -931,7 +956,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
             for (int j = 0; j < GRID_SIZE; j++) {
                 if (grid[i][j] == EMPTY) {
                     grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
+                    int score = Minimax(grid, false, 0, depthLimit, -1000, 1000);
                     grid[i][j] = EMPTY;
 
                     if (score > bestScore) {
@@ -950,7 +975,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
             for (int j = 0; j < GRID_SIZE; j++) {
                 if (grid[i][j] == EMPTY) {
                     grid[i][j] = PLAYER_O;
-                    int score = Minimax(grid, false, 0, depthLimit);
+                    int score = Minimax(grid, false, 0, depthLimit, -1000, 1000);
                     grid[i][j] = EMPTY;
 
                     if (score > bestScore) {
@@ -1138,10 +1163,43 @@ void UpdateGameOver(Sound buttonClickSound) {
     }
 }
 
-// minimax algorithm
-int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit) {
-    if (depth >= depthLimit) return 0; // Return 0 if depth limit is reached
+// Clear Hint 
+void clearHint() {
+    hint.row = -1;
+    hint.col = -1;
+}
+// Get Hint for Player
+void getHint() {
+    int bestScore = -1000;
+    int bestRow = -1;
+    int bestCol = -1;
+    int hintPlayer = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
+    // printf("current player: %d\n", hintPlayer);
+    int depthLimit = 9; // Full depth for hinting
+    for (int i = 0; i < GRID_SIZE; i++) {
+        for (int j = 0; j < GRID_SIZE; j++) {
+            if (grid[i][j] == EMPTY) {
+                grid[i][j] = hintPlayer;
+                int score = Minimax(grid, false, 0, depthLimit, -1000, 1000);
+                grid[i][j] = EMPTY;
 
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestRow = i;
+                    bestCol = j;
+                }
+            }
+        }
+    }
+    if (bestRow != -1 && bestCol != -1) {
+        hint.row = bestRow;
+        hint.col = bestCol;
+    }
+}
+
+// minimax algorithm, factorial design
+int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta) {
+    if (depth >= depthLimit) return 0; // Return 0 if depth limit is reached
     int score = EvaluateBoard(board);
     if (score == 10) return score - depth; // O (AI) is the maximizing player
     if (score == -10) return score + depth; // X (human) is the minimizing player
@@ -1153,8 +1211,11 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
             for (int j = 0; j < GRID_SIZE; j++) { // Iterate through each cell in the grid
                 if (board[i][j] == EMPTY) { // If the cell is empty
                     board[i][j] = PLAYER_O; // Set the cell to PLAYER_O
-                    bestScore = fmax(bestScore, Minimax(board, false, depth + 1, depthLimit)); // Update the best score
+                    bestScore = fmax(bestScore, Minimax(board, false, depth + 1, depthLimit, alpha, beta)); // Update the best score
                     board[i][j] = EMPTY; // Reset the cell to EMPTY
+                    alpha = fmax(alpha, bestScore); // Update alpha
+                    if (beta <= alpha) break; // Beta cut-off (prune the branch, stoppint the recursion)
+                    
                 }
             }
         }
@@ -1165,8 +1226,10 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
             for (int j = 0; j < GRID_SIZE; j++) { // Iterate through each cell in the grid
                 if (board[i][j] == EMPTY) { // If the cell is empty
                     board[i][j] = PLAYER_X; // Set the cell to PLAYER_X
-                    bestScore = fmin(bestScore, Minimax(board, true, depth + 1, depthLimit)); // Update the best score
+                    bestScore = fmin(bestScore, Minimax(board, true, depth + 1, depthLimit, alpha, beta)); // Update the best score
                     board[i][j] = EMPTY; // Reset the cell to EMPTY
+                    beta = fmin(beta, bestScore); // Update beta
+                    if (beta <= alpha) break; // Alpha cut-off (prune the branch, stoppint the recursion)
                 }
             }
         }

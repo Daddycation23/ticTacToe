@@ -30,7 +30,7 @@
 #define NEGATIVE 1
 #define RATIO 0.8
 
-typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
+typedef enum { EMPTY, PLAYER_X, PLAYER_O} Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
 typedef enum { MENU, DIFFICULTY_SELECT, MODEL_SELECT, GAME, GAME_OVER } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
@@ -73,6 +73,13 @@ typedef struct {
     double b_probs[NUM_POSITIONS][NUM_OUTCOMES];
     double class_probs[NUM_OUTCOMES];
 } NaiveBayesModel;
+
+struct GetHint
+{
+    int row;
+    int col;
+};
+
 
 // Declare variables as extern
 extern ModeStats mediumStats;
@@ -131,7 +138,9 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);
 bool CheckWin(Cell player);
 bool CheckDraw();
-int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
+void getHint();
+void clearHint();
+int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
 // Naive Bayes functions
