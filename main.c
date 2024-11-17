@@ -47,13 +47,13 @@ int main(void)
     SetWindowIcon(icon);  // Set the window icon
     UnloadImage(icon);  // Unload the image after setting the icon
 
-    Sound buttonClickSound = LoadSound("assets\\ButtonClicked.mp3");  // Load the button click sound
-    Sound popSound = LoadSound("assets\\Pop.mp3");  // Load the pop sound
-    Sound victorySound = LoadSound("assets\\FFVictory.mp3");  // Load the victory sound
-    Sound loseSound = LoadSound("assets\\MarioLose.mp3");  // Load the lose sound
-    Sound drawSound = LoadSound("assets\\Draw.mp3");  // Load the draw sound
-    Sound mainMenuSound = LoadSound("assets\\MainMenu.mp3");  // Load the main menu sound
-    Sound playSound = LoadSound("assets\\Play.mp3");  // Load the play sound
+    buttonClickSound = LoadSound("assets\\ButtonClicked.mp3");  // Load the button click sound
+    popSound = LoadSound("assets\\Pop.mp3");  // Load the pop sound
+    victorySound = LoadSound("assets\\FFVictory.mp3");  // Load the victory sound
+    loseSound = LoadSound("assets\\MarioLose.mp3");  // Load the lose sound
+    drawSound = LoadSound("assets\\Draw.mp3");  // Load the draw sound
+    mainMenuSound = LoadSound("assets\\MainMenu.mp3");  // Load the main menu sound
+    playSound = LoadSound("assets\\Play.mp3");  // Load the play sound
 
     // After loading each sound, set its volume (between 0.0f to 1.0f)
     SetSoundVolume(buttonClickSound, 0.3f);  // 30% volume
@@ -446,23 +446,7 @@ void DrawGame()
         // only display stats for single player mode
         if (!isTwoPlayer) {
             char statsText[100];
-            ModeStats* currentStats;
-            
-            switch(currentDifficulty) {
-                case EASY:
-                    if (currentModel == NAIVE_BAYES) {
-                        currentStats = &naiveBayesStats;    // naive bayes scores
-                    } else {
-                        currentStats = &decisionTreeStats;  // decision tree scores
-                    }
-                    break;
-                case MEDIUM:
-                    currentStats = &mediumStats;    // medium mode scores
-                    break;
-                case HARD:
-                    currentStats = &hardStats;  // hard mode scores
-                    break;
-            }
+            ModeStats* currentStats = GetCurrentModeStats();
 
             sprintf(statsText, "Player: %d | AI: %d | Draws: %d", 
                     currentStats->playerWins, 
@@ -786,6 +770,13 @@ void InitGame() {
     currentPlayerTurn = PLAYER_X_TURN;
 }
 
+ModeStats* GetCurrentModeStats() {
+    if (currentDifficulty == EASY) {
+        return (currentModel == NAIVE_BAYES) ? &naiveBayesStats : &decisionTreeStats;
+    }
+    return (currentDifficulty == MEDIUM) ? &mediumStats : &hardStats;
+}
+
 // Update the game
 void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
 {
@@ -868,22 +859,8 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
         }
 
         // When updating stats, use the current mode's counter:
-        ModeStats* currentStats = NULL;
-        switch(currentDifficulty) {
-            case EASY:
-                if (currentModel == NAIVE_BAYES) {
-                    currentStats = &naiveBayesStats;
-                } else {
-                    currentStats = &decisionTreeStats;
-                }
-                break;
-            case MEDIUM:
-                currentStats = &mediumStats;
-                break;
-            case HARD:
-                currentStats = &hardStats;
-                break;
-        }
+        ModeStats* currentStats = GetCurrentModeStats();
+
         // check win after a grid is selected
         if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
         {
@@ -903,17 +880,17 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                             currentStats->totalGames++; // Increment total games
                             PlaySound(victorySound);  // Play victory sound for Player X
                         } 
-                        else if (winner == PLAYER_O) {
+                        else {
                             currentStats->aiWins++; // Increment AI wins
                             currentStats->totalGames++; // Increment total games
                             PlaySound(loseSound);  // Play lose sound for Player O
                         }
-                    } else {
+                    } 
+                    else {
                         PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
                     }
                 }
-                else if (CheckDraw())  // Check for a draw
-                {
+                else if (CheckDraw()) { // Check for a draw
                     gameOver = true;
                     gameState = GAME_OVER;
                     winner = EMPTY;  // No winner in a draw
@@ -921,8 +898,7 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                     currentStats->totalGames++; // Increment total games
                     PlaySound(drawSound);  // Play draw sound
                 }
-                else
-                {
+                else {
                     currentPlayerTurn = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_O_TURN : PLAYER_X_TURN; // change player turn
                 }
                 return true;  // Move was made
@@ -999,22 +975,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
         gameState = GAME_OVER;
         
         // Get the current mode's stats
-        ModeStats* currentStats;
-        switch(currentDifficulty) {
-            case EASY:
-                if (currentModel == NAIVE_BAYES) {
-                    currentStats = &naiveBayesStats;
-                } else {
-                    currentStats = &decisionTreeStats;
-                }
-                break;
-            case MEDIUM:
-                currentStats = &mediumStats;
-                break;
-            case HARD:
-                currentStats = &hardStats;
-                break;
-        }
+        ModeStats* currentStats = GetCurrentModeStats();
         
         // Update the stats counter
         currentStats->aiWins++;
@@ -1033,22 +994,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
         gameState = GAME_OVER;
 
         // Get the current mode's stats
-        ModeStats* currentStats;
-        switch(currentDifficulty) {
-            case EASY:
-                if (currentModel == NAIVE_BAYES) {
-                    currentStats = &naiveBayesStats;
-                } else {
-                    currentStats = &decisionTreeStats;
-                }
-                break;
-            case MEDIUM:
-                currentStats = &mediumStats;
-                break;
-            case HARD:
-                currentStats = &hardStats;
-                break;
-        }
+        ModeStats* currentStats =  GetCurrentModeStats();
         
         // Update the stats counter
         currentStats->draws++;
