@@ -136,22 +136,22 @@ BEGIN
                 DrawSymbols() 
                 DrawTitleWords()
                 DrawMenu()
-                BREAK 
+            BREAK 
             CASE DIFFICULTY_SELECT
                 DrawSymbols()
                 DrawDifficultySelect()
-                BREAK 
+            BREAK 
             CASE MODEL_SELECT
                 DrawSymbols()
                 DrawModelSelect()
-                BREAK
+            BREAK
             CASE GAME
                 DrawGame()
-                BREAK 
+            BREAK 
             CASE GAME_OVER
                 DrawGame()
                 DrawGameOver()
-                BREAK 
+            BREAK 
         ENDSWITCH
         EndDrawing()
     ENDWHILE
@@ -325,8 +325,8 @@ FUNCTION DrawMenu()
     startX ← SCREEN_WIDTH/2 - gridWidth/2
     startY ← SCREEN_HEIGHT/5
 
-    FOR i = 0 to TITLE_GRID_SIZE - 1
-        FOR j = 0 to TITLE_GRID_SIZE - 1
+    FOR i = 0 to TITLE_GRID_SIZE - 1 do
+        FOR j = 0 to TITLE_GRID_SIZE - 1 do
             cell = {
                 startX + j * cellSize,
                 startY + i * cellSize,
@@ -562,14 +562,14 @@ FUNCTION InitGame()
 ENDFUNCTION
 
 FUNCTION GetCurrentModeStats()
-    IF currentDifficulty == EASY THEN
-        IF currentModel == NAIVE_BAYES THEN
+    IF (currentDifficulty == EASY)
+        IF (currentModel == NAIVE_BAYES)
             RETURN &naiveBayesStats
         ELSE
             RETURN &decisionTreeStats
         ENDIF
     ELSE
-        IF currentDifficulty == MEDIUM THEN
+        IF (currentDifficulty == MEDIUM)
             RETURN &mediumStats
         ELSE
             RETURN &hardStats
@@ -607,15 +607,15 @@ FUNCTION UpdateGame()
                     ELSE
                         AITurnDecisionTree()
                     ENDIF
-                    BREAK
+                BREAK
                 
                 CASE MEDIUM
                     AITurn()
-                    BREAK
+                BREAK
 
                 CASE HARD
                     AITurn()
-                    BREAK
+                BREAK
             ENDSWITCH
         ENDIF
     ENDIF
@@ -719,7 +719,7 @@ FUNCTION AITurn()
     ENDIF
 
     IF (bestRow != -1 && bestCol != -1)
-        grid[bestRow][bestCol] = PLAYER_O
+        grid[bestRow][bestCol] ← PLAYER_O
     ENDIF
 
     currentStats ← GetCurrentModeStats()

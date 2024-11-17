@@ -1109,16 +1109,15 @@ void clearHint() {
 }
 // Get Hint for Player
 void getHint() {
+    int player = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
     int bestScore = -1000;
     int bestRow = -1;
     int bestCol = -1;
-    int hintPlayer = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
-    // printf("current player: %d\n", hintPlayer);
-    int depthLimit = 9; // Full depth for hinting
+    int depthLimit = 9; // Full depth
     for (int i = 0; i < GRID_SIZE; i++) {
         for (int j = 0; j < GRID_SIZE; j++) {
             if (grid[i][j] == EMPTY) {
-                grid[i][j] = hintPlayer;
+                grid[i][j] = PLAYER_O;
                 int score = Minimax(grid, false, 0, depthLimit, -1000, 1000);
                 grid[i][j] = EMPTY;
 
@@ -1130,6 +1129,7 @@ void getHint() {
             }
         }
     }
+    // save best move
     if (bestRow != -1 && bestCol != -1) {
         hint.row = bestRow;
         hint.col = bestCol;
@@ -1152,8 +1152,8 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
                     board[i][j] = PLAYER_O; // Set the cell to PLAYER_O
                     bestScore = fmax(bestScore, Minimax(board, false, depth + 1, depthLimit, alpha, beta)); // Update the best score
                     board[i][j] = EMPTY; // Reset the cell to EMPTY
-                    alpha = fmax(alpha, bestScore); // Update alpha
-                    if (beta <= alpha) break; // Beta cut-off (prune the branch, stoppint the recursion)
+                    alpha = fmax(alpha, bestScore); // Update alpha (maximize)
+                    if (beta <= alpha) break; // Beta cut-off (prune the branch, stopping the recursion)
                     
                 }
             }
@@ -1167,8 +1167,8 @@ int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int 
                     board[i][j] = PLAYER_X; // Set the cell to PLAYER_X
                     bestScore = fmin(bestScore, Minimax(board, true, depth + 1, depthLimit, alpha, beta)); // Update the best score
                     board[i][j] = EMPTY; // Reset the cell to EMPTY
-                    beta = fmin(beta, bestScore); // Update beta
-                    if (beta <= alpha) break; // Alpha cut-off (prune the branch, stoppint the recursion)
+                    beta = fmin(beta, bestScore); // Update beta (minimize)
+                    if (beta <= alpha) break; // Alpha cut-off (prune the branch, stopping the recursion)
                 }
             }
         }
