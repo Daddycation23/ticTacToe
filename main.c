@@ -231,8 +231,8 @@ int main(void)
             }
         }
 
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+        BeginDrawing();  // Begin drawing
+        ClearBackground(RAYWHITE); // Clear the background to white
 
         switch(gameState) {
             case MENU:
