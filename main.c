@@ -1007,9 +1007,6 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
 
 // Decision Tree AI Turn function
 void AITurnDecisionTree() {
-    printf("Decision Tree AI Turn\n");
-    // Implement your decision tree logic here
-    // For now, just make a random valid move
     int row, col;
     do {
         row = GetRandomValue(0, GRID_SIZE - 1);
