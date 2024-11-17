@@ -108,7 +108,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 
 ### Standard Functions
 - `int sprintf(char *str, const char *format, ...)`: Sends formatted output to a string
-- `float 	sinf (float x)`: Computes the sine (specified in radians) of x
+- `float sinf (float x)`: Computes the sine (specified in radians) of x
 - `void *memset(void *str, int c, size_t n)`: Returns a pointer to the memory area string
 
 

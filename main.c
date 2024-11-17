@@ -21,6 +21,7 @@ AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
 int totalGames = 0;
 int aiWins = 0;
 struct GetHint hint;
+int winningCells[3][2] = {{-1,-1}, {-1,-1}, {-1,-1}}; // Store winning cell coordinates
 
 // Define variables
 ModeStats mediumStats = {0, 0, 0, 0};
@@ -385,11 +386,28 @@ void DrawGame()
         {
             Rectangle cell = {(float)(j * CELL_SIZE), (float)(i * CELL_SIZE), (float)CELL_SIZE, (float)CELL_SIZE};
             
+            // Check if this cell is part of the winning combination
+            bool isWinningCell = false;
+            if (gameOver && winner != EMPTY) {
+                for (int k = 0; k < 3; k++) {
+                    if (winningCells[k][0] == i && winningCells[k][1] == j) {
+                        isWinningCell = true;
+                        break;
+                    }
+                }
+            }
+            
             // Check if the mouse is hovering over the cell and the cell is empty
             bool isHovered = !gameOver && grid[i][j] == EMPTY && CheckCollisionPointRec(mousePos, cell);
             
-            // Draw the cell with a darker color if hovered
-            DrawRectangleRec(cell, isHovered ? DARKGRAY : LIGHTGRAY);
+            // Draw the cell with appropriate color
+            Color cellColor;
+            if (isWinningCell) {
+                cellColor = (Color){ 144, 238, 144, 255 }; // Light yellow highlight for winning cells
+            } else {
+                cellColor = isHovered ? DARKGRAY : LIGHTGRAY;
+            }
+            DrawRectangleRec(cell, cellColor);
 
             if (grid[i][j] == PLAYER_X)
             {
@@ -761,6 +779,12 @@ void InitGame() {
     gameOver = false;
     winner = EMPTY;
     currentPlayerTurn = PLAYER_X_TURN;
+    
+    // Reset winning cells
+    for (int i = 0; i < 3; i++) {
+        winningCells[i][0] = -1;
+        winningCells[i][1] = -1;
+    }
 }
 
 ModeStats* GetCurrentModeStats() {
@@ -1036,18 +1060,43 @@ void AITurnDecisionTree() {
 // Check if the player has won  
 bool CheckWin(Cell player)
 {
-    // check rows and columns
-    for (int i = 0; i < GRID_SIZE; i++)
-    {
-        if (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player) return true; // Row check
-        if (grid[0][i] == player && grid[1][i] == player && grid[2][i] == player) return true; // Column check
+    // check rows
+    for (int i = 0; i < GRID_SIZE; i++) {
+        if (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player) {
+            winningCells[0][0] = i; winningCells[0][1] = 0;
+            winningCells[1][0] = i; winningCells[1][1] = 1;
+            winningCells[2][0] = i; winningCells[2][1] = 2;
+            return true;
+        }
+    }
+    
+    // check columns
+    for (int i = 0; i < GRID_SIZE; i++) {
+        if (grid[0][i] == player && grid[1][i] == player && grid[2][i] == player) {
+            winningCells[0][0] = 0; winningCells[0][1] = i;
+            winningCells[1][0] = 1; winningCells[1][1] = i;
+            winningCells[2][0] = 2; winningCells[2][1] = i;
+            return true;
+        }
     }
 
-    // Check diagonals
-    if (grid[0][0] == player && grid[1][1] == player && grid[2][2] == player) return true; // Main diagonal
-    if (grid[0][2] == player && grid[1][1] == player && grid[2][0] == player) return true; // Anti diagonal
+    // Check main diagonal
+    if (grid[0][0] == player && grid[1][1] == player && grid[2][2] == player) {
+        winningCells[0][0] = 0; winningCells[0][1] = 0;
+        winningCells[1][0] = 1; winningCells[1][1] = 1;
+        winningCells[2][0] = 2; winningCells[2][1] = 2;
+        return true;
+    }
 
-    return false; // No win found
+    // Check anti diagonal
+    if (grid[0][2] == player && grid[1][1] == player && grid[2][0] == player) {
+        winningCells[0][0] = 0; winningCells[0][1] = 2;
+        winningCells[1][0] = 1; winningCells[1][1] = 1;
+        winningCells[2][0] = 2; winningCells[2][1] = 0;
+        return true;
+    }
+
+    return false;
 }
 
 // Check if the game is a draw
