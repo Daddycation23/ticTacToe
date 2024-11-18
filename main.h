@@ -23,7 +23,7 @@
 #define ROTATION_SPEED 0.02f  // Speed of rotation
 #define JUMP_SPEED 0.02f  // Constant jump speed
 #define JUMP_DELAY 0.7f  // Constant delay between jumps
-#define MAX_CONFETTI 150    // Maximum number of confetti particles
+#define MAX_CONFETTI 100    // Maximum number of confetti particles
 
 #define NUM_POSITIONS 9
 #define NUM_OUTCOMES 2 // positive or negative

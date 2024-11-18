@@ -276,7 +276,7 @@ ENDFUNCTION
 FUNCTION InitConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
         confetti[i].position ← (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) }
-        confetti[i].velocity ← (Vector2){ GetRandomValue(-200, 200)/100.0f, GetRandomValue(200, 400)/100.0f }
+        confetti[i].velocity ← (Vector2){ GetRandomValue(-100, 100)/100.0f, GetRandomValue(100, 200)/100.0f }
         confetti[i].color ← (Color){ GetRandomValue(150, 255), GetRandomValue(150, 255), GetRandomValue(150, 255), GetRandomValue(150, 255) }
         confetti[i].size ← GetRandomValue(5, 15)
         confetti[i].active ← true

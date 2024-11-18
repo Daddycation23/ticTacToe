@@ -363,8 +363,8 @@ void InitConfetti() {
             GetRandomValue(-SCREEN_HEIGHT, 0)
         };
         confetti[i].velocity = (Vector2){
-            GetRandomValue(-200, 200)/100.0f,
-            GetRandomValue(200, 400)/100.0f
+            GetRandomValue(-100, 100)/100.0f,
+            GetRandomValue(100, 200)/100.0f
         };
         confetti[i].color = (Color){
             GetRandomValue(150, 255),  // Brighter red range
@@ -381,9 +381,9 @@ void InitConfetti() {
 void UpdateConfetti() {
     for (int i = 0; i < MAX_CONFETTI; i++) {
         if (confetti[i].active) {
-            confetti[i].position.x += confetti[i].velocity.x;
-            confetti[i].position.y += confetti[i].velocity.y;
-            confetti[i].velocity.y += 0.05f;  // Slower falling (gravity)
+            confetti[i].position.x += confetti[i].velocity.x * 0.5f;  // Add multiplier to slow horizontal movement
+            confetti[i].position.y += confetti[i].velocity.y * 0.5f;  // Add multiplier to slow vertical movement
+            confetti[i].velocity.y += 0.02f;  // gravity effect
             
             if (confetti[i].position.y > SCREEN_HEIGHT) {
                 confetti[i].position.y = -10;

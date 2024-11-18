@@ -34,11 +34,6 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 ### Game Logic Functions
 - `void InitGame()`: Initializes the game state and grid.
 - `void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)`: Updates the game state based on player input and game logic.
-- `void DrawGame()`: Renders the game grid, symbols, and UI elements.
-- `void DrawMenu()`: Renders the menu with UI and animations.
-- `void DrawGameOver()`: Renders the game over screen.
-- `void DrawDifficultySelect()`: Renders the difficulty selection screen.
-- `void DrawModelSelect()`: Renders the model selection screen when easy mode is chosen.
 - `bool CheckWin(Cell player)`: Checks if a specified player has won the game.
 - `bool CheckDraw()`: Checks if the game is a draw.
 - `void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)`: Handles the AI's turn in single-player mode.
@@ -46,7 +41,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void UpdateGameOver(Sound buttonClickSound)`: Manages the game over state, allowing players to retry or return to the menu.
 - `void clearHint()`: Clear hint.
 - `void getHint()`: Get hint for player
-- `ModeStats* GetCurrentModeStats(void)`: 
+- `ModeStats* GetCurrentModeStats(void)`: Tracks game statistics (wins, losses and draws) for each difficulty mode and AI model.
 
 ### UI and Animation Functions
 - `void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered)`: Draws buttons with hover and vibration effects.
@@ -56,6 +51,14 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void InitTitleWords()`: Initializes the title words for the animated title.
 - `void UpdateTitleWords()`: Updates the animation state of the title words.
 - `void DrawTitleWords()`: Draws the animated title words.
+- `void InitConfetti()`: Initializes the confetti particles for the animated UI upon winning.
+- `void UpdateConfetti()`: Updates the position and rotation of confetti particles.
+- `void DrawConfetti()`: Draws the confetti particles on the screen.
+- `void DrawGame()`: Renders the game grid, symbols, and UI elements.
+- `void DrawMenu()`: Renders the menu with UI and animations.
+- `void DrawGameOver()`: Renders the game over screen.
+- `void DrawDifficultySelect()`: Renders the difficulty selection screen.
+- `void DrawModelSelect()`: Renders the model selection screen when easy mode is chosen.
 
 ### Data Processing Functions
 - `void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records)`: Loads data from file.
@@ -78,6 +81,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 ### Raylib Functions
 - `void InitWindow(int width, int height, const char *title)`: Initialize window and OpenGL context.
 - `void CloseWindow(void)`: Close window and unload OpenGL context.
+- `bool WindowShouldClose(void)`: Check if application should close (KEY_ESCAPE pressed or windows close icon clicked).
 - `void BeginDrawing(void)`: Setup canvas (framebuffer) to start drawing.
 - `void EndDrawing(void)`: End canvas drawing and swap buffers (double buffering).
 - `void DrawText(const char *text, int posX, int posY, int fontSize, Color color)`: Draw text (using default font).
@@ -87,25 +91,24 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color)`: Draw rectangle outline with extended parameters.
 - `void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)`: Draw a line
 - `Vector2 GetMousePosition(void)`: Get mouse position XY.
+- `void SetMouseCursor(int cursor)`: Set mouse cursor.
 - `bool IsMouseButtonPressed(int button)`: Check if a mouse button has been pressed once.
 - `bool CheckCollisionPointRec(Vector2 point, Rectangle rec)`: Check if point is inside rectangle.
 - `void PlaySound(Sound sound)`: Play a sound.
 - `Sound LoadSound(const char *fileName)`: Loads sound from file. 
-- `void UnloadSound(Sound sound)`: Unloads a sound file. 
+- `void UnloadSound(Sound sound)`: Unloads a sound file.
+- `void SetSoundVolume(Sound sound, float volume)`: Set volume for a sound (1.0 is max level).
+- `void StopSound(Sound sound)`: Stop playing a sound.
+- `bool IsSoundPlaying(Sound sound)`: Check if a sound is currently playing.
 - `void InitAudioDevice(void)`: Initialize audio device and context.
 - `void CloseAudioDevice(void)`: Close the audio device and context.
 - `Image LoadImage(const char *fileName)`: Load image from file into CPU memory (RAM).
-- `void SetWindowIcon(Image image)`: Set icon for window (single image, RGBA 32bit)
 - `void UnloadImage(Image image)`: Unload image from CPU memory (RAM).
-- `void SetSoundVolume(Sound sound, float volume)`: Set volume for a sound (1.0 is max level).
-- `bool WindowShouldClose(void)`: Check if application should close (KEY_ESCAPE pressed or windows close icon clicked).
-- `bool IsSoundPlaying(Sound sound)`: Check if a sound is currently playing.
-- `void StopSound(Sound sound)`: Stop playing a sound.
+- `void SetWindowIcon(Image image)`: Set icon for window (single image, RGBA 32bit)
 - `void ClearBackground(Color color)`: Set background color (framebuffer clear color).
 - `int GetRandomValue(int min, int max)`: Get a random value between min and max (both included).
 - `float GetFrameTime(void)`: Get time in seconds for last frame drawn (delta time).
 - `Font GetFontDefault(void)`: Get the default Font.
-- `void SetMouseCursor(int cursor)`: Set mouse cursor.
 - `int MeasureText(const char *text, int fontSize)`: Measure string width for default font.
 - `double GetTime(void)`: Get elapsed time in seconds since InitWindow().
 
