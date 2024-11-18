@@ -255,10 +255,8 @@ FUNCTION DrawGame()
 
     IF (!gameOver && isQuitHovered)
         SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
-    ENDIF
     ELSEIF (!gameOver && isHintHovered)
         SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
-    ENDIF
     ELSEIF (!gameOver)
         SetMouseCursor(MOUSE_CURSOR_DEFAULT)
     ENDIF
@@ -281,11 +279,9 @@ FUNCTION DrawGame()
             IF (isWinningCell)
                 IF (!isTwoPlayer && winner == PLAYER_O)
                     cellColor ← (Color){255, 200, 200, 255}
-                ENDIF
                 ELSE
                     cellColor ← (Color){144, 238, 144, 255}
                 ENDIF
-            ENDIF
             ELSE
                 cellColor ← isHovered ? DARKGRAY : LIGHTGRAY
             ENDIF
@@ -708,9 +704,8 @@ FUNCTION AITurn()
         ELSE
             AITurnDecisionTree()
         ENDIF
-    ENDIF
 
-    IF (currentDifficulty == MEDIUM)
+    ELSEIF (currentDifficulty == MEDIUM)
         depthLimit ← 4
         FOR i = 0 to GRID_SIZE - 1 do
             FOR j = 0 to GRID_SIZE - 1 do

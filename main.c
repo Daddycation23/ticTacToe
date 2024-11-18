@@ -1,6 +1,6 @@
 #include "main.h"
 
-// Define the global arrays
+// Define the global variables
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
 FallingSymbol symbols[MAX_SYMBOLS];
 TitleWord titleWords[5];
@@ -23,7 +23,6 @@ int aiWins = 0;
 struct GetHint hint;
 int winningCells[3][2] = {{-1,-1}, {-1,-1}, {-1,-1}}; // Store winning cell coordinates
 
-// Define variables
 ModeStats mediumStats = {0, 0, 0, 0};
 ModeStats hardStats = {0, 0, 0, 0};
 ModeStats naiveBayesStats = {0, 0, 0, 0};
@@ -62,8 +61,8 @@ int main(void)
     SetSoundVolume(victorySound, 0.4f);
     SetSoundVolume(loseSound, 0.4f);
     SetSoundVolume(drawSound, 0.4f);
-    SetSoundVolume(mainMenuSound, 0.4f);  // Background music slightly lower
-    SetSoundVolume(playSound, 0.4f);      // Background music slightly lower
+    SetSoundVolume(mainMenuSound, 0.4f);
+    SetSoundVolume(playSound, 0.4f);
 
     InitSymbols();  // Initialize the falling symbols
     InitTitleWords();  // Initialize the title words
@@ -787,6 +786,7 @@ void InitGame() {
     }
 }
 
+// function to point to the current game mode stats
 ModeStats* GetCurrentModeStats() {
     if (currentDifficulty == EASY) {
         return (currentModel == NAIVE_BAYES) ? &naiveBayesStats : &decisionTreeStats;
@@ -942,9 +942,8 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
             AITurnDecisionTree();  // New function to implement
         }
     }
-
     // Medium mode: use Minimax with limited depth search of 4
-    if (currentDifficulty == MEDIUM) {
+    else if (currentDifficulty == MEDIUM) {
         int depthLimit = 4; // Set a depth limit for medium difficulty
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
