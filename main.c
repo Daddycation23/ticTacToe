@@ -57,13 +57,13 @@ int main(void)
     playSound = LoadSound("assets\\Play.mp3");  // Load the play sound
 
     // After loading each sound, set its volume (between 0.0f to 1.0f)
-    SetSoundVolume(buttonClickSound, 0.3f);  // 30% volume
-    SetSoundVolume(popSound, 0.3f);
-    SetSoundVolume(victorySound, 0.3f);
-    SetSoundVolume(loseSound, 0.3f);
-    SetSoundVolume(drawSound, 0.3f);
-    SetSoundVolume(mainMenuSound, 0.2f);  // Background music slightly lower
-    SetSoundVolume(playSound, 0.2f);      // Background music slightly lower
+    SetSoundVolume(buttonClickSound, 0.4f);  // 40% volume
+    SetSoundVolume(popSound, 0.4f);
+    SetSoundVolume(victorySound, 0.4f);
+    SetSoundVolume(loseSound, 0.4f);
+    SetSoundVolume(drawSound, 0.4f);
+    SetSoundVolume(mainMenuSound, 0.4f);  // Background music slightly lower
+    SetSoundVolume(playSound, 0.4f);      // Background music slightly lower
 
     InitSymbols();  // Initialize the falling symbols
     InitTitleWords();  // Initialize the title words
