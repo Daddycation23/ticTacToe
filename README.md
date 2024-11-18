@@ -62,15 +62,15 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void AITurnDecisionTree()`: Implements the decision tree algorithm for AI decision-making.
 - `int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE])`: Evaluates the board to determine the score for the AI.
 - `void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records)`: Loads data from file
-- `void split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO)`: Split data
-- `void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: 
-- `void save_NBmodel(const NaiveBayesModel *model, const char *filename)`:
-- `void test_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`:
-- `double calculate_probability(NaiveBayesModel *model, const char board[], int outcome)`: 
-- `int predict_outcome(NaiveBayesModel *model, const char board[])`:
-- `int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol)`:
-- `int outcome_index(const char *outcome)`:
-- `void divide(int dividend, int divisor, int *quo, int *rem)`: 
+- `void split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO)`: Shuffle and split dataset for training and testing of model
+- `void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: Train model with Naive Bayes(NB) algorithm
+- `void save_NBmodel(const NaiveBayesModel *model, const char *filename)`: Save weights of NB model into a text file
+- `void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: save prediction results of trained NB model into text file
+- `double calculate_probability(NaiveBayesModel *model, const char board[], int outcome)`: Calculate the posterior probability of a specificed outcome based on the given board layout.
+- `int predict_outcome(NaiveBayesModel *model, const char board[])`: Predict outcome of a given board layout
+- `int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol)`: Predict next best move based on given board layout
+- `int outcome_index(const char *outcome)`: Convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
+- `void divide(int dividend, int divisor, int *quo, int *rem)`: Get quotient and remainder of a given integer
 
 ### Raylib Functions
 - `void InitWindow(int width, int height, const char *title)`: Initialize window and OpenGL context.
