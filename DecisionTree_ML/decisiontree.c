@@ -38,12 +38,20 @@ void growth_Tree(DecisionTreeNode *tree) {
     printf("Training Accuracy: %.2f%%\n", train_accuracy * 100);
     display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training");
 
-
-
     // Evaluate testing data
     float test_accuracy = evaluate_with_randomness(tree, test_set, test_size, test_confusion);
     printf("Testing Accuracy: %.2f%%\n", test_accuracy * 100);
     display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing");
+
+    // Write accuracies to the confusion matrix file
+    FILE *file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "a");
+    if (!file) {
+        perror("Failed to open confusion matrix file for writing accuracies");
+        return;
+    }
+    fprintf(file, "\nTraining Accuracy: %.2f%%\n", train_accuracy * 100);
+    fprintf(file, "Testing Accuracy: %.2f%%\n", test_accuracy * 100);
+    fclose(file);
 }
 
 // Load dataset from file
