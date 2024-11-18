@@ -24,6 +24,7 @@ int aiWins = 0; // Set aiWins to 0
 int totalGames = 0; // Set the total number of games to 0
 Confetti confetti[MAX_CONFETTI]; // Set the maximum number of confetti particles
 bool showPartyAnimation = false; // Flag to check if the party animation should be shown
+bool allInactive = true; // Flag to check if all confetti particles are inactive
 struct GetHint hint = { -1, -1, 0, 0}; // Declare hint object to store best move and hint counts for player 
 int winningCells[3][2] = {{-1,-1}, {-1,-1}, {-1,-1}}; // Store winning cell coordinates
 
@@ -248,7 +249,7 @@ int main(void)
 
         BeginDrawing();  // Begin drawing
         ClearBackground(RAYWHITE); // Clear the background to white
-        if (gameState!=GAME)
+        if (gameState!=GAME && gameState!=GAME_OVER)
         {
             // resets hintCount when not in game
             hint.hintCountX = 0;
@@ -369,22 +370,38 @@ void UpdateSymbols() {
 // Initialize the confetti
 void InitConfetti() {
     for (int i = 0; i < MAX_CONFETTI; i++) {
+        // Start all particles from bottom right corner with some variation
         confetti[i].position = (Vector2){
-            GetRandomValue(0, SCREEN_WIDTH),
-            GetRandomValue(-SCREEN_HEIGHT, 0)
+            SCREEN_WIDTH - GetRandomValue(30, 70),  // More variation in start position
+            SCREEN_HEIGHT - GetRandomValue(30, 70)
         };
+        
+        // Wider spray pattern (160° to 280° for almost full semicircle)
+        float angle = GetRandomValue(160, 280) * DEG2RAD;  // Increased angle range
+        float speed = GetRandomValue(600, 1200) / 100.0f;  // Increased speed range
         confetti[i].velocity = (Vector2){
-            GetRandomValue(-100, 100)/100.0f,
-            GetRandomValue(100, 200)/100.0f
+            cos(angle) * speed,
+            sin(angle) * speed
         };
-        confetti[i].color = (Color){
-            GetRandomValue(150, 255),  // Brighter red range
-            GetRandomValue(150, 255),  // Brighter green range
-            GetRandomValue(150, 255),  // Brighter blue range
-            GetRandomValue(200, 255)   // Semi-transparent
-        };
-        confetti[i].size = GetRandomValue(5, 15);
+        
+        // Festive colors for party popper
+        switch(GetRandomValue(0, 4)) {
+            case 0: confetti[i].color = (Color){255, 50, 50, 255};   // Red
+                break;
+            case 1: confetti[i].color = (Color){50, 255, 50, 255};   // Green
+                break;
+            case 2: confetti[i].color = (Color){50, 50, 255, 255};   // Blue
+                break;
+            case 3: confetti[i].color = (Color){255, 255, 50, 255};  // Yellow
+                break;
+            case 4: confetti[i].color = (Color){255, 50, 255, 255};  // Pink
+                break;
+        }
+        
+        confetti[i].size = GetRandomValue(2, 4);
         confetti[i].active = true;
+        confetti[i].alpha = 1.0f;
+        confetti[i].lifetime = GetRandomValue(150, 200) / 100.0f;
     }
 }
 
@@ -392,15 +409,40 @@ void InitConfetti() {
 void UpdateConfetti() {
     for (int i = 0; i < MAX_CONFETTI; i++) {
         if (confetti[i].active) {
-            confetti[i].position.x += confetti[i].velocity.x * 0.2f;  // Add multiplier to slow horizontal movement
-            confetti[i].position.y += confetti[i].velocity.y * 0.2f;  // Add multiplier to slow vertical movement
-            confetti[i].velocity.y += 0.02f;  // gravity effect
+            allInactive = false;    // Reset the flag
             
-            if (confetti[i].position.y > SCREEN_HEIGHT) {
-                confetti[i].position.y = -10;
-                confetti[i].velocity.y = GetRandomValue(200, 400)/100.0f;
+            // Update position with drag effect
+            confetti[i].velocity.x *= 0.99f;
+            confetti[i].velocity.y *= 0.99f;
+            
+            // Increased movement multiplier for wider spread
+            confetti[i].position.x += confetti[i].velocity.x * 0.6f;  // Increased from 0.4f
+            confetti[i].position.y += confetti[i].velocity.y * 0.6f;  // Increased from 0.4f
+            
+            // Reduced gravity for more horizontal movement
+            confetti[i].velocity.y += 0.02f;
+            
+            // Increased random movement for more spread
+            confetti[i].velocity.x += GetRandomValue(-20, 20) / 100.0f;  // Increased range
+            confetti[i].velocity.y += GetRandomValue(-20, 20) / 100.0f;  // Increased range
+            
+            // Slower fade out
+            confetti[i].alpha -= 0.002f;
+            confetti[i].lifetime -= 0.002f;
+            
+            // Increased bounds for off-screen check to allow more spread
+            if (confetti[i].alpha <= 0 || 
+                confetti[i].lifetime <= 0 ||
+                confetti[i].position.y > SCREEN_HEIGHT + 50 ||  // Increased bounds
+                confetti[i].position.x < -50 ||                 // Increased bounds
+                confetti[i].position.x > SCREEN_WIDTH + 50) {   // Increased bounds
+                confetti[i].active = false;
             }
         }
+    }
+    
+    if (allInactive) {
+        showPartyAnimation = false; // Stop the party animation
     }
 }
 
@@ -408,13 +450,38 @@ void UpdateConfetti() {
 void DrawConfetti() {
     for (int i = 0; i < MAX_CONFETTI; i++) {
         if (confetti[i].active) {
-            DrawRectangle(
+            Color particleColor = confetti[i].color;
+            particleColor.a = (unsigned char)(confetti[i].alpha * 255);
+            
+            // Longer trails for more visible effect
+            Vector2 direction = {
+                -confetti[i].velocity.x * 0.15f,  // Increased from 0.1f
+                -confetti[i].velocity.y * 0.15f   // Increased from 0.1f
+            };
+            
+            // Draw main particle
+            DrawCircle(
                 confetti[i].position.x,
                 confetti[i].position.y,
                 confetti[i].size,
-                confetti[i].size,
-                confetti[i].color
+                particleColor
             );
+            
+            // Longer trails with more segments
+            for (int trail = 1; trail <= 7; trail++) {  // Increased from 5 to 7 segments
+                float trailAlpha = confetti[i].alpha * (1.0f - (trail * 0.14f));  // Adjusted fade
+                Vector2 trailPos = {
+                    confetti[i].position.x + direction.x * trail,
+                    confetti[i].position.y + direction.y * trail
+                };
+                
+                DrawCircle(
+                    trailPos.x,
+                    trailPos.y,
+                    confetti[i].size * (1.0f - (trail * 0.12f)),  // Adjusted size reduction
+                    ColorAlpha(particleColor, trailAlpha * 255)
+                );
+            }
         }
     }
 }
@@ -436,8 +503,7 @@ void DrawSymbols() {
 }
 
 // Draw the game
-void DrawGame()
-{
+void DrawGame() {
     bool isHintHovered = false;
     Vector2 mousePos = GetMousePosition(); 
     
@@ -515,9 +581,9 @@ void DrawGame()
     const char *hintText = "Hint: ";
     char hintTextFinal[10];
     // hintCount for player X
-    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountX));
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountX)); // hint button text
     if (currentPlayerTurn==PLAYER_X_TURN){
-        if (hint.hintCountX < 2)
+        if (hint.hintCountX < 2) // hint button active when count < 2
         {
             isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40);
             DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered);
@@ -527,10 +593,10 @@ void DrawGame()
         }    
     }
     // hintCount for player O
-    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountO));
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountO)); // hint button text
     if (currentPlayerTurn==PLAYER_O_TURN)
     {
-        if (hint.hintCountO < 2)
+        if (hint.hintCountO < 2) // hint button active when count < 2
         {
             isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40);
             DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered);    
@@ -582,6 +648,13 @@ void DrawGame()
             DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, RED);
         }
     }
+}
+
+bool HandleButtonHover(Rectangle button, const char* text, int fontSize, bool* isHovered) {
+    Vector2 mousePos = GetMousePosition();
+    *isHovered = CheckCollisionPointRec(mousePos, button);
+    DrawButton(button, text, fontSize, *isHovered);
+    return *isHovered;
 }
 
 // Draw the menu
@@ -655,17 +728,14 @@ void DrawMenu() {
         BUTTON_HEIGHT
     };
     
-    Vector2 mousePos = GetMousePosition();
-
     // Check hover states
-    bool singlePlayerHover = CheckCollisionPointRec(mousePos, singlePlayerBtn);
-    bool twoPlayerHover = CheckCollisionPointRec(mousePos, twoPlayerBtn);
-    bool exitHover = CheckCollisionPointRec(mousePos, exitBtn);
+    bool singlePlayerHover = false;
+    bool twoPlayerHover = false;
+    bool exitHover = false;
 
-    // Draw buttons with hover effects
-    DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover);
-    DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover);
-    DrawButton(exitBtn, "Exit", buttonFontSize, exitHover);
+    HandleButtonHover(singlePlayerBtn, "Single Player", buttonFontSize, &singlePlayerHover);
+    HandleButtonHover(twoPlayerBtn, "Two Players", buttonFontSize, &twoPlayerHover);
+    HandleButtonHover(exitBtn, "Exit", buttonFontSize, &exitHover);
 
     // Set cursor based on any button hover
     SetMouseCursor((singlePlayerHover || twoPlayerHover || exitHover) ? 
@@ -807,19 +877,17 @@ void DrawDifficultySelect() {
         30                 // Height
     };
 
-    Vector2 mousePos = GetMousePosition();
-    
     // Check hover states
-    bool easyHover = CheckCollisionPointRec(mousePos, easyBtn);
-    bool mediumHover = CheckCollisionPointRec(mousePos, mediumBtn);
-    bool hardHover = CheckCollisionPointRec(mousePos, hardBtn);
-    bool backHover = CheckCollisionPointRec(mousePos, backBtn);
+    bool easyHover = false;
+    bool mediumHover = false;
+    bool hardHover = false;
+    bool backHover = false;
 
     // Draw buttons with hover effects
-    DrawButton(easyBtn, "Easy", buttonFontSize, easyHover);
-    DrawButton(mediumBtn, "Medium", buttonFontSize, mediumHover);
-    DrawButton(hardBtn, "Hard", buttonFontSize, hardHover);
-    DrawButton(backBtn, "Back", buttonFontSize, backHover);
+    HandleButtonHover(easyBtn, "Easy", buttonFontSize, &easyHover);
+    HandleButtonHover(mediumBtn, "Medium", buttonFontSize, &mediumHover);
+    HandleButtonHover(hardBtn, "Hard", buttonFontSize, &hardHover);
+    HandleButtonHover(backBtn, "Back", buttonFontSize, &backHover);
 
     // Set cursor based on any button hover
     SetMouseCursor((easyHover || mediumHover || hardHover || backHover) ? 
@@ -857,21 +925,26 @@ void DrawModelSelect() {
         30                 // Height
     };
 
-    Vector2 mousePos = GetMousePosition();
-    bool nbHover = CheckCollisionPointRec(mousePos, nbBtn);
-    bool dtHover = CheckCollisionPointRec(mousePos, dtBtn);
-    bool backHover = CheckCollisionPointRec(mousePos, backBtn);
+    // Check hover states
+    bool nbHover = false;
+    bool dtHover = false;
+    bool backHover = false;
 
-    DrawButton(nbBtn, "Naive Bayes", 20, nbHover);
-    DrawButton(dtBtn, "Decision Tree", 20, dtHover);
-    DrawButton(backBtn, "Back", 20, backHover);
+    // Draw buttons with hover effects
+    HandleButtonHover(nbBtn, "Naive Bayes", 20, &nbHover);
+    HandleButtonHover(dtBtn, "Decision Tree", 20, &dtHover);
+    HandleButtonHover(backBtn, "Back", 20, &backHover);
     
+    // Set cursor based on any button hover
     SetMouseCursor((nbHover || dtHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
 // Game Functions
 // initialize the game
 void InitGame() {
+    // resets hintCount when retry
+    hint.hintCountO = 0;
+    hint.hintCountX = 0;
     showPartyAnimation = false; // Reset party animation
 
     // Stop all sounds that might be playing
@@ -984,15 +1057,16 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                 getHint();
                 row = hint.row;
                 col = hint.col;
-            } 
-            if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
+            } else if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
             {
                 PlaySound(buttonClickSound);
                 hint.hintCountO+=1;
                 getHint();
                 row = hint.row;
                 col = hint.col;
-            } 
+            } else {
+                return false; // No move was made
+            }
         }
 
         // When updating stats, use the current mode's counter:

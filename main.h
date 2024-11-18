@@ -24,7 +24,7 @@
 #define ROTATION_SPEED 0.02f  // Speed of rotation
 #define JUMP_SPEED 0.02f  // Constant jump speed
 #define JUMP_DELAY 0.7f  // Constant delay between jumps
-#define MAX_CONFETTI 100    // Maximum number of confetti particles
+#define MAX_CONFETTI 200    // Maximum number of confetti particles
 
 #define NUM_POSITIONS 9
 #define NUM_OUTCOMES 2 // positive or negative
@@ -99,11 +99,13 @@ struct GetHint
 };
 
 typedef struct {
-    Vector2 position;
-    Vector2 velocity;
-    Color color;
-    float size;
-    bool active;
+    Vector2 position;   // Position of the particle
+    Vector2 velocity;   // Velocity of the particle (speed)
+    Color color;    // Color of the particle
+    float size;     // Size of the particle
+    bool active;    // Add active flag
+    float alpha;    // Add alpha for fade effect
+    float lifetime; // Add lifetime for particle duration
 } Confetti;
 
 // Declare variables as extern
@@ -157,6 +159,7 @@ void DrawModelSelect(void);
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
 void DrawMenu();
 void DrawGameOver();
+bool HandleButtonHover(Rectangle button, const char* text, int fontSize, bool* isHovered);
 
 void InitGame();
 void InitSymbols();

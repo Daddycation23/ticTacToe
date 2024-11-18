@@ -15,7 +15,7 @@ BEGIN
 
     InitSymbols()
     InitTitleWords()
-    InitConfetti();
+    InitConfetti()
 
     boards[1000][NUM_POSITIONS + 1] ← {0}
 
@@ -268,39 +268,85 @@ ENDFUNCTION
 
 FUNCTION DrawSymbols()
     FOR i = 0 tp MAX_SYMBOLS - 1 do
-        origin ← {10, 10};  
+        origin ← {10, 10} 
         DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED)
     ENDFOR
 ENDFUNCTION
 
 FUNCTION InitConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
-        confetti[i].position ← (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) }
-        confetti[i].velocity ← (Vector2){ GetRandomValue(-100, 100)/100.0f, GetRandomValue(100, 200)/100.0f }
-        confetti[i].color ← (Color){ GetRandomValue(150, 255), GetRandomValue(150, 255), GetRandomValue(150, 255), GetRandomValue(150, 255) }
-        confetti[i].size ← GetRandomValue(5, 15)
+        confetti[i].position ← (Vector2){ SCREEN_WIDTH - GetRandomValue(30, 70), SCREEN_HEIGHT - GetRandomValue(30, 70)}
+        angle ← GetRandomValue(160, 280) * DEG2RAD
+        speed ← GetRandomValue(600, 1200)/100.0f
+        confetti[i].velocity ← (Vector2){ cos(angle) * speed, sin(angle) * speed }
+        SWITCH(GetRandomValue(0, 4))
+            CASE 0:
+                confetti[i].color ← RED
+                BREAK
+            CASE 1:
+                confetti[i].color ← GREEN
+                BREAK
+            CASE 2:
+                confetti[i].color ← BLUE
+                BREAK
+            CASE 3:
+                confetti[i].color ← YELLOW
+                BREAK
+            CASE 4:
+                confetti[i].color ← Pink
+                BREAK
+        ENDSWITCH
+        confetti[i].size ← GetRandomValue(2, 4)
         confetti[i].active ← true
+        confetti[i].alpha ← 1.0f
+        confetti[i].lifetime ← GetRandomValue(150, 200)/100.0f
     ENDFOR
 ENDFUNCTION
 
 FUNCTION UpdateConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
         IF (confetti[i].active)
-            confetti[i].position.x ← confetti[i].position.x + confetti[i].velocity.x * 0.2f
-            confetti[i].position.y ← confetti[i].position.y + confetti[i].velocity.y * 0.2f
+            allInactive ← false
+            confetti[i].velocity.x = confetti[i].velocity.x * 0.99f
+            confetti[i].velocity.y = confetti[i].velocity.y * 0.99f            
+            
+            confetti[i].position.x ← confetti[i].position.x + confetti[i].velocity.x * 0.6f
+            confetti[i].position.y ← confetti[i].position.y + confetti[i].velocity.y * 0.6f
+            
             confetti[i].velocity.y ← confetti[i].velocity.y + 0.02f
-            IF (confetti[i].position.y > SCREEN_HEIGHT)
-                confetti[i].position.y ← -10
-                confetti[i].velocity.y ← GetRandomValue(200, 400)/100.0f
+            
+            confetti[i].velocity.x ← confetti[i].velocity.x + GetRandomValue(-20, 20) / 100.0f
+            confetti[i].velocity.y ← confetti[i].velocity.y + GetRandomValue(-20, 20) / 100.0f
+
+            confetti[i].alpha ← confetti[i].alpha - 0.02f
+            confetti[i].lifetime ← confetti[i].lifetime - 0.02f
+
+            IF (confetti[i].alpha <= 0 || 
+                confetti[i].lifetime <= 0 ||
+                confetti[i].position.y > SCREEN_HEIGHT + 50 ||
+                confetti[i].position.x < -50 ||
+                confetti[i].position.x > SCREEN_WIDTH + 50)
+                    confetti[i].active ← false
             ENDIF
         ENDIF
     ENDFOR
+    IF (allInactive)
+        showPartyAnimation ← false
+    ENDIF
 ENDFUNCTION
 
 FUNCTION DrawConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
         IF (confetti[i].active)
-            DrawRectangle(confetti[i].position.x, confetti[i].position.y, confetti[i].size, confetti[i].size, confetti[i].color)
+            particleColor ← confetti[i].color
+            particleColor.a ← confetti[i].alpha*255
+            direction ← (Vector2){ -confetti[i].velocity.x * 0.15f, -confetti[i].velocity.y * 0.15f }
+            DrawCircle(confetti[i].position.x, confetti[i].position.y, confetti[i].size, particleColor)
+            FOR trail = 0 to 7 do
+                trailAlpha ← confetti[i].alpha * (1.0f - (trail * 0.14f))
+                trailPos ← { confetti[i].position.x + direction.x * trail, confetti[i].position.y + direction.y * trail }
+                DrawCircle(trailPos.x, trailPos.y, confetti[i].size * (1.0f - (trail * 0.12f)), ColorAlpha(particleColor, trailAlpha * 255))
+            ENDFOR
         ENDIF
     ENDFOR
 ENDFUNCTION
@@ -398,10 +444,17 @@ FUNCTION DrawGame()
     ENDIF
 ENDFUNCTION
 
+FUNCTION HandleButtonHover()
+    mousePos ← GetMousePosition()
+    *isHintHovered ← CheckCollisionPointRec(mousePos, button)
+    DrawButton(button, text, fontSize, *isHovered)
+    return *isHintHovered
+ENDFUNCTION
+
 FUNCTION DrawMenu()
     titleFontSize ← 40
     buttonFontSize ← 20 
-    cellSize ← 50;  // larger cells for better visibility
+    cellSize ← 50
     gridWidth ← TITLE_GRID_SIZE * cellSize
     gridHeight ← TITLE_GRID_SIZE * cellSize
     startX ← SCREEN_WIDTH/2 - gridWidth/2
@@ -463,13 +516,12 @@ FUNCTION DrawMenu()
         BUTTON_HEIGHT
     }
 
-    mousePos ← GetMousePosition()
-    singlePlayerHover ← CheckCollisionPointRec(mousePos, singlePlayerBtn)
-    twoPlayerHover ← CheckCollisionPointRec(mousePos, twoPlayerBtn)
-    exitHover ← CheckCollisionPointRec(mousePos, exitBtn)
-    DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover)
-    DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover)
-    DrawButton(exitBtn, "Exit", buttonFontSize, exitHover)
+    singlePlayerHover ← false
+    twoPlayerHover ← false
+    exitHover ← false
+    HandleButtonHover(singlePlayerBtn, "Single Player", buttonFontSize, &singlePlayerHover)
+    HandleButtonHover(twoPlayerBtn, "Two Players", buttonFontSize, &twoPlayerHover)
+    HandleButtonHover(exitBtn, "Exit", buttonFontSize, &exitHover)    
     SetMouseCursor((singlePlayerHover || twoPlayerHover || exitHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
 ENDFUNCTION
 
@@ -585,15 +637,14 @@ FUNCTION DrawDifficultySelect()
         30                 
     }
 
-    mousePos ← GetMousePosition()
-    easyHover ← CheckCollisionPointRec(mousePos, easyBtn)
-    mediumHover ← CheckCollisionPointRec(mousePos, mediumBtn)
-    hardHover ← CheckCollisionPointRec(mousePos, hardBtn)
-    backHover ← CheckCollisionPointRec(mousePos, backBtn)
-    DrawButton(easyBtn, "Easy", buttonFontSize, easyHover)
-    DrawButton(mediumBtn, "Medium", buttonFontSize, mediumHover)
-    DrawButton(hardBtn, "Hard", buttonFontSize, hardHover)
-    DrawButton(backBtn, "Back", buttonFontSize, backHover)
+    easyHover ← false
+    mediumHover ← false
+    hardHover ← false
+    backHover ← false
+    HandleButtonHover(easyBtn, "Easy", buttonFontSize, &easyHover)
+    HandleButtonHover(mediumBtn, "Medium", buttonFontSize, &mediumHover)
+    HandleButtonHover(hardBtn, "Hard", buttonFontSize, &hardHover)
+    HandleButtonHover(backBtn, "Back", buttonFontSize, &backHover)    
     SetMouseCursor((easyHover || mediumHover || hardHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
 ENDFUNCTION
 
@@ -623,17 +674,18 @@ FUNCTION DrawModelSelect()
         SCREEN_WIDTH/6,    
         30                 
     }
-    mousePos ← GetMousePosition();
-    nbHover ← CheckCollisionPointRec(mousePos, nbBtn)
-    dtHover ← CheckCollisionPointRec(mousePos, dtBtn)
-    backHover ← CheckCollisionPointRec(mousePos, backBtn)
-    DrawButton(nbBtn, "Naive Bayes", 20, nbHover)
-    DrawButton(dtBtn, "Decision Tree", 20, dtHover)
-    DrawButton(backBtn, "Back", 20, backHover)
+    nbHover ← false
+    dtHover ← false
+    backHover ← false
+    HandleButtonHover(nbBtn, "Naive Bayes", 20, &nbHover)
+    HandleButtonHover(dtBtn, "Decision Tree", 20, &dtHover)
+    HandleButtonHover(backBtn, "Back", 20, &backHover)
     SetMouseCursor((nbHover || dtHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
 ENDFUNCTION
 
 FUNCTION InitGame()
+    hint.hintCountO ← 0
+    hint.hintCountX ← 0
     showPartyAnimation ← false
     StopSound(victorySound)
     StopSound(loseSound)
@@ -705,12 +757,27 @@ FUNCTION UpdateGame()
 ENDFUNCTION
 
 FUNCTION HandlePlayerTurn()
+    clearHint()
     IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         mousePos ← GetMousePosition()
         row ← (int)(mousePos.y / CELL_SIZE)
         col ← (int)(mousePos.x / CELL_SIZE)
+        IF (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
+            PlaySound(buttonClickSound)
+            hint.hintCountX ← hint.hintCountX + 1
+            getHint()
+            row ← hint.row
+            col ← hint.col
+        ELSEIF (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO <2)
+            PlaySound(buttonClickSound)
+            hint.hintCountO ← hint.hintCountO + 1
+            getHint()
+            row = hint.row
+            row = hint.col
+        ELSE
+            RETURN false
+        ENDIF
         currentStats ← GetCurrentModeStats()
-
         IF (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
             IF (grid[row][col] == EMPTY)
                 grid[row][col] ← (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O
@@ -771,7 +838,7 @@ FUNCTION AITurn()
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (grid[i][j] == EMPTY)
                     grid[i][j] ← PLAYER_O
-                    score ← MiniMax()
+                    score ← Minimax()
                     grid[i][j] ← EMPTY
 
                     IF (score > bestScore)
@@ -789,7 +856,7 @@ FUNCTION AITurn()
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (grid[i][j] == EMPTY)
                     grid[i][j] ← PLAYER_O
-                    score ← MiniMax()
+                    score ← Minimax()
                     grid[i][j] ← EMPTY
 
                     IF (score > bestScore)
@@ -857,8 +924,8 @@ FUNCTION CheckDraw()
                 RETURN false
             ENDIF
         ENDFOR
-    RETURN true
     ENDFOR
+    RETURN true
 ENDFUNCTION
 
 FUNCTION UpdateGameOver()
@@ -885,6 +952,85 @@ FUNCTION UpdateGameOver()
             gameState ← GAME
             InitGame()
         ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION clearHint()
+    hint.row ← -1
+    hint.col ← -1 
+ENDFUNCTION
+
+FUNCTION getHint()
+    bestScore ← -1000
+    bestRow ← -1
+    bestCol ← -1
+    depthLimit ← 9
+    FOR i=0 to GRID_SIZE -1 do
+        FOR j = 0 to GRID_SIZE -1 do
+            IF (grid[i][j] == EMPTY)
+                grid[i][j] ← PLAYER_O
+                socre ← Minimax()
+                grid[i][j] ← EMPTY
+                IF (score > bestScore)
+                    bestScore ← score
+                    bestRow ← i
+                    bestCol ← j
+                ENDIF
+            ENDIF
+        ENDFOR
+    ENDFOR
+    IF (bestRow != -1 && bestCol != -1)
+        hint.row = bestRow
+        hint.col = bestCol
+    ENDIF
+ENDFUNCTION
+
+FUNCTION Minimax()
+    IF (depth >= depthLimit) 
+        RETURN 0
+    ENDIF
+    score ← EvaluateBoard()
+    IF (score == 10) 
+        RETURN score - depth
+    ENDIF
+    IF (sore == -10)
+        RETURN score + depth
+    ENDIF
+    IF (CheckDraw())
+        RETURN 0
+    ENDIF
+    IF (isMaximizing)
+        bestScore ← -1000
+        FOR i = 0 to GRID_SIZE - 1 do
+            FOR j = 0 to GRID_SIZE -1 do
+                IF (board[i][j] == EMPTY)
+                    board[i][j] ← PLAYER_O
+                    bestScore ← fmax(bestScore, Minimax())
+                    board[i][j] ← EMPTY
+                    alpha ← fmax(alpha, bestScore)
+                    IF (beta <= alpha)
+                        BREAK
+                    ENDIF
+                ENDIF
+            ENDFOR
+        ENDFOR
+        RETURN bestScore
+    ELSE
+        bestScore ← 1000
+        FOR i = 0 to GRID_SIZE - 1 do
+            FOR j = 0 to GRID_SIZE - 1 do
+                IF (board[i][j] == EMPTY)
+                    board[i][j] ← PLAYER_X
+                    bestScore ← fmin(bestScore, Minimax())
+                    board[i][j] ← EMPTY
+                    beta ← fmin(beta, bestScore)
+                    IF (beta <= alpha)
+                        BREAK
+                    ENDIF
+                ENDIF
+            ENDFOR
+        ENDFOR
+        RETURN bestScore
     ENDIF
 ENDFUNCTION
 
