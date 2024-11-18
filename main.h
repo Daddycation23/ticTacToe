@@ -78,10 +78,13 @@ typedef struct {
     double class_probs[NUM_OUTCOMES];
 } NaiveBayesModel;
 
+// Define GetHint object to store best move row and col, and the counts of hints
 struct GetHint
 {
     int row;
     int col;
+    int hintCountX;
+    int hintCountO;
 };
 
 typedef struct {
