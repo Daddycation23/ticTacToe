@@ -74,11 +74,9 @@ void load_dataset(const char *filename, DataRow dataset[], int *dataset_size) {
 
 // Shuffle dataset
 void shuffle_dataset(DataRow dataset[], int size) {
-    // printf("Before shuffling:\n");
     for (int i = 0; i < 5; i++) { // Print first 5 rows for debugging
         for (int j = 0; j < NUM_FEATURES; j++) {
         }
-       // printf("Label: %d\n", dataset[i].label);
     }
 
     for (int i = size - 1; i > 0; i--) {
@@ -90,7 +88,6 @@ void shuffle_dataset(DataRow dataset[], int size) {
 
     for (int i = 0; i < 5; i++) { // Print first 5 rows again for debugging
         for (int j = 0; j < NUM_FEATURES; j++) {
-            // printf("%d ", dataset[i].features[j]);
         }
     }
 }
@@ -271,11 +268,11 @@ void dt_predict_best_move(DecisionTreeNode *tree, char board[3][3], char current
         printf("Error: Decision tree is not initialized!\n");
         return;
     }
-    int features[NUM_FEATURES]; // Array to store the board as features
-    int max_positive_prob = -1; // Variable to track the best positive prediction
-    *best_row = -1;             // Initialize best move row
-    *best_col = -1;             // Initialize best move column
-    int attempts = 0;           // Track the number of attempts made
+    int features[NUM_FEATURES]; 
+    int max_positive_prob = -1; 
+    *best_row = -1;             
+    *best_col = -1;            
+    int attempts = 0;          
 
     // Convert the board to features
     for (int i = 0; i < 3; i++) {
