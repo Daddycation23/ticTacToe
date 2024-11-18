@@ -286,9 +286,9 @@ ENDFUNCTION
 FUNCTION UpdateConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
         IF (confetti[i].active)
-            confetti[i].position.x ← confetti[i].position.x + confetti[i].velocity.x
-            confetti[i].position.y ← confetti[i].position.y + confetti[i].velocity.y
-            confetti[i].velocity.y ← confetti[i].velocity.y + 0.05f
+            confetti[i].position.x ← confetti[i].position.x + confetti[i].velocity.x * 0.2f
+            confetti[i].position.y ← confetti[i].position.y + confetti[i].velocity.y * 0.2f
+            confetti[i].velocity.y ← confetti[i].velocity.y + 0.02f
             IF (confetti[i].position.y > SCREEN_HEIGHT)
                 confetti[i].position.y ← -10
                 confetti[i].velocity.y ← GetRandomValue(200, 400)/100.0f

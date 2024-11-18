@@ -381,8 +381,8 @@ void InitConfetti() {
 void UpdateConfetti() {
     for (int i = 0; i < MAX_CONFETTI; i++) {
         if (confetti[i].active) {
-            confetti[i].position.x += confetti[i].velocity.x * 0.5f;  // Add multiplier to slow horizontal movement
-            confetti[i].position.y += confetti[i].velocity.y * 0.5f;  // Add multiplier to slow vertical movement
+            confetti[i].position.x += confetti[i].velocity.x * 0.2f;  // Add multiplier to slow horizontal movement
+            confetti[i].position.y += confetti[i].velocity.y * 0.2f;  // Add multiplier to slow vertical movement
             confetti[i].velocity.y += 0.02f;  // gravity effect
             
             if (confetti[i].position.y > SCREEN_HEIGHT) {
