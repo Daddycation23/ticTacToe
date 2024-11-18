@@ -1155,9 +1155,8 @@ void clearHint() {
     hint.row = -1;
     hint.col = -1;
 }
-// Get Hint for Player
+// Get Hint
 void getHint() {
-    int player = (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O;
     int bestScore = -1000;
     int bestRow = -1;
     int bestCol = -1;
