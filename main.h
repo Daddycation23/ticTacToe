@@ -30,7 +30,7 @@
 #define NEGATIVE 1
 #define RATIO 0.8
 
-typedef enum { EMPTY, PLAYER_X, PLAYER_O} Cell;
+typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
 typedef enum { MENU, DIFFICULTY_SELECT, MODEL_SELECT, GAME, GAME_OVER } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
@@ -69,6 +69,7 @@ typedef struct {
 
 ModeStats* GetCurrentModeStats(void);
 
+// Define model type such that it holds the probabilites of number of attributes for both outcomes respectively
 typedef struct {
     double x_probs[NUM_POSITIONS][NUM_OUTCOMES];
     double o_probs[NUM_POSITIONS][NUM_OUTCOMES];
@@ -145,12 +146,12 @@ void clearHint();
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
 
-// Naive Bayes functions
+// Naive Bayes function prototypes
 void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records);
 void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_records, char train_boards[][NUM_POSITIONS + 1], int train_outcomes[], char test_boards[][NUM_POSITIONS + 1], int test_outcomes[], int *train_size, int *test_size, float ratio);
 void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
 void save_NBmodel(const NaiveBayesModel *model, const char *filename);
-void test_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
+void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size);
 double calculate_probability(NaiveBayesModel *model, const char board[], int outcome);
 int predict_outcome(NaiveBayesModel *model, const char board[]);
 int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol);
