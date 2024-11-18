@@ -57,21 +57,23 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void UpdateTitleWords()`: Updates the animation state of the title words.
 - `void DrawTitleWords()`: Draws the animated title words.
 
+### Data Processing Functions
+- `void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records)`: Loads data from file.
+- `void split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO)`: Shuffle and split dataset for training and testing of model.
+- `int outcome_index(const char *outcome)`: Convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
+
 ### AI Functions
 - `int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta)`: Implements the Minimax algorithm for AI decision-making.
 - `void AITurnDecisionTree()`: Implements the decision tree algorithm for AI decision-making.
 - `int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE])`: Evaluates the board to determine the score for the AI.
-- `void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records)`: Loads data from file
-- `void split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO)`: Shuffle and split dataset for training and testing of model
-- `void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: Train model with Naive Bayes(NB) algorithm
-- `void save_NBmodel(const NaiveBayesModel *model, const char *filename)`: Save weights of NB model into a text file
-- `void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: save prediction results of trained NB model into text file
+- `void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: Train model with Naive Bayes(NB) algorithm.
+- `void save_NBmodel(const NaiveBayesModel *model, const char *filename)`: Save weights of NB model into a text file.
+- `void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: save prediction results of trained NB model into text file.
 - `double calculate_probability(NaiveBayesModel *model, const char board[], int outcome)`: Calculate the posterior probability of a specificed outcome based on the given board layout.
-- `int predict_outcome(NaiveBayesModel *model, const char board[])`: Predict outcome of a given board layout
-- `int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol)`: Predict next best move based on given board layout
-- `int outcome_index(const char *outcome)`: Convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
-- `void divide(int dividend, int divisor, int *quo, int *rem)`: Get quotient and remainder of a given integer
-- `NBmodel/plot_confusion_matrix.py`: Python file to plot the confusion matrix of the NB model on both training and testing dataset
+- `int predict_outcome(NaiveBayesModel *model, const char board[])`: Predict outcome of a given board layout.
+- `int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol)`: Predict next best move based on given board layout.
+- `void divide(int dividend, int divisor, int *quo, int *rem)`: Get quotient and remainder of a given integer.
+- `NBmodel/plot_confusion_matrix.py`: Python file to plot the confusion matrix of the NB model on both training and testing dataset.
 
 ### Raylib Functions
 - `void InitWindow(int width, int height, const char *title)`: Initialize window and OpenGL context.
