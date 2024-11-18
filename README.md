@@ -71,6 +71,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol)`: Predict next best move based on given board layout
 - `int outcome_index(const char *outcome)`: Convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
 - `void divide(int dividend, int divisor, int *quo, int *rem)`: Get quotient and remainder of a given integer
+- `NBmodel/plot_confusion_matrix.py`: Python file to plot the confusion matrix of the NB model on both training and testing dataset
 
 ### Raylib Functions
 - `void InitWindow(int width, int height, const char *title)`: Initialize window and OpenGL context.
