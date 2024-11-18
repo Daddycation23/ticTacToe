@@ -33,7 +33,7 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
     // Shuffle the dataset using Fisher-Yates algorithm 
     srand(time(NULL));
     for (int i = total_records-1; i > 0; i--) { 
-        int j = rand() % (i + 1);   // Get unique randome number
+        int j = rand() % (i + 1);   // Get unique random number
  
         // Swap boards[i] and boards[j] 
         char temp_board[10]; 
@@ -65,7 +65,7 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
     }
 }
 
-// Utility function to convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1) ).
+// Utility function to convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
 int outcome_index(const char *outcome) {
     return (strcmp(outcome, "positive") == 0) ? POSITIVE : NEGATIVE;
 }
