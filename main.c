@@ -22,7 +22,7 @@ int totalGames = 0; // Set the total number of games to 0
 int aiWins = 0; // Set aiWins to 0
 Confetti confetti[MAX_CONFETTI]; // Set the maximum number of confetti particles
 bool showPartyAnimation = false; // Flag to check if the party animation should be shown
-struct GetHint hint;
+struct GetHint hint = { -1, -1, 0, 0}; // Declare hint object to store best move and hint counts for player 
 int winningCells[3][2] = {{-1,-1}, {-1,-1}, {-1,-1}}; // Store winning cell coordinates
 
 // Initialize the ModeStats structs
@@ -243,7 +243,13 @@ int main(void)
 
         BeginDrawing();  // Begin drawing
         ClearBackground(RAYWHITE); // Clear the background to white
-
+        if (gameState!=GAME)
+        {
+            // resets hintCount when not in game
+            hint.hintCountX = 0;
+            hint.hintCountO = 0;
+        }
+        
         switch(gameState) {
             case MENU:
                 DrawSymbols();  // Draw the falling symbols
@@ -495,19 +501,9 @@ void DrawSymbols() {
 // Draw the game
 void DrawGame()
 {
-    Vector2 mousePos = GetMousePosition();
-    bool isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40); 
-    bool isQuitHovered = (mousePos.x >= 20 && mousePos.x <= 90 && mousePos.y >= 10 && mousePos.y <= 40);
+    bool isHintHovered = false;
+    Vector2 mousePos = GetMousePosition(); 
     
-    // Only set cursor for button if we're not in game over state
-    if (!gameOver && isQuitHovered) {
-        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-    } else if (!gameOver && isHintHovered) {
-        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-    } else if (!gameOver) {
-        SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    }
-
     // The grid and pieces
     for (int i = 0; i < GRID_SIZE; i++)
     {
@@ -578,14 +574,50 @@ void DrawGame()
         SCREEN_WIDTH - 80, 10,  // moved to top right
         70, 30
     };
-    DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered);
-
+    // Hint button counts left for player
+    const char *hintText = "Hint: ";
+    char hintTextFinal[10];
+    // hintCount for player X
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountX));
+    if (currentPlayerTurn==PLAYER_X_TURN){
+        if (hint.hintCountX < 2)
+        {
+            isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40);
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered);
+        } else 
+        {
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && false);
+        }    
+    }
+    // hintCount for player O
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountO));
+    if (currentPlayerTurn==PLAYER_O_TURN)
+    {
+        if (hint.hintCountO < 2)
+        {
+            isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40);
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered);    
+        } else 
+        {
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && false);
+        }
+    } 
     // Quit button position
     Rectangle quitBtn = {
         20, 10,  // moved to top left
         70, 30
     };
+    bool isQuitHovered = (mousePos.x >= 20 && mousePos.x <= 90 && mousePos.y >= 10 && mousePos.y <= 40);
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered);
+
+    // Only set cursor for button if we're not in game over state
+    if (!gameOver && isQuitHovered) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+    } else if (!gameOver && isHintHovered) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+    } else if (!gameOver) {
+        SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+    }
 
     if (!gameOver) {
         // only display stats for single player mode
@@ -1003,14 +1035,27 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
         int row = (int)(mousePos.y / CELL_SIZE); 
         int col = (int)(mousePos.x / CELL_SIZE);
         
-        // Update hint button position check
+        // when hint button is clicked, get best move for the player and update hintCount. If hintCount is 2, button doesnt work
         if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
-            mousePos.y >= 10 && mousePos.y <= 40)
+            mousePos.y >= 10 && mousePos.y <= 40 && (hint.hintCountX < 2 || hint.hintCountO < 2))
         {
-            PlaySound(buttonClickSound);
-            getHint();
-            row = hint.row;
-            col = hint.col;
+            // Check player turn and update the hint count when hint button is clicked
+            if (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
+            {
+                PlaySound(buttonClickSound);
+                hint.hintCountX+=1;
+                getHint();
+                row = hint.row;
+                col = hint.col;
+            } 
+            if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
+            {
+                PlaySound(buttonClickSound);
+                hint.hintCountO+=1;
+                getHint();
+                row = hint.row;
+                col = hint.col;
+            } 
         }
 
         // When updating stats, use the current mode's counter:
@@ -1285,7 +1330,7 @@ void UpdateGameOver(Sound buttonClickSound) {
     }
 }
 
-// Clear Hint 
+// Clear Hint best move
 void clearHint() {
     hint.row = -1;
     hint.col = -1;
