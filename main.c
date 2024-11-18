@@ -937,6 +937,9 @@ void DrawModelSelect() {
 // Game Functions
 // initialize the game
 void InitGame() {
+    // resets hintCount when retry
+    hint.hintCountO = 0;
+    hint.hintCountX = 0;
     showPartyAnimation = false; // Reset party animation
 
     // Stop all sounds that might be playing

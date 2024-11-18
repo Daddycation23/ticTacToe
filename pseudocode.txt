@@ -684,6 +684,8 @@ FUNCTION DrawModelSelect()
 ENDFUNCTION
 
 FUNCTION InitGame()
+    hint.hintCountO ← 0
+    hint.hintCountX ← 0
     showPartyAnimation ← false
     StopSound(victorySound)
     StopSound(loseSound)
@@ -755,12 +757,27 @@ FUNCTION UpdateGame()
 ENDFUNCTION
 
 FUNCTION HandlePlayerTurn()
+    clearHint()
     IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         mousePos ← GetMousePosition()
         row ← (int)(mousePos.y / CELL_SIZE)
         col ← (int)(mousePos.x / CELL_SIZE)
+        IF (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
+            PlaySound(buttonClickSound)
+            hint.hintCountX ← hint.hintCountX + 1
+            getHint()
+            row ← hint.row
+            col ← hint.col
+        ELSEIF (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO <2)
+            PlaySound(buttonClickSound)
+            hint.hintCountO ← hint.hintCountO + 1
+            getHint()
+            row = hint.row
+            row = hint.col
+        ELSE
+            RETURN false
+        ENDIF
         currentStats ← GetCurrentModeStats()
-
         IF (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
             IF (grid[row][col] == EMPTY)
                 grid[row][col] ← (currentPlayerTurn == PLAYER_X_TURN) ? PLAYER_X : PLAYER_O
@@ -821,7 +838,7 @@ FUNCTION AITurn()
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (grid[i][j] == EMPTY)
                     grid[i][j] ← PLAYER_O
-                    score ← MiniMax()
+                    score ← Minimax()
                     grid[i][j] ← EMPTY
 
                     IF (score > bestScore)
@@ -839,7 +856,7 @@ FUNCTION AITurn()
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (grid[i][j] == EMPTY)
                     grid[i][j] ← PLAYER_O
-                    score ← MiniMax()
+                    score ← Minimax()
                     grid[i][j] ← EMPTY
 
                     IF (score > bestScore)
@@ -907,8 +924,8 @@ FUNCTION CheckDraw()
                 RETURN false
             ENDIF
         ENDFOR
-    RETURN true
     ENDFOR
+    RETURN true
 ENDFUNCTION
 
 FUNCTION UpdateGameOver()
@@ -935,6 +952,85 @@ FUNCTION UpdateGameOver()
             gameState ← GAME
             InitGame()
         ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION clearHint()
+    hint.row ← -1
+    hint.col ← -1 
+ENDFUNCTION
+
+FUNCTION getHint()
+    bestScore ← -1000
+    bestRow ← -1
+    bestCol ← -1
+    depthLimit ← 9
+    FOR i=0 to GRID_SIZE -1 do
+        FOR j = 0 to GRID_SIZE -1 do
+            IF (grid[i][j] == EMPTY)
+                grid[i][j] ← PLAYER_O
+                socre ← Minimax()
+                grid[i][j] ← EMPTY
+                IF (score > bestScore)
+                    bestScore ← score
+                    bestRow ← i
+                    bestCol ← j
+                ENDIF
+            ENDIF
+        ENDFOR
+    ENDFOR
+    IF (bestRow != -1 && bestCol != -1)
+        hint.row = bestRow
+        hint.col = bestCol
+    ENDIF
+ENDFUNCTION
+
+FUNCTION Minimax()
+    IF (depth >= depthLimit) 
+        RETURN 0
+    ENDIF
+    score ← EvaluateBoard()
+    IF (score == 10) 
+        RETURN score - depth
+    ENDIF
+    IF (sore == -10)
+        RETURN score + depth
+    ENDIF
+    IF (CheckDraw())
+        RETURN 0
+    ENDIF
+    IF (isMaximizing)
+        bestScore ← -1000
+        FOR i = 0 to GRID_SIZE - 1 do
+            FOR j = 0 to GRID_SIZE -1 do
+                IF (board[i][j] == EMPTY)
+                    board[i][j] ← PLAYER_O
+                    bestScore ← fmax(bestScore, Minimax())
+                    board[i][j] ← EMPTY
+                    alpha ← fmax(alpha, bestScore)
+                    IF (beta <= alpha)
+                        BREAK
+                    ENDIF
+                ENDIF
+            ENDFOR
+        ENDFOR
+        RETURN bestScore
+    ELSE
+        bestScore ← 1000
+        FOR i = 0 to GRID_SIZE - 1 do
+            FOR j = 0 to GRID_SIZE - 1 do
+                IF (board[i][j] == EMPTY)
+                    board[i][j] ← PLAYER_X
+                    bestScore ← fmin(bestScore, Minimax())
+                    board[i][j] ← EMPTY
+                    beta ← fmin(beta, bestScore)
+                    IF (beta <= alpha)
+                        BREAK
+                    ENDIF
+                ENDIF
+            ENDFOR
+        ENDFOR
+        RETURN bestScore
     ENDIF
 ENDFUNCTION
 
