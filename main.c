@@ -22,6 +22,7 @@ int totalGames = 0; // Set the total number of games to 0
 int aiWins = 0; // Set aiWins to 0
 Confetti confetti[MAX_CONFETTI]; // Set the maximum number of confetti particles
 bool showPartyAnimation = false; // Flag to check if the party animation should be shown
+bool allInactive = true; // Flag to check if all confetti particles are inactive
 struct GetHint hint = { -1, -1, 0, 0}; // Declare hint object to store best move and hint counts for player 
 int winningCells[3][2] = {{-1,-1}, {-1,-1}, {-1,-1}}; // Store winning cell coordinates
 
@@ -401,11 +402,9 @@ void InitConfetti() {
 
 // Update the confetti animation
 void UpdateConfetti() {
-    bool allInactive = true;
-    
     for (int i = 0; i < MAX_CONFETTI; i++) {
         if (confetti[i].active) {
-            allInactive = false;
+            allInactive = false;    // Reset the flag
             
             // Update position with drag effect
             confetti[i].velocity.x *= 0.99f;
@@ -438,7 +437,7 @@ void UpdateConfetti() {
     }
     
     if (allInactive) {
-        showPartyAnimation = false;
+        showPartyAnimation = false; // Stop the party animation
     }
 }
 
@@ -499,8 +498,7 @@ void DrawSymbols() {
 }
 
 // Draw the game
-void DrawGame()
-{
+void DrawGame() {
     bool isHintHovered = false;
     Vector2 mousePos = GetMousePosition(); 
     
@@ -647,6 +645,13 @@ void DrawGame()
     }
 }
 
+bool HandleButtonHover(Rectangle button, const char* text, int fontSize, bool* isHovered) {
+    Vector2 mousePos = GetMousePosition();
+    *isHovered = CheckCollisionPointRec(mousePos, button);
+    DrawButton(button, text, fontSize, *isHovered);
+    return *isHovered;
+}
+
 // Draw the menu
 void DrawMenu() {
     const int titleFontSize = 40;
@@ -718,17 +723,14 @@ void DrawMenu() {
         BUTTON_HEIGHT
     };
     
-    Vector2 mousePos = GetMousePosition();
-
     // Check hover states
-    bool singlePlayerHover = CheckCollisionPointRec(mousePos, singlePlayerBtn);
-    bool twoPlayerHover = CheckCollisionPointRec(mousePos, twoPlayerBtn);
-    bool exitHover = CheckCollisionPointRec(mousePos, exitBtn);
+    bool singlePlayerHover = false;
+    bool twoPlayerHover = false;
+    bool exitHover = false;
 
-    // Draw buttons with hover effects
-    DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover);
-    DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover);
-    DrawButton(exitBtn, "Exit", buttonFontSize, exitHover);
+    HandleButtonHover(singlePlayerBtn, "Single Player", buttonFontSize, &singlePlayerHover);
+    HandleButtonHover(twoPlayerBtn, "Two Players", buttonFontSize, &twoPlayerHover);
+    HandleButtonHover(exitBtn, "Exit", buttonFontSize, &exitHover);
 
     // Set cursor based on any button hover
     SetMouseCursor((singlePlayerHover || twoPlayerHover || exitHover) ? 
@@ -870,19 +872,17 @@ void DrawDifficultySelect() {
         30                 // Height
     };
 
-    Vector2 mousePos = GetMousePosition();
-    
     // Check hover states
-    bool easyHover = CheckCollisionPointRec(mousePos, easyBtn);
-    bool mediumHover = CheckCollisionPointRec(mousePos, mediumBtn);
-    bool hardHover = CheckCollisionPointRec(mousePos, hardBtn);
-    bool backHover = CheckCollisionPointRec(mousePos, backBtn);
+    bool easyHover = false;
+    bool mediumHover = false;
+    bool hardHover = false;
+    bool backHover = false;
 
     // Draw buttons with hover effects
-    DrawButton(easyBtn, "Easy", buttonFontSize, easyHover);
-    DrawButton(mediumBtn, "Medium", buttonFontSize, mediumHover);
-    DrawButton(hardBtn, "Hard", buttonFontSize, hardHover);
-    DrawButton(backBtn, "Back", buttonFontSize, backHover);
+    HandleButtonHover(easyBtn, "Easy", buttonFontSize, &easyHover);
+    HandleButtonHover(mediumBtn, "Medium", buttonFontSize, &mediumHover);
+    HandleButtonHover(hardBtn, "Hard", buttonFontSize, &hardHover);
+    HandleButtonHover(backBtn, "Back", buttonFontSize, &backHover);
 
     // Set cursor based on any button hover
     SetMouseCursor((easyHover || mediumHover || hardHover || backHover) ? 
@@ -920,15 +920,17 @@ void DrawModelSelect() {
         30                 // Height
     };
 
-    Vector2 mousePos = GetMousePosition();
-    bool nbHover = CheckCollisionPointRec(mousePos, nbBtn);
-    bool dtHover = CheckCollisionPointRec(mousePos, dtBtn);
-    bool backHover = CheckCollisionPointRec(mousePos, backBtn);
+    // Check hover states
+    bool nbHover = false;
+    bool dtHover = false;
+    bool backHover = false;
 
-    DrawButton(nbBtn, "Naive Bayes", 20, nbHover);
-    DrawButton(dtBtn, "Decision Tree", 20, dtHover);
-    DrawButton(backBtn, "Back", 20, backHover);
+    // Draw buttons with hover effects
+    HandleButtonHover(nbBtn, "Naive Bayes", 20, &nbHover);
+    HandleButtonHover(dtBtn, "Decision Tree", 20, &dtHover);
+    HandleButtonHover(backBtn, "Back", 20, &backHover);
     
+    // Set cursor based on any button hover
     SetMouseCursor((nbHover || dtHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
