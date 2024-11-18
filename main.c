@@ -243,7 +243,7 @@ int main(void)
 
         BeginDrawing();  // Begin drawing
         ClearBackground(RAYWHITE); // Clear the background to white
-        if (gameState!=GAME)
+        if (gameState!=GAME && gameState!=GAME_OVER)
         {
             // resets hintCount when not in game
             hint.hintCountX = 0;
@@ -578,9 +578,9 @@ void DrawGame()
     const char *hintText = "Hint: ";
     char hintTextFinal[10];
     // hintCount for player X
-    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountX));
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountX)); // hint button text
     if (currentPlayerTurn==PLAYER_X_TURN){
-        if (hint.hintCountX < 2)
+        if (hint.hintCountX < 2) // hint button active when count < 2
         {
             isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40);
             DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered);
@@ -590,10 +590,10 @@ void DrawGame()
         }    
     }
     // hintCount for player O
-    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountO));
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2 - hint.hintCountO)); // hint button text
     if (currentPlayerTurn==PLAYER_O_TURN)
     {
-        if (hint.hintCountO < 2)
+        if (hint.hintCountO < 2) // hint button active when count < 2
         {
             isHintHovered = (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40);
             DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered);    
