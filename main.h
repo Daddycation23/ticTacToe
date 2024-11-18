@@ -10,6 +10,7 @@
 #include <math.h>
 #include <limits.h>
 
+
 #define SCREEN_WIDTH 600
 #define SCREEN_HEIGHT 600
 #define BUTTON_WIDTH 200
@@ -41,6 +42,15 @@ typedef struct {
     float alpha;  // For fade effect
     bool active;
 } GridSymbol;
+
+typedef struct DecisionTreeNode {
+    int feature_index;               // Feature to split on
+    int threshold;                   // Threshold value
+    int is_leaf;                     // 1 if leaf node
+    int prediction;                  // Prediction if leaf
+    struct DecisionTreeNode *left;   // Left child
+    struct DecisionTreeNode *right;  // Right child
+} DecisionTreeNode;
 
 typedef struct {
     Vector2 position;
@@ -77,6 +87,7 @@ typedef struct {
     double b_probs[NUM_POSITIONS][NUM_OUTCOMES];
     double class_probs[NUM_OUTCOMES];
 } NaiveBayesModel;
+
 
 // Define GetHint object to store best move row and col, and the counts of hints
 struct GetHint
@@ -152,7 +163,7 @@ void InitSymbols();
 void InitTitleWords();
 void UpdateSymbols();
 void UpdateTitleWords();
-void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);
+void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model, DecisionTreeNode *TDmodel);
 void UpdateGameOver(Sound buttonClickSound);
 bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound);
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model);

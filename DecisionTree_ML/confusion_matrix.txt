@@ -1,0 +1,8 @@
+Training Confusion Matrix:
+TP: 177, TN: 140, FP: 0, FN: 449
+Accuracy: 41.38%
+
+Testing Confusion Matrix:
+TP: 0, TN: 192, FP: 0, FN: 0
+Accuracy: 100.00%
+

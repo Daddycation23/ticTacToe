@@ -1,4 +1,6 @@
+#include "DecisionTree_ML/decisiontree.h"
 #include "main.h"
+
 
 // Define the global variables
 GridSymbol titleSymbols[TITLE_GRID_SIZE][TITLE_GRID_SIZE];
@@ -18,8 +20,8 @@ float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
 float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
 float vibrationAmount = 2.0f; // Amount of vibration
 AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
-int totalGames = 0; // Set the total number of games to 0
 int aiWins = 0; // Set aiWins to 0
+int totalGames = 0; // Set the total number of games to 0
 Confetti confetti[MAX_CONFETTI]; // Set the maximum number of confetti particles
 bool showPartyAnimation = false; // Flag to check if the party animation should be shown
 struct GetHint hint = { -1, -1, 0, 0}; // Declare hint object to store best move and hint counts for player 
@@ -105,6 +107,9 @@ int main(void)
     test_NBmodel("NBmodel/NBmodel_confusion_matrix.txt", mode, type, &NBmodel, test_boards, test_outcomes, test_size);
     // End of Machine Learning
 
+    DecisionTreeNode TDmodel;
+    growth_Tree(&TDmodel); 
+
     while (!WindowShouldClose())
     {
         if (gameState == MENU || gameState == DIFFICULTY_SELECT || gameState == MODEL_SELECT) {
@@ -155,7 +160,7 @@ int main(void)
         }
         else if (gameState == GAME) 
         {
-            UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound, &NBmodel);
+            UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound, &NBmodel, &TDmodel);
         }
         else if (gameState == GAME_OVER)
         {
@@ -896,7 +901,7 @@ ModeStats* GetCurrentModeStats() {
 }
 
 // Update the game
-void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)
+void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model, DecisionTreeNode *TDmodel)
 {
     if (gameOver) return;
     
@@ -939,7 +944,7 @@ void UpdateGame(Sound buttonClickSound, Sound popSound, Sound victorySound, Soun
                     if (currentModel == NAIVE_BAYES) {
                         AITurn(victorySound, loseSound, drawSound, model);  // Naive Bayes
                     } else {
-                        AITurnDecisionTree();  // Decision Tree
+                        AITurnDecisionTree(victorySound, loseSound, drawSound, TDmodel);  // Decision Tree
                     }
                     break;
                     
@@ -1052,12 +1057,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
 
     // Ensure this function only applies in medium and hard modes
     if (currentDifficulty == EASY) {
-        if (currentModel == NAIVE_BAYES) {
-            predict_move(model, grid, &bestRow, &bestCol);
-        } 
-        else {
-            AITurnDecisionTree();  // New function to implement
-        }
+        predict_move(model, grid, &bestRow, &bestCol);
     }
 
     // Medium mode: use Minimax with limited depth search of 4
@@ -1140,15 +1140,35 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
     }
 }
 
+
 // Decision Tree AI Turn function
-void AITurnDecisionTree() {
+void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *DTmodel) {
+    int bestScore = -1000;
+    int bestRow = -1;
+    int bestCol = -1;
     int row, col;
+    double best_prob = 0.0;         // Probability of best move
+    char board[3][3];  // Buffer array for board layout
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (grid[i][j] == EMPTY) {
+                board[i][j] = 'b';  // Convert EMPTY to space
+            } else if (grid[i][j] == PLAYER_X) {
+                board[i][j] = 'x';  // Convert PLAYER_X to 'X'
+            } else if (grid[i][j] == PLAYER_O) {
+                board[i][j] = 'o';  // Convert PLAYER_O to 'O'
+            }
+        }
+    }
+    print_tree(DTmodel, 2);
+    dt_predict_best_move(DTmodel, board, PLAYER_O, &bestRow, &bestCol); 
+
     do {
         row = GetRandomValue(0, GRID_SIZE - 1);
         col = GetRandomValue(0, GRID_SIZE - 1);
     } while (grid[row][col] != EMPTY);
     
-    grid[row][col] = PLAYER_O;
+    grid[bestRow][bestCol] = PLAYER_O;
 
     // Get current stats for Easy mode
     ModeStats* currentStats = &decisionTreeStats;
@@ -1173,6 +1193,7 @@ void AITurnDecisionTree() {
         currentPlayerTurn = PLAYER_X_TURN;
     }
 }
+
 
 // Check if the player has won  
 bool CheckWin(Cell player)
@@ -1364,5 +1385,5 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]) {
     return 0; // No winner
 }
 
-// gcc -o main main.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+// gcc -o main main.c DecisionTree_ML/decisiontree.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
 // ./main
