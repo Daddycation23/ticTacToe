@@ -36,14 +36,14 @@ void growth_Tree(DecisionTreeNode *tree) {
     // Evaluate training data
     float train_accuracy = evaluate_with_randomness(tree, train_set, train_size, train_confusion);
     printf("Training Accuracy: %.2f%%\n", train_accuracy * 100);
-    printf("Training Confusion Matrix:\n");
-    display_confusion_matrix(train_confusion);
+    display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training");
+
+
 
     // Evaluate testing data
     float test_accuracy = evaluate_with_randomness(tree, test_set, test_size, test_confusion);
     printf("Testing Accuracy: %.2f%%\n", test_accuracy * 100);
-    printf("Testing Confusion Matrix:\n");
-    display_confusion_matrix(test_confusion);
+    display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing");
 }
 
 // Load dataset from file
@@ -207,11 +207,28 @@ int predict_with_randomness(DecisionTreeNode *node, int features[]) {
 }
 
 // Display the confusion matrix
-void display_confusion_matrix(int confusion_matrix[2][2]) {
-    printf("\nConfusion Matrix:\n");
+void display_confusion_matrix(int confusion_matrix[2][2], const char *filename, const char *dataset_type) {
+    FILE *file = fopen(filename, "a"); 
+    if (!file) {
+        perror("Failed to open confusion matrix file");
+        return;
+    }
+
+    // Print to console
+    printf("\n%s Confusion Matrix:\n", dataset_type);
     printf("                Predicted Positive    Predicted Negative\n");
     printf("Actual Positive        %10d%20d\n", confusion_matrix[0][0], confusion_matrix[0][1]);
     printf("Actual Negative        %10d%20d\n", confusion_matrix[1][0], confusion_matrix[1][1]);
+
+    // Write to file
+    fprintf(file, "\n%s Confusion Matrix:\n", dataset_type);
+    fprintf(file, "                Predicted Positive    Predicted Negative\n");
+    fprintf(file, "Actual Positive        %10d%20d\n", confusion_matrix[0][0], confusion_matrix[0][1]);
+    fprintf(file, "Actual Negative        %10d%20d\n", confusion_matrix[1][0], confusion_matrix[1][1]);
+    fprintf(file, "---------------------------------------------------------\n");
+
+    fflush(file);
+    fclose(file);
 }
 
 // Free the memory allocated for the decision tree

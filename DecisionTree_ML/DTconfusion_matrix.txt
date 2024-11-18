@@ -1,0 +1,12 @@
+
+Training Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive               347                 154
+Actual Negative                96                 169
+---------------------------------------------------------
+
+Testing Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive                84                  41
+Actual Negative                27                  40
+---------------------------------------------------------
