@@ -23,6 +23,7 @@
 #define ROTATION_SPEED 0.02f  // Speed of rotation
 #define JUMP_SPEED 0.02f  // Constant jump speed
 #define JUMP_DELAY 0.7f  // Constant delay between jumps
+#define MAX_CONFETTI 150    // Maximum number of confetti particles
 
 #define NUM_POSITIONS 9
 #define NUM_OUTCOMES 2 // positive or negative
@@ -83,6 +84,13 @@ struct GetHint
     int col;
 };
 
+typedef struct {
+    Vector2 position;
+    Vector2 velocity;
+    Color color;
+    float size;
+    bool active;
+} Confetti;
 
 // Declare variables as extern
 extern ModeStats mediumStats;
@@ -120,7 +128,13 @@ extern int aiWins;
 extern int draws;
 extern int totalGames;
 
+extern Confetti confetti[MAX_CONFETTI];
+extern bool showPartyAnimation;
+
 // Function prototypes
+void InitConfetti();
+void UpdateConfetti();
+void DrawConfetti();
 void DrawSymbols();
 void DrawTitleWords();
 void DrawGame();

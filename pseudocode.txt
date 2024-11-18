@@ -15,6 +15,7 @@ BEGIN
 
     InitSymbols()
     InitTitleWords()
+    InitConfetti();
 
     boards[1000][NUM_POSITIONS + 1] ← {0}
 
@@ -171,6 +172,10 @@ BEGIN
             CASE GAME_OVER
                 DrawGame()
                 DrawGameOver()
+                IF (showPartyAnimation == true)
+                    UpdateConfetti()
+                    DrawConfetti()
+                ENDIF
             BREAK 
         ENDSWITCH
         EndDrawing()
@@ -265,6 +270,38 @@ FUNCTION DrawSymbols()
     FOR i = 0 tp MAX_SYMBOLS - 1 do
         origin ← {10, 10};  
         DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED)
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION InitConfetti()
+    FOR i = 0 to MAX_CONFETTI - 1 do
+        confetti[i].position ← (Vector2){ GetRandomValue(0, SCREEN_WIDTH), GetRandomValue(-SCREEN_HEIGHT, 0) }
+        confetti[i].velocity ← (Vector2){ GetRandomValue(-200, 200)/100.0f, GetRandomValue(200, 400)/100.0f }
+        confetti[i].color ← (Color){ GetRandomValue(150, 255), GetRandomValue(150, 255), GetRandomValue(150, 255), GetRandomValue(150, 255) }
+        confetti[i].size ← GetRandomValue(5, 15)
+        confetti[i].active ← true
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION UpdateConfetti()
+    FOR i = 0 to MAX_CONFETTI - 1 do
+        IF (confetti[i].active)
+            confetti[i].position.x ← confetti[i].position.x + confetti[i].velocity.x
+            confetti[i].position.y ← confetti[i].position.y + confetti[i].velocity.y
+            confetti[i].velocity.y ← confetti[i].velocity.y + 0.05f
+            IF (confetti[i].position.y > SCREEN_HEIGHT)
+                confetti[i].position.y ← -10
+                confetti[i].velocity.y ← GetRandomValue(200, 400)/100.0f
+            ENDIF
+        ENDIF
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION DrawConfetti()
+    FOR i = 0 to MAX_CONFETTI - 1 do
+        IF (confetti[i].active)
+            DrawRectangle(confetti[i].position.x, confetti[i].position.y, confetti[i].size, confetti[i].size, confetti[i].color)
+        ENDIF
     ENDFOR
 ENDFUNCTION
 
@@ -597,6 +634,7 @@ FUNCTION DrawModelSelect()
 ENDFUNCTION
 
 FUNCTION InitGame()
+    showPartyAnimation ← false
     StopSound(victorySound)
     StopSound(loseSound)
     StopSound(drawSound)
@@ -681,18 +719,20 @@ FUNCTION HandlePlayerTurn()
                     winner ← grid[row][col]
                     gameState ← GAME_OVER
 
-                    IF (!isTwoPlayer)
-                        IF (winner == PLAYER_X)
-                            currentStats → playerWins + 1
-                            currentStats → totalGames + 1
-                            PlaySound(victorySound)
-                        ELSE
-                            currentStats → aiWins + 1
-                            currentStats → totalGames + 1
-                            PlaySound(loseSound)
-                        ENDIF
-                    ELSE
+                    IF (isTwoPlayer)
+                        showPartyAnimation ← true
+                        InitConfetti()
                         PlaySound(victorySound)
+                    ELSEIF (!isTwoPlayer && winner == PLAYER_X)
+                        showPartyAnimation ← true
+                        InitConfetti()
+                        currentStats → playerWins + 1
+                        currentStats → totalGames + 1
+                        PlaySound(victorySound)
+                    ELSE
+                        currentStats → aiWins + 1
+                        currentStats → totalGames + 1
+                        PlaySound(loseSound)
                     ENDIF
 
                 ELSEIF (CheckDraw())

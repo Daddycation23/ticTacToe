@@ -18,16 +18,20 @@ float buttonVibrationOffset = 0.0f; // Vibration offset for buttons
 float vibrationSpeed = 15.0f; // Speed of vibration, increase this to intensify the vibration
 float vibrationAmount = 2.0f; // Amount of vibration
 AIModel currentModel = NAIVE_BAYES; // Default to Naive Bayes
-int totalGames = 0;
-int aiWins = 0;
+int totalGames = 0; // Set the total number of games to 0
+int aiWins = 0; // Set aiWins to 0
+Confetti confetti[MAX_CONFETTI]; // Set the maximum number of confetti particles
+bool showPartyAnimation = false; // Flag to check if the party animation should be shown
 struct GetHint hint;
 int winningCells[3][2] = {{-1,-1}, {-1,-1}, {-1,-1}}; // Store winning cell coordinates
 
+// Initialize the ModeStats structs
 ModeStats mediumStats = {0, 0, 0, 0};
 ModeStats hardStats = {0, 0, 0, 0};
 ModeStats naiveBayesStats = {0, 0, 0, 0};
 ModeStats decisionTreeStats = {0, 0, 0, 0};
 
+// Initialize the sound variables
 Sound buttonClickSound;
 Sound popSound;
 Sound victorySound;
@@ -66,6 +70,7 @@ int main(void)
 
     InitSymbols();  // Initialize the falling symbols
     InitTitleWords();  // Initialize the title words
+    InitConfetti(); // Initialize the confetti
 
     // Naive Bayes Machine Learning for easy mode
     char boards[1000][NUM_POSITIONS + 1];       // Array to store attrbutes of tic-tac-toe.data dataset
@@ -259,6 +264,10 @@ int main(void)
             case GAME_OVER:
                 DrawGame();  // Draw the game
                 DrawGameOver();  // Draw the game over screen
+                if (showPartyAnimation == true) {   // If the party animation is active
+                    UpdateConfetti();   // Update the confetti
+                    DrawConfetti(); // Draw the confetti
+                }
                 break;
         }
 
@@ -342,6 +351,59 @@ void UpdateSymbols() {
             symbols[i].position.x = GetRandomValue(0, SCREEN_WIDTH);
             symbols[i].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
             symbols[i].rotation = GetRandomValue(0, 360);  // Reset rotation
+        }
+    }
+}
+
+// Initialize the confetti
+void InitConfetti() {
+    for (int i = 0; i < MAX_CONFETTI; i++) {
+        confetti[i].position = (Vector2){
+            GetRandomValue(0, SCREEN_WIDTH),
+            GetRandomValue(-SCREEN_HEIGHT, 0)
+        };
+        confetti[i].velocity = (Vector2){
+            GetRandomValue(-200, 200)/100.0f,
+            GetRandomValue(200, 400)/100.0f
+        };
+        confetti[i].color = (Color){
+            GetRandomValue(150, 255),  // Brighter red range
+            GetRandomValue(150, 255),  // Brighter green range
+            GetRandomValue(150, 255),  // Brighter blue range
+            GetRandomValue(200, 255)   // Semi-transparent
+        };
+        confetti[i].size = GetRandomValue(5, 15);
+        confetti[i].active = true;
+    }
+}
+
+// Update the confetti animation
+void UpdateConfetti() {
+    for (int i = 0; i < MAX_CONFETTI; i++) {
+        if (confetti[i].active) {
+            confetti[i].position.x += confetti[i].velocity.x;
+            confetti[i].position.y += confetti[i].velocity.y;
+            confetti[i].velocity.y += 0.05f;  // Slower falling (gravity)
+            
+            if (confetti[i].position.y > SCREEN_HEIGHT) {
+                confetti[i].position.y = -10;
+                confetti[i].velocity.y = GetRandomValue(200, 400)/100.0f;
+            }
+        }
+    }
+}
+
+// Draw the confetti
+void DrawConfetti() {
+    for (int i = 0; i < MAX_CONFETTI; i++) {
+        if (confetti[i].active) {
+            DrawRectangle(
+                confetti[i].position.x,
+                confetti[i].position.y,
+                confetti[i].size,
+                confetti[i].size,
+                confetti[i].color
+            );
         }
     }
 }
@@ -773,6 +835,8 @@ void DrawModelSelect() {
 // Game Functions
 // initialize the game
 void InitGame() {
+    showPartyAnimation = false; // Reset party animation
+
     // Stop all sounds that might be playing
     StopSound(victorySound);
     StopSound(loseSound); 
@@ -897,20 +961,23 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                     gameState = GAME_OVER;
                     
                     // Play sound immediately when a winner is detected
-                    if (!isTwoPlayer) {
-                        if (winner == PLAYER_X) {
-                            currentStats->playerWins++; // Increment player wins
-                            currentStats->totalGames++; // Increment total games
-                            PlaySound(victorySound);  // Play victory sound for Player X
-                        } 
-                        else {
-                            currentStats->aiWins++; // Increment AI wins
-                            currentStats->totalGames++; // Increment total games
-                            PlaySound(loseSound);  // Play lose sound for Player O
-                        }
+                    if (isTwoPlayer) {
+                        showPartyAnimation = true; // Show confetti for any winner in two-player mode
+                        InitConfetti(); // trigger confetti animation
+                        PlaySound(victorySound); // Play victory sound for any winner in two-player mode
+                    }
+                    else if (!isTwoPlayer && winner == PLAYER_X) {
+                        showPartyAnimation = true;  // Show party animation only when human player wins
+                        InitConfetti(); // trigger confetti animation
+                        currentStats->playerWins++; // Increment player wins
+                        currentStats->totalGames++; // Increment total games
+                        PlaySound(victorySound); // Play victory sound for Player X
                     } 
                     else {
-                        PlaySound(victorySound);  // Play victory sound for any winner in two-player mode
+                        showPartyAnimation = false; // No confetti for AI wins
+                        currentStats->aiWins++; // Increment AI wins
+                        currentStats->totalGames++; // Increment total games
+                        PlaySound(loseSound); // Play lose sound for Player O
                     }
                 }
                 else if (CheckDraw()) { // Check for a draw
