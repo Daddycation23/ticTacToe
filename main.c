@@ -979,15 +979,16 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
                 getHint();
                 row = hint.row;
                 col = hint.col;
-            } 
-            if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
+            } else if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
             {
                 PlaySound(buttonClickSound);
                 hint.hintCountO+=1;
                 getHint();
                 row = hint.row;
                 col = hint.col;
-            } 
+            } else {
+                return false; // No move was made
+            }
         }
 
         // When updating stats, use the current mode's counter:
