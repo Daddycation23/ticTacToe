@@ -92,7 +92,12 @@ int main(void)
     save_NBmodel(&NBmodel, "NBmodel/NBmodel_weights.txt");
 
     // Test model
-    test_NBmodel(&NBmodel, test_boards, test_outcomes, test_size);
+    char mode[] = "w";
+    char type[] = "Training";
+    test_NBmodel("NBmodel/NBmodel_confusion_matrix.txt", mode, type, &NBmodel, train_boards, train_outcomes, train_size);
+    strcpy(mode, "a");
+    strcpy(type, "Testing");
+    test_NBmodel("NBmodel/NBmodel_confusion_matrix.txt", mode, type, &NBmodel, test_boards, test_outcomes, test_size);
     // End of Machine Learning
 
     while (!WindowShouldClose())
@@ -942,6 +947,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
             AITurnDecisionTree();  // New function to implement
         }
     }
+
     // Medium mode: use Minimax with limited depth search of 4
     else if (currentDifficulty == MEDIUM) {
         int depthLimit = 4; // Set a depth limit for medium difficulty
