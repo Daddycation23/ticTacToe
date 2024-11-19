@@ -5,12 +5,12 @@
 
 // Function to train Naive Bayes model
 void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size) {
-    int positive_count = 0, negative_count = 0;
+    int positive_count = 0, negative_count = 0;            // Count for the occurrences of the two different outcomes "positive" and "negative" in the dataset
 
     // Initialize counts
-    int x_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurances of 'x' in every position for both 'postive' and 'negative' outcome
-    int o_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurances of 'o' in every position for both 'postive' and 'negative' outcome
-    int b_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurances of 'b' in every position for both 'postive' and 'negative' outcome
+    int x_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurrences of 'x' in every position for both "positive" and "negative" outcome
+    int o_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurrences of 'o' in every position for both "positive" and "negative" outcome
+    int b_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurrences of 'b' in every position for both "positive" and "negative" outcome
 
     // Count occurences
     for (int i = 0; i < size; i++) {
