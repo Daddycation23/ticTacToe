@@ -160,3 +160,48 @@ Actual Negative                20                  46
 
 Training Accuracy: 65.67%
 Testing Accuracy: 65.63%
+
+Training Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive               350                 158
+Actual Negative               100                 158
+---------------------------------------------------------
+
+Testing Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive                82                  36
+Actual Negative                21                  53
+---------------------------------------------------------
+
+Training Accuracy: 66.32%
+Testing Accuracy: 70.31%
+
+Training Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive               330                 173
+Actual Negative                98                 165
+---------------------------------------------------------
+
+Testing Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive                72                  51
+Actual Negative                27                  42
+---------------------------------------------------------
+
+Training Accuracy: 64.62%
+Testing Accuracy: 59.38%
+
+Training Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive               323                 179
+Actual Negative               102                 162
+---------------------------------------------------------
+
+Testing Confusion Matrix:
+                Predicted Positive    Predicted Negative
+Actual Positive                72                  52
+Actual Negative                26                  42
+---------------------------------------------------------
+
+Training Accuracy: 63.32%
+Testing Accuracy: 59.38%
