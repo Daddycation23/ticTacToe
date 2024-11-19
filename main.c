@@ -1048,14 +1048,14 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
             if (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
             {
                 PlaySound(buttonClickSound);
-                hint.hintCountX+=1;
+                hint.hintCountX += 1;
                 getHint();
                 row = hint.row;
                 col = hint.col;
             } else if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
             {
                 PlaySound(buttonClickSound);
-                hint.hintCountO+=1;
+                hint.hintCountO += 1;
                 getHint();
                 row = hint.row;
                 col = hint.col;
