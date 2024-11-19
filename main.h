@@ -190,6 +190,6 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
 // Utility functions
 int outcome_index(const char *outcome);
 void divide(int dividend, int divisor, int *quo, int *rem);
-void AITurnDecisionTree();
+void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *TDmodel);
 
 #endif // MAIN_H
