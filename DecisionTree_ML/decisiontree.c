@@ -73,7 +73,7 @@ void load_dataset(const char *filename, DataRow dataset[], int *dataset_size) {
             else dataset[*dataset_size].features[i] = 0;
             token = strtok(NULL, ",");
         }
-        dataset[*dataset_size].label = (strcmp(token, "positive\n") == 0) ? POSITIVE : NEGATIVE;
+        dataset[*dataset_size].label = (strcmp(token, "positive\n") == 0) ? DT_POSITIVE : DT_NEGATIVE;
         (*dataset_size)++;
     }
 
@@ -118,7 +118,7 @@ void decision_tree_split_dataset(DataRow dataset[], int dataset_size, DataRow tr
 DecisionTreeNode *build_tree(DataRow dataset[], int size, int depth) {
     int positives = 0, negatives = 0;
     for (int i = 0; i < size; i++) {
-        if (dataset[i].label == POSITIVE) positives++;
+        if (dataset[i].label == DT_POSITIVE) positives++;
         else negatives++;
     }
 
@@ -126,7 +126,7 @@ DecisionTreeNode *build_tree(DataRow dataset[], int size, int depth) {
     if (depth >= MAX_DEPTH || positives == 0 || negatives == 0) {
         DecisionTreeNode *leaf = (DecisionTreeNode *)malloc(sizeof(DecisionTreeNode));
         leaf->is_leaf = 1;
-        leaf->prediction = (positives > negatives) ? POSITIVE : NEGATIVE;
+        leaf->prediction = (positives > negatives) ? DT_POSITIVE : DT_NEGATIVE;
         leaf->left = leaf->right = NULL;
         return leaf;
     }
@@ -179,13 +179,13 @@ float evaluate_with_randomness(DecisionTreeNode *root, DataRow dataset[], int si
         }
 
         // Update confusion matrix
-        if (actual == POSITIVE && prediction == POSITIVE) {
+        if (actual == DT_POSITIVE && prediction == DT_POSITIVE) {
             confusion_matrix[0][0]++; // True Positive
-        } else if (actual == NEGATIVE && prediction == NEGATIVE) {
+        } else if (actual == DT_NEGATIVE && prediction == DT_NEGATIVE) {
             confusion_matrix[1][1]++; // True Negative
-        } else if (actual == NEGATIVE && prediction == POSITIVE) {
+        } else if (actual == DT_NEGATIVE && prediction == DT_POSITIVE) {
             confusion_matrix[1][0]++; // False Positive
-        } else if (actual == POSITIVE && prediction == NEGATIVE) {
+        } else if (actual == DT_POSITIVE && prediction == DT_NEGATIVE) {
             confusion_matrix[0][1]++; // False Negative
         }
     }
@@ -196,13 +196,13 @@ float evaluate_with_randomness(DecisionTreeNode *root, DataRow dataset[], int si
 // Predict with added randomness
 int predict_with_randomness(DecisionTreeNode *node, int features[]) {
     if (!node) {
-        return NEGATIVE; // Default to a safe fallback prediction
+        return DT_NEGATIVE; // Default to a safe fallback prediction
     }
 
     if (node->is_leaf) {
         // Add randomness: flip the prediction with a certain probability
         if ((float)rand() / RAND_MAX < RANDOMNESS_FACTOR) {
-            return (node->prediction == POSITIVE) ? NEGATIVE : POSITIVE;
+            return (node->prediction == DT_POSITIVE) ? DT_NEGATIVE : DT_POSITIVE;
         }
         return node->prediction;
     }
@@ -261,10 +261,10 @@ float calculate_gini_index(DataRow dataset[], int size, int feature_index, int t
     int positives_left = 0, positives_right = 0;
 
     for (int i = 0; i < left_size; i++) {
-        if (left[i].label == POSITIVE) positives_left++;
+        if (left[i].label == DT_POSITIVE) positives_left++;
     }
     for (int i = 0; i < right_size; i++) {
-        if (right[i].label == POSITIVE) positives_right++;
+        if (right[i].label == DT_POSITIVE) positives_right++;
     }
 
     float prob_left = (float)positives_left / left_size;
@@ -322,7 +322,7 @@ void dt_predict_best_move(DecisionTreeNode *tree, char board[3][3], char current
                     int prediction = predict_with_randomness(tree, features);
 
                     // Check if this move is the best
-                    if (prediction == POSITIVE && (max_positive_prob == -1 || prediction > max_positive_prob)) {
+                    if (prediction == DT_POSITIVE && (max_positive_prob == -1 || prediction > max_positive_prob)) {
                         temp_row = i;
                         temp_col = j;
                         max_positive_prob = prediction;
@@ -370,7 +370,7 @@ void calculate_position_probabilities(DataRow dataset[], int dataset_size, const
 
     // Count occurrences of x, o, and b for each position
     for (int i = 0; i < dataset_size; i++) {
-        if (dataset[i].label == POSITIVE)
+        if (dataset[i].label == DT_POSITIVE)
             positive_count++;
         else
             negative_count++;
@@ -405,8 +405,8 @@ void calculate_position_probabilities(DataRow dataset[], int dataset_size, const
 
         const char *symbols[] = {"x", "o", "b"};
         for (int j = 0; j < 3; j++) {
-            double p_positive = (positive_count > 0) ? (double)position_count[i][j][POSITIVE] / positive_count : 0.0;
-            double p_negative = (negative_count > 0) ? (double)position_count[i][j][NEGATIVE] / negative_count : 0.0;
+            double p_positive = (positive_count > 0) ? (double)position_count[i][j][DT_POSITIVE] / positive_count : 0.0;
+            double p_negative = (negative_count > 0) ? (double)position_count[i][j][DT_NEGATIVE] / negative_count : 0.0;
 
             fprintf(file, "  %-6s | %-20.4f | %-20.4f\n", symbols[j], p_positive, p_negative);
         }
