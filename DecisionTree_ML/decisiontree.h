@@ -10,8 +10,8 @@
 
 #define MAX_ROWS 958
 #define NUM_FEATURES 9
-#define POSITIVE 1
-#define NEGATIVE 0
+#define DT_POSITIVE 1
+#define DT_NEGATIVE 0
 #define MAX_DEPTH 5 // Further reduce tree depth for fairness
 #define RANDOMNESS_FACTOR 0.3 // Add randomness to predictions
 
