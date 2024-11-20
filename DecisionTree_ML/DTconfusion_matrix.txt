@@ -1,74 +1,28 @@
 
 Decision Tree Training Confusion Matrix:
-    True Positive (TP): 330
-    False Positive (FP): 103
-    True Negative (TN): 170
-    False Negative (FN): 163
+    True Positive (TP): 342
+    False Positive (FP): 92
+    True Negative (TN): 179
+    False Negative (FN): 153
 
 Confusion Matrix:
                 Predicted Positive    Predicted Negative
-Actual Positive               330                 163
-Actual Negative               103                 170
+Actual Positive               342                 153
+Actual Negative                92                 179
 ---------------------------------------------------------
-Training Accuracy: 65.27% (499/766)
-Training Error Rate: 31.07%
+Training Accuracy: 68.02% (521/766)
+Training Error Rate: 33.68%
 
 Decision Tree Testing Confusion Matrix:
     True Positive (TP): 93
-    False Positive (FP): 19
-    True Negative (TN): 40
-    False Negative (FN): 40
+    False Positive (FP): 17
+    True Negative (TN): 44
+    False Negative (FN): 38
 
 Confusion Matrix:
                 Predicted Positive    Predicted Negative
-Actual Positive                93                  40
-Actual Negative                19                  40
+Actual Positive                93                  38
+Actual Negative                17                  44
 ---------------------------------------------------------
-
-Training Accuracy: 65.01%
-Testing Accuracy: 64.06%
-
-Training Confusion Matrix:
-                Predicted Positive    Predicted Negative
-Actual Positive               360                 146
-Actual Negative                86                 174
----------------------------------------------------------
-
-Testing Confusion Matrix:
-                Predicted Positive    Predicted Negative
-Actual Positive                77                  43
-Actual Negative                25                  47
----------------------------------------------------------
-
-Training Accuracy: 69.71%
-Testing Accuracy: 64.58%
-
-Training Confusion Matrix:
-                Predicted Positive    Predicted Negative
-Actual Positive               334                 159
-Actual Negative                95                 178
----------------------------------------------------------
-
-Testing Confusion Matrix:
-                Predicted Positive    Predicted Negative
-Actual Positive                83                  50
-Actual Negative                26                  33
----------------------------------------------------------
-
-Training Accuracy: 66.84%
-Testing Accuracy: 60.42%
-
-Training Confusion Matrix:
-                Predicted Positive    Predicted Negative
-Actual Positive               341                 156
-Actual Negative               101                 168
----------------------------------------------------------
-
-Testing Confusion Matrix:
-                Predicted Positive    Predicted Negative
-Actual Positive                89                  40
-Actual Negative                28                  35
----------------------------------------------------------
-
-Training Accuracy: 66.45%
-Testing Accuracy: 64.58%
+Testing Accuracy: 71.35% (137/192)
+Testing Error Rate: 35.94%
