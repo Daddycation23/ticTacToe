@@ -122,7 +122,7 @@ void test_NBmodel(const char *filename, char mode[], char type[], NaiveBayesMode
     fclose(file_ptr);       // Close file
 }
 
-// Function to calculate the posterior probability of a specified outcome based on the given board layout. For example, if user set outcome argument as "positive", the function would calculate how probable the given board layout would lead to a "postive" outcome.
+// Function to calculate the posterior probability of a specified outcome based on the given board layout.
 double calculate_probability(NaiveBayesModel *model, const char board[], int outcome) {
     double probability = model->class_probs[outcome];       // P(C); Get prior probability of given/set outcome, "positive" or "negative"
 
@@ -174,7 +174,7 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
 
             double positive_prob = calculate_probability(model, temp_board, POSITIVE);      // Calculate posterior probability of a "positive" outcome with the temporary board layout based on the simulated move
             
-            // Check if latest calculated posterior probability is the highest so far, if yes, replace best_prob with tha, and best_move with the simulated move
+            // Check if latest calculated posterior probability is the highest so far, if yes, replace best_prob with that, and best_move with the simulated move
             if (positive_prob > best_prob) {
                 best_prob = positive_prob;
                 best_move = i;

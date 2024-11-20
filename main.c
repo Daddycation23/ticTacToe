@@ -1,5 +1,5 @@
-#include "DecisionTree_ML/decisiontree.h"
 #include "main.h"
+#include "DecisionTree_ML/decisiontree.h"
 
 
 // Define the global variables
@@ -641,10 +641,10 @@ void DrawGame() {
         int yPos = isTwoPlayer ? 20 : 40;  // shift up for 2 player mode
 
         if (currentPlayerTurn == PLAYER_X_TURN) {
-            const char* turnText = "Player X's Turn";
+            const char* turnText = isTwoPlayer ? "Player X's Turn" : "Your Turn";
             DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, BLUE);
         } else {
-            const char* turnText = "Player O's Turn";
+            const char* turnText = isTwoPlayer ? "Player O's Turn" : "AI's Turn";
             DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, RED);
         }
     }
@@ -956,7 +956,10 @@ void InitGame() {
     memset(grid, EMPTY, sizeof(grid));
     gameOver = false;
     winner = EMPTY;
-    currentPlayerTurn = PLAYER_X_TURN;
+    
+    // Randomize starting player for both single and two player modes
+    RandomizeStartingPlayer();
+    
     
     // Reset winning cells
     for (int i = 0; i < 3; i++) {
@@ -1457,6 +1460,15 @@ int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]) {
     }
 
     return 0; // No winner
+}
+
+void RandomizeStartingPlayer() { //Randomize starting player
+    // 50% chance for each player to start
+    if (GetRandomValue(0, 1) == 0) {
+        currentPlayerTurn = PLAYER_X_TURN;  // Human starts
+    } else {
+        currentPlayerTurn = PLAYER_O_TURN;  // AI starts
+    }
 }
 
 // gcc -o main main.c DecisionTree_ML/decisiontree.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
