@@ -1219,7 +1219,7 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
 
 
 // Decision Tree AI Turn function
-void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *DTmodel) {
+void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *TDmodel) {
     int bestScore = -1000;       // Initialize best score for evaluating moves
     int bestRow = -1;            // Initialize best row for AI move
     int bestCol = -1;            // Initialize best column for AI move
@@ -1241,10 +1241,10 @@ void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, De
     }
 
     // Print the decision tree structure for debugging
-    print_tree(DTmodel, 2);
+    print_tree(TDmodel, 2);
 
     // Use the decision tree to predict the best move for the AI
-    dt_predict_best_move(DTmodel, board, PLAYER_O, &bestRow, &bestCol);
+    dt_predict_best_move(TDmodel, board, PLAYER_O, &bestRow, &bestCol);
 
     // Fallback logic: Choose a random empty cell if the decision tree fails
     do {

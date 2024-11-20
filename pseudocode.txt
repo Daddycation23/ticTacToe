@@ -898,6 +898,59 @@ FUNCTION AITurn()
     ENDIF
 ENDFUNCTION
 
+FUNCTION AITurnDecisionTree(victorySound, loseSound, drawSound, TDmodel)
+    bestScore ← -1000              
+    bestRow ← -1                   
+    bestCol ← -1                   
+    board ← EMPTY 2D ARRAY        
+
+    // Convert the grid into a format suitable for the decision tree
+    FOR i = 0 TO 2 DO
+        FOR j = 0 TO 2 DO
+            IF grid[i][j] == EMPTY THEN
+                board[i][j] ← 'b'  
+            ELSE IF grid[i][j] == PLAYER_X THEN
+                board[i][j] ← 'x'  
+            ELSE IF grid[i][j] == PLAYER_O THEN
+                board[i][j] ← 'o'  
+            ENDIF
+        ENDFOR
+    ENDFOR
+
+    CALL print_tree(TDmodel, 2)
+    CALL dt_predict_best_move(TDmodel, board, PLAYER_O, bestRow, bestCol)
+
+    DO
+        row ← RANDOM_VALUE(0, GRID_SIZE - 1)
+        col ← RANDOM_VALUE(0, GRID_SIZE - 1)
+    WHILE grid[row][col] != EMPTY
+
+    grid[bestRow][bestCol] ← PLAYER_O
+
+    currentStats ← decisionTreeStats
+
+    IF CheckWin(PLAYER_O) THEN
+        gameOver ← true            
+        winner ← PLAYER_O             
+        gameState ← GAME_OVER          
+        currentStats.aiWins + 1       
+        currentStats.totalGames + 1   
+        CALL PlaySound(loseSound)      
+
+    ELSE IF CheckDraw() THEN
+        gameOver ← true               
+        gameState ← GAME_OVER        
+        winner ← EMPTY                
+        currentStats.draws + 1        
+        currentStats.totalGames + 1   
+        CALL PlaySound(drawSound)     
+
+    ELSE
+        currentPlayerTurn ← PLAYER_X_TURN
+    ENDIF
+ENDFUNCTION
+
+
 FUNCTION CheckWin()
     FOR i = 0 to GRID_SIZE - 1 do
         IF (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player)
