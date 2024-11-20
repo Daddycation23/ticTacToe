@@ -5,11 +5,15 @@
 #include <time.h>
 #include "decisiontree.h"
 
+
 void growth_Tree(DecisionTreeNode *tree) {
     DataRow dataset[MAX_ROWS];
     DataRow train_set[MAX_ROWS], test_set[MAX_ROWS];
     int dataset_size = 0, train_size = 0, test_size = 0;
     int train_confusion[2][2] = {0}, test_confusion[2][2] = {0};
+    float train_accuracy = 0.0, test_accuracy = 0.0;
+    double train_error_rate = 0.0, test_error_rate = 0.0; // Added variables for error rate
+    int correct_train = 0, correct_test = 0;
 
     srand(time(NULL)); // Initialize random seed
 
@@ -22,36 +26,47 @@ void growth_Tree(DecisionTreeNode *tree) {
     // Split dataset (80% training, 20% testing)
     decision_tree_split_dataset(dataset, dataset_size, train_set, &train_size, test_set, &test_size, 0.8);
 
-    // Print class distribution for debugging
-    printf("Training Size: %d, Testing Size: %d\n", train_size, test_size);
-
-    // Save weights to weights.txt
-    printf("Saving weights...\n");
-    calculate_position_probabilities(dataset, dataset_size, "weights.txt");
-    printf("Weights saved successfully.\n");
-
     // Build decision tree
     tree = build_tree(train_set, train_size, 0);
 
+    // Write weights to file
+    calculate_position_probabilities(dataset, dataset_size, "DecisionTree_ML/DTweights.txt");
+
+    // Clear the file before writing results
+    FILE *file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "w");
+    if (file) fclose(file);
+
     // Evaluate training data
-    float train_accuracy = evaluate_with_randomness(tree, train_set, train_size, train_confusion);
-    printf("Training Accuracy: %.2f%%\n", train_accuracy * 100);
+    train_accuracy = evaluate_with_randomness(tree, train_set, train_size, train_confusion);
+    correct_train = (int)(train_accuracy * train_size);
     display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training");
+    printf("Training Accuracy: %.2f%% (%d/%d)\n", train_accuracy * 100, correct_train, train_size);
+    write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Training", train_accuracy, correct_train, train_size);
+
+    // Calculate training error rate
+    train_error_rate = calculate_error_rate(tree, train_set, train_size, train_confusion);
+    printf("Training Error Rate: %.2f%%\n", train_error_rate);
+    file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "a");
+    if (file) {
+        fprintf(file, "Training Error Rate: %.2f%%\n", train_error_rate);
+        fclose(file);
+    }
 
     // Evaluate testing data
-    float test_accuracy = evaluate_with_randomness(tree, test_set, test_size, test_confusion);
-    printf("Testing Accuracy: %.2f%%\n", test_accuracy * 100);
+    test_accuracy = evaluate_with_randomness(tree, test_set, test_size, test_confusion);
+    correct_test = (int)(test_accuracy * test_size);
     display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing");
+    printf("Testing Accuracy: %.2f%% (%d/%d)\n", test_accuracy * 100, correct_test, test_size);
+    write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Testing", test_accuracy, correct_test, test_size);
 
-    // Write accuracies to the confusion matrix file
-    FILE *file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "a");
-    if (!file) {
-        perror("Failed to open confusion matrix file for writing accuracies");
-        return;
+    // Calculate testing error rate
+    test_error_rate = calculate_error_rate(tree, test_set, test_size, test_confusion);
+    printf("Testing Error Rate: %.2f%%\n", test_error_rate);
+    file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "a");
+    if (file) {
+        fprintf(file, "Testing Error Rate: %.2f%%\n", test_error_rate);
+        fclose(file);
     }
-    fprintf(file, "\nTraining Accuracy: %.2f%%\n", train_accuracy * 100);
-    fprintf(file, "Testing Accuracy: %.2f%%\n", test_accuracy * 100);
-    fclose(file);
 }
 
 // Load dataset from file
@@ -82,21 +97,11 @@ void load_dataset(const char *filename, DataRow dataset[], int *dataset_size) {
 
 // Shuffle dataset
 void shuffle_dataset(DataRow dataset[], int size) {
-    for (int i = 0; i < 5; i++) { // Print first 5 rows for debugging
-        for (int j = 0; j < NUM_FEATURES; j++) {
-        }
-    }
-
     for (int i = size - 1; i > 0; i--) {
         int j = rand() % (i + 1);
         DataRow temp = dataset[i];
         dataset[i] = dataset[j];
         dataset[j] = temp;
-    }
-
-    for (int i = 0; i < 5; i++) { // Print first 5 rows again for debugging
-        for (int j = 0; j < NUM_FEATURES; j++) {
-        }
     }
 }
 
@@ -170,19 +175,17 @@ float evaluate_with_randomness(DecisionTreeNode *root, DataRow dataset[], int si
         }
     }
 
+    // Populate the confusion matrix
     for (int i = 0; i < size; i++) {
         int prediction = predict_with_randomness(root, dataset[i].features);
         int actual = dataset[i].label;
 
-        if (prediction == actual) {
-            correct_predictions++;
-        }
-
-        // Update confusion matrix
         if (actual == DT_POSITIVE && prediction == DT_POSITIVE) {
             confusion_matrix[0][0]++; // True Positive
+            correct_predictions++;
         } else if (actual == DT_NEGATIVE && prediction == DT_NEGATIVE) {
             confusion_matrix[1][1]++; // True Negative
+            correct_predictions++;
         } else if (actual == DT_NEGATIVE && prediction == DT_POSITIVE) {
             confusion_matrix[1][0]++; // False Positive
         } else if (actual == DT_POSITIVE && prediction == DT_NEGATIVE) {
@@ -216,27 +219,55 @@ int predict_with_randomness(DecisionTreeNode *node, int features[]) {
 
 // Display the confusion matrix
 void display_confusion_matrix(int confusion_matrix[2][2], const char *filename, const char *dataset_type) {
-    FILE *file = fopen(filename, "a"); 
+    FILE *file = fopen(filename, "a"); // Open in append mode
     if (!file) {
         perror("Failed to open confusion matrix file");
         return;
     }
 
+    // Extract TP, TN, FP, FN from the confusion matrix
+    int TP = confusion_matrix[0][0];
+    int FP = confusion_matrix[1][0];
+    int TN = confusion_matrix[1][1];
+    int FN = confusion_matrix[0][1];
+
     // Print to console
-    printf("\n%s Confusion Matrix:\n", dataset_type);
+    printf("\nDecision Tree %s Confusion Matrix:\n", dataset_type);
+    printf("    True Positive (TP): %d\n", TP);
+    printf("    False Positive (FP): %d\n", FP);
+    printf("    True Negative (TN): %d\n", TN);
+    printf("    False Negative (FN): %d\n", FN);
+    printf("\nConfusion Matrix:\n");
     printf("                Predicted Positive    Predicted Negative\n");
-    printf("Actual Positive        %10d%20d\n", confusion_matrix[0][0], confusion_matrix[0][1]);
-    printf("Actual Negative        %10d%20d\n", confusion_matrix[1][0], confusion_matrix[1][1]);
+    printf("Actual Positive        %10d%20d\n", TP, FN);
+    printf("Actual Negative        %10d%20d\n", FP, TN);
+    printf("---------------------------------------------------------\n");
 
     // Write to file
-    fprintf(file, "\n%s Confusion Matrix:\n", dataset_type);
+    fprintf(file, "\nDecision Tree %s Confusion Matrix:\n", dataset_type);
+    fprintf(file, "    True Positive (TP): %d\n", TP);
+    fprintf(file, "    False Positive (FP): %d\n", FP);
+    fprintf(file, "    True Negative (TN): %d\n", TN);
+    fprintf(file, "    False Negative (FN): %d\n", FN);
+    fprintf(file, "\nConfusion Matrix:\n");
     fprintf(file, "                Predicted Positive    Predicted Negative\n");
-    fprintf(file, "Actual Positive        %10d%20d\n", confusion_matrix[0][0], confusion_matrix[0][1]);
-    fprintf(file, "Actual Negative        %10d%20d\n", confusion_matrix[1][0], confusion_matrix[1][1]);
+    fprintf(file, "Actual Positive        %10d%20d\n", TP, FN);
+    fprintf(file, "Actual Negative        %10d%20d\n", FP, TN);
     fprintf(file, "---------------------------------------------------------\n");
 
-    fflush(file);
-    fclose(file);
+    fclose(file); // Close the file properly
+}
+
+void write_accuracy_to_file(const char *filename, const char *dataset_type, float accuracy, int correct, int total) {
+    FILE *file = fopen(filename, "a"); // Open in append mode
+    if (!file) {
+        perror("Failed to open file for writing accuracy");
+        return;
+    }
+
+    // Write the accuracy with the number of correctly classified samples
+    fprintf(file, "%s Accuracy: %.2f%% (%d/%d)\n", dataset_type, accuracy * 100, correct, total);
+    fclose(file); // Close the file
 }
 
 // Free the memory allocated for the decision tree
@@ -355,13 +386,16 @@ void dt_predict_best_move(DecisionTreeNode *tree, char board[3][3], char current
 
 void print_tree(DecisionTreeNode *node, int depth) {
     if (!node) {
-        // printf("%*sNULL\n", depth * 4, ""); // Indent for readability
         return;
     }
 
     if (node->is_leaf) {
-       // printf("%*sLeaf: Prediction = %d\n", depth * 4, "", node->prediction);
-    } 
+        // printf("%*sLeaf: Prediction = %d\n", depth * 4, "", node->prediction);
+    } else {
+        // printf("%*sNode: Feature = %d, Threshold = %d\n", depth * 4, "", node->feature_index, node->threshold);
+        print_tree(node->left, depth + 1);
+        print_tree(node->right, depth + 1);
+    }
 }
 
 void calculate_position_probabilities(DataRow dataset[], int dataset_size, const char *filename) {
@@ -385,19 +419,20 @@ void calculate_position_probabilities(DataRow dataset[], int dataset_size, const
         }
     }
 
-    // Open file to write probabilities
+    // Open the file to write probabilities in overwrite mode
     FILE *file = fopen(filename, "w");
     if (!file) {
         perror("Failed to open file to save weights");
         return;
     }
 
+    // Write class probabilities
     fprintf(file, "Class Probabilities:\n");
     fprintf(file, "  Positive: P(Positive) = %.4f\n", (double)positive_count / dataset_size);
     fprintf(file, "  Negative: P(Negative) = %.4f\n", (double)negative_count / dataset_size);
     fprintf(file, "--------------------------------------------\n");
 
-    // Write position probabilities with better formatting
+    // Write position probabilities
     for (int i = 0; i < NUM_FEATURES; i++) {
         fprintf(file, "Position %d:\n", i + 1);
         fprintf(file, "  Symbol | P(Symbol | Positive) | P(Symbol | Negative)\n");
@@ -414,5 +449,21 @@ void calculate_position_probabilities(DataRow dataset[], int dataset_size, const
     }
 
     fclose(file);
-    printf("Weights saved to %s\n", filename);
+    printf("Weights updated and saved to %s\n", filename);
+}
+
+double calculate_error_rate(DecisionTreeNode *root, DataRow dataset[], int size, int confusion_matrix[2][2]) {
+    int error_count = 0; // Count the number of errors
+
+    for (int i = 0; i < size; i++) {
+        int prediction = predict_with_randomness(root, dataset[i].features);
+        int actual = dataset[i].label;
+
+        if (prediction != actual) {
+            error_count++;
+        }
+    }
+
+    // Calculate and return error rate as a percentage
+    return ((double)error_count / size) * 100;
 }

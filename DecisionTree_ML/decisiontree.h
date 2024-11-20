@@ -35,4 +35,6 @@ void calculate_position_probabilities(DataRow dataset[], int dataset_size, const
 void dt_predict_best_move(DecisionTreeNode *tree, char board[3][3], char current_player, int *best_row, int *best_col);
 void growth_Tree(DecisionTreeNode *TDmodel);
 void print_tree(DecisionTreeNode *node, int depth) ;
+double calculate_error_rate(DecisionTreeNode *root, DataRow dataset[], int size, int confusion_matrix[2][2]);
+void write_accuracy_to_file(const char *filename, const char *dataset_type, float accuracy, int correct, int total);
 #endif // DECISIONTREE_H
