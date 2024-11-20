@@ -41,12 +41,12 @@ void growth_Tree(DecisionTreeNode *tree) {
     train_accuracy = evaluate_with_randomness(tree, train_set, train_size, train_confusion);
     correct_train = (int)(train_accuracy * train_size);
     display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training");
-    printf("Training Accuracy: %.2f%% (%d/%d)\n", train_accuracy * 100, correct_train, train_size);
+    // printf("Training Accuracy: %.2f%% (%d/%d)\n", train_accuracy * 100, correct_train, train_size);
     write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Training", train_accuracy, correct_train, train_size);
 
     // Calculate error rate for the training data
     train_error_rate = calculate_error_rate(tree, train_set, train_size, train_confusion);
-    printf("Training Error Rate: %.2f%%\n", train_error_rate);
+    // printf("Training Error Rate: %.2f%%\n", train_error_rate);
     file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "a");
     if (file) {
         fprintf(file, "Training Error Rate: %.2f%%\n", train_error_rate);
@@ -57,12 +57,12 @@ void growth_Tree(DecisionTreeNode *tree) {
     test_accuracy = evaluate_with_randomness(tree, test_set, test_size, test_confusion);
     correct_test = (int)(test_accuracy * test_size);
     display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing");
-    printf("Testing Accuracy: %.2f%% (%d/%d)\n", test_accuracy * 100, correct_test, test_size);
+    // printf("Testing Accuracy: %.2f%% (%d/%d)\n", test_accuracy * 100, correct_test, test_size);
     write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Testing", test_accuracy, correct_test, test_size);
 
     // Calculate error rate for the testing data
     test_error_rate = calculate_error_rate(tree, test_set, test_size, test_confusion);
-    printf("Testing Error Rate: %.2f%%\n", test_error_rate);
+    // printf("Testing Error Rate: %.2f%%\n", test_error_rate);
     file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "a");
     if (file) {
         fprintf(file, "Testing Error Rate: %.2f%%\n", test_error_rate);
@@ -252,6 +252,7 @@ void display_confusion_matrix(int confusion_matrix[2][2], const char *filename, 
     int FN = confusion_matrix[0][1];
 
     // Print confusion matrix and metrics to console
+    /*
     printf("\nDecision Tree %s Confusion Matrix:\n", dataset_type);
     printf("    True Positive (TP): %d\n", TP);
     printf("    False Positive (FP): %d\n", FP);
@@ -262,6 +263,7 @@ void display_confusion_matrix(int confusion_matrix[2][2], const char *filename, 
     printf("Actual Positive        %10d%20d\n", TP, FN);
     printf("Actual Negative        %10d%20d\n", FP, TN);
     printf("---------------------------------------------------------\n");
+    */
 
     // Write confusion matrix and metrics to file
     fprintf(file, "\nDecision Tree %s Confusion Matrix:\n", dataset_type);

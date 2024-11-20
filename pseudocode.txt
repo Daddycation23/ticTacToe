@@ -950,7 +950,6 @@ FUNCTION AITurnDecisionTree(victorySound, loseSound, drawSound, TDmodel)
     ENDIF
 ENDFUNCTION
 
-
 FUNCTION CheckWin()
     FOR i = 0 to GRID_SIZE - 1 do
         IF (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player)
