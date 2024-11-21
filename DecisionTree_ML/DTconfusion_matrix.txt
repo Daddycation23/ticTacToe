@@ -1,28 +1,28 @@
 
 Decision Tree Training Confusion Matrix:
-    True Positive (TP): 344
-    False Positive (FP): 98
-    True Negative (TN): 166
-    False Negative (FN): 158
+    True Positive (TP): 327
+    False Positive (FP): 94
+    True Negative (TN): 165
+    False Negative (FN): 180
 
 Confusion Matrix:
                 Predicted Positive    Predicted Negative
-Actual Positive               344                 158
-Actual Negative                98                 166
+Actual Positive               327                 180
+Actual Negative                94                 165
 ---------------------------------------------------------
-Training Accuracy: 66.58% (510/766)
-Training Error Rate: 34.46%
+Training Accuracy: 64.23% (491/766)
+Training Error Rate: 33.94%
 
 Decision Tree Testing Confusion Matrix:
-    True Positive (TP): 84
-    False Positive (FP): 22
-    True Negative (TN): 46
+    True Positive (TP): 79
+    False Positive (FP): 20
+    True Negative (TN): 53
     False Negative (FN): 40
 
 Confusion Matrix:
                 Predicted Positive    Predicted Negative
-Actual Positive                84                  40
-Actual Negative                22                  46
+Actual Positive                79                  40
+Actual Negative                20                  53
 ---------------------------------------------------------
-Testing Accuracy: 67.71% (130/192)
-Testing Error Rate: 35.94%
+Testing Accuracy: 68.75% (132/192)
+Testing Error Rate: 34.90%
