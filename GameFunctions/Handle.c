@@ -24,21 +24,21 @@ bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound
         if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
             mousePos.y >= 10 && mousePos.y <= 40 && (hint.hintCountX < 2 || hint.hintCountO < 2))
         {
-            // Check player turn and update the hint count when hint button is clicked
+            // Get player turn and update the hint count when hint button is clicked
             if (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
             {
                 PlaySound(buttonClickSound);
-                hint.hintCountX+=1;
-                getHint();
-                row = hint.row;
-                col = hint.col;
+                hint.hintCountX+=1; // increment 
+                getHint(); // Get best move 
+                row = hint.row; // assign best move to be picked
+                col = hint.col; // assign best move to be picked
             } else if (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO < 2)
             {
                 PlaySound(buttonClickSound);
-                hint.hintCountO+=1;
-                getHint();
-                row = hint.row;
-                col = hint.col;
+                hint.hintCountO+=1; // increment
+                getHint(); // Get best move
+                row = hint.row; // assign best move to be picked
+                col = hint.col; // assign best move to be picked
             } else {
                 return false; // No move was made
             }
