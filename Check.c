@@ -1,5 +1,4 @@
 #include "main.h"
-
 // Declare external variables used in Check.c
 extern Cell grid[GRID_SIZE][GRID_SIZE];
 extern int winningCells[3][2];
