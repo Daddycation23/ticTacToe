@@ -1,18 +1,18 @@
 Training Dataset:
-  Accuracy: 70.50% (540/766)
-  Error: 29.50% (226/766)
+  Accuracy: 69.97% (536/766)
+  Error: 30.03% (230/766)
   Confusion Matrix:
-    True Positive: 432
-    False Positive: 161
-    True Negative: 108
-    False Negative: 65
+    True Positive: 423
+    False Positive: 158
+    True Negative: 113
+    False Negative: 72
 
 
 Testing Dataset:
-  Accuracy: 77.60% (149/192)
-  Error: 22.40% (43/192)
+  Accuracy: 70.31% (135/192)
+  Error: 29.69% (57/192)
   Confusion Matrix:
-    True Positive: 113
-    False Positive: 27
-    True Negative: 36
-    False Negative: 16
+    True Positive: 111
+    False Positive: 37
+    True Negative: 24
+    False Negative: 20
