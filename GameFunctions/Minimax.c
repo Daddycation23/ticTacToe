@@ -1,6 +1,6 @@
 #include "main.h"
 
-// minimax algorithm, factorial design
+// minimax algorithm, recursive design
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta) {
     if (depth >= depthLimit) return 0; // Return 0 if depth limit is reached
     int score = EvaluateBoard(board);

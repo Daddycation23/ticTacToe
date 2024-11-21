@@ -1,4 +1,5 @@
 #include "main.h"
+// Declare external variables used in Hint.c
 extern struct GetHint hint;
 extern Cell grid[GRID_SIZE][GRID_SIZE];
 // Clear Hint best move
