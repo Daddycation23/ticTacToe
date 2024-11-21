@@ -1,5 +1,5 @@
-#include "DecisionTree_ML/decisiontree.h"
 #include "main.h"
+#include "DecisionTree_ML/decisiontree.h"
 
 
 // Define the global variables
@@ -1219,55 +1219,68 @@ void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesMode
 
 
 // Decision Tree AI Turn function
-void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *DTmodel) {
-    int bestScore = -1000;
-    int bestRow = -1;
-    int bestCol = -1;
-    int row, col;
-    double best_prob = 0.0;         // Probability of best move
-    char board[3][3];  // Buffer array for board layout
+void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *TDmodel) {
+    int bestScore = -1000;       // Initialize best score for evaluating moves
+    int bestRow = -1;            // Initialize best row for AI move
+    int bestCol = -1;            // Initialize best column for AI move
+    int row, col;                // Variables for random fallback move
+    double best_prob = 0.0;      // Probability of the best move
+    char board[3][3];            // Buffer array for board layout
+
+    // Convert the current grid state into a compatible format for the decision tree
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (grid[i][j] == EMPTY) {
-                board[i][j] = 'b';  // Convert EMPTY to space
+                board[i][j] = 'b';  // Convert EMPTY cells to 'b' (blank)
             } else if (grid[i][j] == PLAYER_X) {
-                board[i][j] = 'x';  // Convert PLAYER_X to 'X'
+                board[i][j] = 'x';  // Convert PLAYER_X cells to 'x'
             } else if (grid[i][j] == PLAYER_O) {
-                board[i][j] = 'o';  // Convert PLAYER_O to 'O'
+                board[i][j] = 'o';  // Convert PLAYER_O cells to 'o'
             }
         }
     }
-    print_tree(DTmodel, 2);
-    dt_predict_best_move(DTmodel, board, PLAYER_O, &bestRow, &bestCol); 
 
+    // Print the decision tree structure for debugging
+    print_tree(TDmodel, 2);
+
+    // Use the decision tree to predict the best move for the AI
+    dt_predict_best_move(TDmodel, board, PLAYER_O, &bestRow, &bestCol);
+
+    // Fallback logic: Choose a random empty cell if the decision tree fails
     do {
-        row = GetRandomValue(0, GRID_SIZE - 1);
-        col = GetRandomValue(0, GRID_SIZE - 1);
-    } while (grid[row][col] != EMPTY);
-    
+        row = GetRandomValue(0, GRID_SIZE - 1);  // Generate random row index
+        col = GetRandomValue(0, GRID_SIZE - 1);  // Generate random column index
+    } while (grid[row][col] != EMPTY);           // Ensure the chosen cell is empty
+
+    // Place the AI's move on the grid at the predicted or random position
     grid[bestRow][bestCol] = PLAYER_O;
 
-    // Get current stats for Easy mode
+    // Get the current stats for Easy mode
     ModeStats* currentStats = &decisionTreeStats;
-    
+
+    // Check if the AI's move results in a win
     if (CheckWin(PLAYER_O)) {
-        gameOver = true;
-        winner = PLAYER_O;
-        gameState = GAME_OVER;
-        currentStats->aiWins++; // Increment AI wins
-        currentStats->totalGames++; // Increment total games
+        gameOver = true;               // Mark the game as over
+        winner = PLAYER_O;             // Set the winner to PLAYER_O
+        gameState = GAME_OVER;         // Transition to GAME_OVER state
+        currentStats->aiWins++;        // Increment AI win count
+        currentStats->totalGames++;    // Increment total games count
 
-        PlaySound(loseSound);
-    } else if (CheckDraw()) {
-        gameOver = true;
-        gameState = GAME_OVER;
-        winner = EMPTY;
-        currentStats->draws++; // Increment draws score
-        currentStats->totalGames++; // Increment total games
+        PlaySound(loseSound);          // Play losing sound for the player
+    }
+    // Check if the game results in a draw
+    else if (CheckDraw()) {
+        gameOver = true;               // Mark the game as over
+        gameState = GAME_OVER;         // Transition to GAME_OVER state
+        winner = EMPTY;                // Set the winner to NONE (draw)
+        currentStats->draws++;         // Increment draw count
+        currentStats->totalGames++;    // Increment total games count
 
-        PlaySound(drawSound);
-    } else {
-        currentPlayerTurn = PLAYER_X_TURN;
+        PlaySound(drawSound);          // Play draw sound
+    }
+    // If the game continues, pass the turn to the player
+    else {
+        currentPlayerTurn = PLAYER_X_TURN; // Set the turn to PLAYER_X
     }
 }
 

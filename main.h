@@ -43,6 +43,7 @@ typedef struct {
     bool active;
 } GridSymbol;
 
+// Define the structure for a node in the decision tree
 typedef struct DecisionTreeNode {
     int feature_index;               // Feature to split on
     int threshold;                   // Threshold value

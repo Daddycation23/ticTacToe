@@ -37,6 +37,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `bool CheckWin(Cell player)`: Checks if a specified player has won the game.
 - `bool CheckDraw()`: Checks if the game is a draw.
 - `void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)`: Handles the AI's turn in single-player mode.
+- `void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *TDmodel)`: Handles the AI's turn in single-player mode with integrated Decision Tree model.
 - `bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)`: Manages the player's turn and checks for game outcomes.
 - `void UpdateGameOver(Sound buttonClickSound)`: Manages the game over state, allowing players to retry or return to the menu.
 - `void clearHint()`: Clear hint.
@@ -127,7 +128,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
    ```
 2. **Build**: Compile the program using a C compiler with Raylib linked.
    ```bash
-   gcc -o main main.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+   gcc -o main main.c DecisionTree_ML/decisiontree.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
    ```
 3. **Run**: Execute the compiled program.
    ```bash

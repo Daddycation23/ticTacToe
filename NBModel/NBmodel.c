@@ -174,7 +174,7 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
 
             double positive_prob = calculate_probability(model, temp_board, POSITIVE);      // Calculate posterior probability of a "positive" outcome with the temporary board layout based on the simulated move
             
-            // Check if latest calculated posterior probability is the highest so far, if yes, replace best_prob with tha, and best_move with the simulated move
+            // Check if latest calculated posterior probability is the highest so far, if yes, replace best_prob with that, and best_move with the simulated move
             if (positive_prob > best_prob) {
                 best_prob = positive_prob;
                 best_move = i;
