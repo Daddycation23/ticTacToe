@@ -1123,6 +1123,15 @@ FUNCTION EvaluateBoard()
     RETURN 0
 ENDFUNCTION
 
+FUNCTION RandomizeStartingPlayer()
+    IF (GetRandomValue(0, 1) == 0)
+        currentPlayerTurn ← PLAYER_X_TURN
+    ENDIF
+    ELSE
+        currentPlayerTurn ← PLAYER_O_TURN
+    ENDIF
+ENDFUNCTION
+
 FUNCTION load_data(filename, boards, outcomes, total_records)
     file_ptr refToFile → &filename
     OPEN FILE file_ptr
