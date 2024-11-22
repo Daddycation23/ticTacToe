@@ -315,5 +315,5 @@ void RandomizeStartingPlayer() { //Randomize starting player
     }
 }
 
-// gcc -o main main.c DecisionTree_ML/*.c NBmodel/*.c GameFunctions/*.c -I. -I./DecisionTree_ML -I./NBmodel -I./GameFunctions -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+// gcc -o main main.c DecisionTree_ML/*.c NBmodel/*.c GameFunctions/*.c -I. -I./DecisionTree_ML -I./NBmodel -I./GameFunctions -L./Libraries -L. -lraylib -lopengl32 -lgdi32 -lwinmm
 // ./main
