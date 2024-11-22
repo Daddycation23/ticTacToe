@@ -1,4 +1,5 @@
-#include "main.h"
+#include "../main.h"
+
 extern struct GetHint hint;
 extern Cell grid[GRID_SIZE][GRID_SIZE];
 extern int winningCells[3][2];

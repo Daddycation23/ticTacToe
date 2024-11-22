@@ -1,4 +1,5 @@
-#include "main.h"
+#include "../main.h"
+
 extern TitleWord titleWords[5];
 extern FallingSymbol symbols[MAX_SYMBOLS];
 extern Confetti confetti[MAX_CONFETTI];

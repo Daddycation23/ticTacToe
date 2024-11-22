@@ -1,7 +1,6 @@
-#include "main.h"
-#include "DecisionTree_ML/decisiontree.h"
+#include "../main.h"
+#include "../DecisionTree_ML/decisiontree.h"
 extern Cell grid[GRID_SIZE][GRID_SIZE];
-
 
 // AI's turn using MiniMax algorithms and Machine Learning models
 void AITurn(Sound victorySound, Sound loseSound, Sound drawSound, NaiveBayesModel *model)

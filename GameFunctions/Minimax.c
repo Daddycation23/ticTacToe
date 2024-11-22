@@ -1,4 +1,4 @@
-#include "main.h"
+#include "../main.h"
 
 // minimax algorithm, recursive design
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta) {

@@ -1,4 +1,5 @@
-#include "main.h"
+#include "../main.h"
+
 extern Confetti confetti[MAX_CONFETTI];
 extern bool showPartyAnimation;
 extern bool gameOver;
