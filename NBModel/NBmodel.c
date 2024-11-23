@@ -101,7 +101,7 @@ void save_NBmodel(const NaiveBayesModel *model, const char *filename) {
     }
 
     fclose(file_ptr);       // Close file
-    printf("Model weights saved to %s\n", filename);
+    printf("\nModel weights saved to %s\n", filename);
 }
 
 // Function to test accuracy of model
