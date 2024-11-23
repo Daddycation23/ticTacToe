@@ -7,7 +7,7 @@
 // Function to load data from file into arrays
 void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records) {
     FILE *file_ptr = fopen(filename, "r");      // Open file of dataset to read
-    if (file_ptr == NULL) {                     // Check if its an exisiting file, else will send an error
+    if (file_ptr == NULL) {                     // Check if its an existing file, else will send an error
         perror("Failed to open file");
         exit(1);
     }
@@ -48,10 +48,10 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
         outcomes[j] = temp_outcome;
     }
     
-    int target_train_size = (int)(ratio * total_records);       // Get number of lines for training dataaset, in this case 80% of total_records
+    int target_train_size = (int)(ratio * total_records);       // Get number of lines for training dataset, in this case 80% of total_records
 
 
-    // Loop to seperate original dataset into training(80%) and testing(20%) dataset for machine learning
+    // Loop to separate original dataset into training(80%) and testing(20%) dataset for machine learning
     for (int i = 0; i < total_records; i++) {
         if (*train_size < target_train_size) { // 80%
             strcpy(train_boards[*train_size], boards[i]);
