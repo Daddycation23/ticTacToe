@@ -12,7 +12,7 @@ void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int
     int o_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurrences of 'o' in every position for both "positive" and "negative" outcome
     int b_counts[NUM_POSITIONS][NUM_OUTCOMES] = {0};        // Array for number of occurrences of 'b' in every position for both "positive" and "negative" outcome
 
-    // Count occurences
+    // Count occurrences
     for (int i = 0; i < size; i++) {
         int outcome_idx = outcomes[i];
         if (outcome_idx == POSITIVE) positive_count++;      // Counting of number of times its a 'positive' or 'negative'
@@ -84,12 +84,12 @@ void save_NBmodel(const NaiveBayesModel *model, const char *filename) {
         return;
     }
 
-    // Save the prior probabilites
+    // Save the prior probabilities
     fprintf(file_ptr, "Class Probabilities:\n");
     fprintf(file_ptr, "P(Positive): %f\n", model->class_probs[POSITIVE]);
     fprintf(file_ptr, "P(Negative): %f\n\n", model->class_probs[NEGATIVE]);
 
-    // Loop to save each conditional probabilites of each feature ['x', 'o' ,'b'] for each outcome
+    // Loop to save each conditional probabilities of each feature ['x', 'o' ,'b'] for each outcome
     for (int i = 0; i < NUM_POSITIONS; i++) {
         fprintf(file_ptr, "Position %d:\n", i + 1);
         fprintf(file_ptr, "P(x | Positive): %f\n", model->x_probs[i][POSITIVE]);
