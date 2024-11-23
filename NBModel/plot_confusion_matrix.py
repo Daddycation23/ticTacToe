@@ -94,6 +94,9 @@ for i in range(testing_cm.shape[0]):
 axes[1].set_title('Testing Dataset Confusion Matrix')
 axes[1].set_xlabel(f"n = {results['Testing']['Total Predictions']}")
 
+# Save plots
+plt.savefig("NBmodel/NBmodel_confusion_matrix.png")
+
 # Display plots
 plt.tight_layout()
 plt.show()
