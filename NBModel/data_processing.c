@@ -63,6 +63,16 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
             (*test_size)++;
         }
     }
+
+    printf("\ntrain_boards array:\n");
+    for (int i = 0; i < 10; i++){
+        printf("%s\n", train_boards[i]);
+    };
+
+    printf("\ntrain_outcomes array:\n");
+    for (int i = 0; i < 10; i++){
+        printf("%d\n", train_outcomes[i]);
+    };
 }
 
 // Utility function to convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
