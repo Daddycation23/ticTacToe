@@ -1232,6 +1232,8 @@ ENDFUNCTION
 /**************************/
 FUNCTION load_data(filename, boards, outcomes, total_records)
     file_ptr refToFile → &filename
+    total_records refToInt → &total_records
+
     OPEN FILE file_ptr
     IF (file_ptr = NULL)
         PRINT "Failed to open file"
@@ -1278,6 +1280,16 @@ FUNCTION split_data(boards, outcomes, total_records, train_boards, train_outcome
             *test_size ← *test_size + 1
         ENDIF
     ENDFOR
+
+    PRINT "train_boards array:"
+    FOR i = 0 to 10 do
+        PRINT train_boards[i]
+    ENDFOR
+
+    PRINT "train_outcomes array:"
+    FOR i = 0 to 10 do
+        PRINT train_outcomes[i]
+    ENDFOR
 ENDFUNCTION
 
 FUNCTION outcome_index(outcome)
@@ -1288,6 +1300,11 @@ FUNCTION outcome_index(outcome)
     ENDIF
 ENDFUNCTION
 
+
+
+/************************/
+/* NBmodel.c file       */
+/************************/
 FUNCTION train_NBmodel(model, boards, outcomes, size)
     model refToNaiveBayesModel → &NBmodel
 
@@ -1315,6 +1332,36 @@ FUNCTION train_NBmodel(model, boards, outcomes, size)
                 b_counts[j][outcome_idx] ← b_counts[j][outcome_idx] + 1
             ENDIF
         ENDFOR
+    ENDFOR
+
+    PRINT "X_counts array"
+    PRINT " pos     neg"
+    FOR i = 0 to NUM_POSITIONS do
+        PRINT "Position (i+1) ["
+        FOR j = 0 to NUM_OUTCOMES do
+            PRINT x_counts[i][j]
+        ENDFOR
+        PRINT "]"
+    ENDFOR
+
+    PRINT "o_counts array"
+    PRINT " pos     neg"
+    FOR i = 0 to NUM_POSITIONS do
+        PRINT "Position (i+1) ["
+        FOR j = 0 to NUM_OUTCOMES do
+            PRINT o_counts[i][j]
+        ENDFOR
+        PRINT "]"
+    ENDFOR
+
+    PRINT "b_counts array"
+    PRINT " pos     neg"
+    FOR i = 0 to NUM_POSITIONS do
+        PRINT "Position (i+1) ["
+        FOR j = 0 to NUM_OUTCOMES do
+            PRINT b_counts[i][j]
+        ENDFOR
+        PRINT "]"
     ENDFOR
 
     model→class_probs[POSITIVE] ← positive_count / size
@@ -1440,22 +1487,38 @@ ENDFUNCTION
 
 FUNCTION predict_move(model, grid[GRID_SIZE][GRID_SIZE], bestRow, bestCol)
     model refToNaiveBayesModel → &NBmodel
+    bestRow refToInt → &bestRow
+    bestCol refToInt → &bestCol
 
     best_move ← -1
     best_prob ← 0.0
     k ← 0
 
+    PRINT "AI's Turn"
+    PRINT "Game board layout as grid(array) format:"
+
     FOR i = 0 to GRID_SIZE do
+        PRINT "["
         FOR j = 0 to GRID_SIZE do
             IF (grid[i][j] = EMPTY)
                 board[k] ← 'b'
+                PRINT "b"
             ELSEIF (grid[i][j] = PLAYER_O)
                 board[k] ← 'o'
+                PRINT "o"
             ELSE
                 board[k] ← 'x'
+                PRINT "x"
+            ENDIF
             k ← k + 1
         ENDFOR
+        PRINT "]"
     ENDFOR
+
+    PRINT "Game board layout as string:"
+    PRINT board
+
+    PRINT "Simulated move       Simulated board       Posterior Probabilities"
 
     FOR i = 0 to NUM_POSITIONS do
         IF (board[i] = 'b')
@@ -1468,10 +1531,14 @@ FUNCTION predict_move(model, grid[GRID_SIZE][GRID_SIZE], bestRow, bestCol)
                 best_prob ← positive_prob
                 best_move ← i
             ENDIF
+
+            PRINT i, temp_board, positive_prob
         ENDIF
     ENDFOR
 
     divide(best_move, 3, bestRow, bestCol)
+
+    PRINT "Best move: %best_move -> (%bestRow, %bestCol)"
 
     return 0
 ENDFUNCTION
