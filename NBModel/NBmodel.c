@@ -26,6 +26,39 @@ void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int
         }
     }
 
+    // Print out x_counts array for visualization
+    printf("\n    x_counts array\n\n");
+    printf("             pos  neg\n");
+    for (int i = 0; i < NUM_POSITIONS; i++) {
+        printf("Position %d [", i+1);
+        for (int j = 0; j < NUM_OUTCOMES; j++){
+            printf(" %d ", x_counts[i][j]);
+        }
+        printf("]\n");
+    }
+
+    // Print out o_counts array for visualization
+    printf("\n    o_counts array\n\n");
+    printf("             pos  neg\n");    
+    for (int i = 0; i < NUM_POSITIONS; i++) {
+        printf("Position %d [", i+1);
+        for (int j = 0; j < NUM_OUTCOMES; j++){
+            printf(" %d ", o_counts[i][j]);
+        }
+        printf("]\n");
+    }
+
+    // Print out b_counts array for visualization
+    printf("\n    b_counts array\n\n");
+    printf("             pos  neg\n");
+    for (int i = 0; i < NUM_POSITIONS; i++) {
+        printf("Position %d [", i+1);
+        for (int j = 0; j < NUM_OUTCOMES; j++){
+            printf(" %d ", b_counts[i][j]);
+        }
+        printf("]\n");
+    }
+
     // Calculate prior probabilities
     model->class_probs[POSITIVE] = (double)positive_count / size;       // Probability of outcome being "positive" in the dataset
     model->class_probs[NEGATIVE] = (double)negative_count / size;       // Probability of outcome being "negative" in the dataset
@@ -149,21 +182,36 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
     char board[NUM_POSITIONS + 1];  // Buffer array for board layout
     int k = 0;                      // Index of buffer array
 
+    //Print initial grid layout for visualization
+    printf("\nGame board layout as grid(array) format:\n");
+
     // Loop to translate the board layout in the GUI into an array for the model to read
     for (int i = 0; i < GRID_SIZE; i++) {
+        printf("[");        // For visualization
         for (int j = 0; j < GRID_SIZE; j++) {
             if (grid[i][j] == EMPTY) {          // If position is empty, set respective position/index in buffer array to blank 'b'
                 board[k] = 'b';
+                printf("b");        // For visualization
             }
             else if (grid[i][j] == PLAYER_O){   // If position has 'o', set respective position/index in buffer array to 'o'
                 board[k] = 'o';
+                printf("o");        // For visualization
             }
             else {
                 board[k] = 'x';                 // If position has 'x', set respective position/index in buffer array to 'x'
+                printf("x");        // For visualization
             }
             k++;
         }
+        printf("]\n");        // For visualization
     }
+
+    // Print grid as string after conversion for visualization
+    printf("\nGame board layout as string:\n");
+    printf("%s\n", board);
+
+    // Print the current simulated move and board layout and the respective probability of winning
+    printf("\nSimulated move          Simulated board           Posterior Probability\n");
 
     // Loop over the board layout to compare which available position gives higher probability of winning
     for (int i = 0; i < NUM_POSITIONS; i++) {
@@ -179,12 +227,18 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
                 best_prob = positive_prob;
                 best_move = i;
             }
+
+            // Print the current simulated move and board layout and the respective probability of winning
+            printf("       %d                   %s                      %f\n", i, temp_board, positive_prob);
         }
     }
 
     // Use divide function to translate best_move into the (x,y) position of the board layout for the model to place move on GUI.
     // For example, if best_move is 2, it will be translated as (0,2), meaning first row & third column on board
     divide(best_move, 3, bestRow, bestCol);
+
+    // Print conversion of best_move integer to bestRow index and bestCol index for visualization
+    printf("\nBest move: %d -> (%d, %d)\n", best_move, *bestRow, *bestCol);
 
     return 0;
 }
