@@ -182,6 +182,8 @@ int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *b
     char board[NUM_POSITIONS + 1];  // Buffer array for board layout
     int k = 0;                      // Index of buffer array
 
+    // AI's thinking process visualization
+    printf("\nAI's Turn");
     //Print initial grid layout for visualization
     printf("\nGame board layout as grid(array) format:\n");
 
