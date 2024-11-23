@@ -64,11 +64,13 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
         }
     }
 
+    // Print out first 10 lines of train_boards array for visualization
     printf("\ntrain_boards array:\n");
     for (int i = 0; i < 10; i++){
         printf("%s\n", train_boards[i]);
     };
 
+    // Print out first 10 lines of train_outcomes array for visualization
     printf("\ntrain_outcomes array:\n");
     for (int i = 0; i < 10; i++){
         printf("%d\n", train_outcomes[i]);
