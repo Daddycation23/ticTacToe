@@ -1,5 +1,8 @@
+/*********************/
+/* main.c file       */
+/*********************/                    
 BEGIN 
-    InitWindow()
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe")
     InitAudioDevice()
     icon ← LoadImage("assets\icon.png")
     SetWindowIcon(icon)
@@ -13,6 +16,14 @@ BEGIN
     mainMenuSound ← LoadSound("assets\MainMenu.mp3")
     playSound ← LoadSound("assets\Play.mp3")
 
+    SetSoundVolume(buttonClickSound, 0.4f)
+    SetSoundVolume(popSound, 0.4f)
+    SetSoundVolume(victorySound, 0.4f)
+    SetSoundVolume(loseSound, 0.4f)
+    SetSoundVolume(drawSound, 0.4f)
+    SetSoundVolume(mainMenuSound, 0.4f)
+    SetSoundVolume(playSound, 0.4f)
+
     InitSymbols()
     InitTitleWords()
     InitConfetti()
@@ -22,6 +33,9 @@ BEGIN
     total_records ← 0
 
     load_data("tic-tac-toe.data", boards, outcomes, &total_records)
+
+    train_size ← 0
+    test_size ← 0
 
     split_data(boards, outcomes, total_records, train_boards, train_outcomes, test_boards, test_outcomes, &train_size, &test_size, RATIO)
 
@@ -33,9 +47,11 @@ BEGIN
     type ← "Training"
     test_NBmodel("NBmodel/NBmodel_confusion_matrix.txt", mode, type, &NBmodel, train_boards, train_outcomes, train_size)
     
-    mode ← "a"
-    type ← "Testing"
+    strcpy(mode, "a")
+    strcpy(type, "Testing")
     test_NBmodel("NBmodel/NBmodel_confusion_matrix.txt", mode, type, &NBmodel, test_boards, test_outcomes, test_size)
+
+    growth_Tree(&TDmodel)
 
     WHILE (!WindowShouldClose())
         IF (gameState == MENU || gameState == DIFFICULTY_SELECT || gameState == MODEL_SELECT)
@@ -157,18 +173,18 @@ BEGIN
                 DrawSymbols() 
                 DrawTitleWords()
                 DrawMenu()
-            BREAK 
+                BREAK 
             CASE DIFFICULTY_SELECT
                 DrawSymbols()
                 DrawDifficultySelect()
-            BREAK 
+                BREAK 
             CASE MODEL_SELECT
                 DrawSymbols()
                 DrawModelSelect()
-            BREAK
+                BREAK
             CASE GAME
                 DrawGame()
-            BREAK 
+                BREAK 
             CASE GAME_OVER
                 DrawGame()
                 DrawGameOver()
@@ -176,7 +192,7 @@ BEGIN
                     UpdateConfetti()
                     DrawConfetti()
                 ENDIF
-            BREAK 
+                BREAK 
         ENDSWITCH
         EndDrawing()
     ENDWHILE
@@ -193,6 +209,34 @@ BEGIN
     return 0
 END 
 
+FUNCTION GetCurrentModeStats()
+    IF (currentDifficulty == EASY)
+        IF (currentModel == NAIVE_BAYES)
+            RETURN &naiveBayesStats
+        ELSE
+            RETURN &decisionTreeStats
+        ENDIF
+    ELSE
+        IF (currentDifficulty == MEDIUM)
+            RETURN &mediumStats
+        ELSE
+            RETURN &hardStats
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION RandomizeStartingPlayer()
+    IF (GetRandomValue(0, 1) == 0)
+        currentPlayerTurn ← PLAYER_X_TURN
+    ELSE
+        currentPlayerTurn ← PLAYER_O_TURN
+    ENDIF
+ENDFUNCTION
+
+
+/*********************/
+/* Init.c file       */
+/*********************/
 FUNCTION InitTitleWords()
     words ← {"Tic", "-", "Tac", "-", "Toe"}
     startX ← SCREEN_WIDTH / 2 - MeasureText("Tic-Tac-Toe", 40) / 2
@@ -217,6 +261,56 @@ FUNCTION InitSymbols()
     ENDFOR
 ENDFUNCTION
 
+FUNCTION InitConfetti()
+    FOR i = 0 to MAX_CONFETTI - 1 do
+        confetti[i].position ← (Vector2){ SCREEN_WIDTH - GetRandomValue(30, 70), SCREEN_HEIGHT - GetRandomValue(30, 70)}
+        angle ← GetRandomValue(160, 280) * DEG2RAD
+        speed ← GetRandomValue(600, 1200)/100.0f
+        confetti[i].velocity ← (Vector2){ cos(angle) * speed, sin(angle) * speed }
+        SWITCH(GetRandomValue(0, 4))
+            CASE 0:
+                confetti[i].color ← RED
+                BREAK
+            CASE 1:
+                confetti[i].color ← GREEN
+                BREAK
+            CASE 2:
+                confetti[i].color ← BLUE
+                BREAK
+            CASE 3:
+                confetti[i].color ← YELLOW
+                BREAK
+            CASE 4:
+                confetti[i].color ← Pink
+                BREAK
+        ENDSWITCH
+        confetti[i].size ← GetRandomValue(2, 4)
+        confetti[i].active ← true
+        confetti[i].alpha ← 1.0f
+        confetti[i].lifetime ← GetRandomValue(150, 200)/100.0f
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION InitGame()
+    hint.hintCountO ← 0
+    hint.hintCountX ← 0
+    showPartyAnimation ← false
+    StopSound(victorySound)
+    StopSound(loseSound)
+    StopSound(drawSound)
+    memset(grid, EMPTY, sizeof(grid))
+    gameOver ← false
+    winner ← EMPTY
+    RandomizeStartingPlayer()
+    FOR i = 0 to 2 do
+        winningCells[i][0] ← -1
+        winningCells[i][1] ← -1
+ENDFUNCTION
+
+
+/*********************/
+/* Update.c file     */
+/*********************/
 FUNCTION UpdateTitleWords()
     currentWord ← 0
     jumpDelay ← 0.0f
@@ -260,49 +354,6 @@ FUNCTION UpdateSymbols()
     ENDFOR
 ENDFUNCTION
 
-FUNCTION DrawTitleWords()
-    FOR i = 0 to 4 do
-        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK)
-    ENDFOR
-ENDFUNCTION
-
-FUNCTION DrawSymbols()
-    FOR i = 0 tp MAX_SYMBOLS - 1 do
-        origin ← {10, 10} 
-        DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED)
-    ENDFOR
-ENDFUNCTION
-
-FUNCTION InitConfetti()
-    FOR i = 0 to MAX_CONFETTI - 1 do
-        confetti[i].position ← (Vector2){ SCREEN_WIDTH - GetRandomValue(30, 70), SCREEN_HEIGHT - GetRandomValue(30, 70)}
-        angle ← GetRandomValue(160, 280) * DEG2RAD
-        speed ← GetRandomValue(600, 1200)/100.0f
-        confetti[i].velocity ← (Vector2){ cos(angle) * speed, sin(angle) * speed }
-        SWITCH(GetRandomValue(0, 4))
-            CASE 0:
-                confetti[i].color ← RED
-                BREAK
-            CASE 1:
-                confetti[i].color ← GREEN
-                BREAK
-            CASE 2:
-                confetti[i].color ← BLUE
-                BREAK
-            CASE 3:
-                confetti[i].color ← YELLOW
-                BREAK
-            CASE 4:
-                confetti[i].color ← Pink
-                BREAK
-        ENDSWITCH
-        confetti[i].size ← GetRandomValue(2, 4)
-        confetti[i].active ← true
-        confetti[i].alpha ← 1.0f
-        confetti[i].lifetime ← GetRandomValue(150, 200)/100.0f
-    ENDFOR
-ENDFUNCTION
-
 FUNCTION UpdateConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
         IF (confetti[i].active)
@@ -335,12 +386,82 @@ FUNCTION UpdateConfetti()
     ENDIF
 ENDFUNCTION
 
+FUNCTION UpdateGame(buttonClickSound, popSound, victorySound, loseSound, drawSound, *model, *TDmodel)
+    IF (gameOver) return 
+    IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        mousePos ← GetMousePosition()
+        IF (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
+            PlaySound(buttonClickSound)
+            gameState ← MENU
+            RETURN 
+        ENDIF
+    ENDIF
+    IF (currentPlayerTurn == PLAYER_X_TURN)
+        IF (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound))
+            PlaySound(popSound)
+        ENDIF
+    ELSEIF (currentPlayerTurn == PLAYER_O_TURN)
+        IF (isTwoPlayer)
+            IF (HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)) 
+                PlaySound(popSound) 
+            ENDIF
+        ELSE
+            SWITCH(currentDifficulty)
+                CASE EASY
+                    IF (currentModel == NAIVE_BAYES)
+                        AITurn(victorySound, loseSound, drawSound, model)
+                    ELSE
+                        AITurnDecisionTree(victorySound, loseSound, drawSound, TDmodel)
+                    ENDIF
+                    BREAK
+                CASE MEDIUM
+                    AITurn(victorySound, loseSound, drawSound, model)
+                    BREAK
+                CASE HARD
+                    AITurn(victorySound, loseSound, drawSound, model)
+                    BREAK
+            ENDSWITCH
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION UpdateGameOver(buttonClickSound)
+    IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        mousePos ← GetMousePosition()
+        retryBtn ← {
+            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+            SCREEN_HEIGHT/2 + 40,
+            BUTTON_WIDTH,
+            BUTTON_HEIGHT
+        }
+        menuBtn ← {
+            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+            SCREEN_HEIGHT/2 + 100,
+            BUTTON_WIDTH,
+            BUTTON_HEIGHT
+        }
+        IF (CheckCollisionPointRec(mousePos, menuBtn))
+            PlaySound(buttonClickSound)
+            gameState ← MENU
+            InitGame()
+        ELSEIF (CheckCollisionPointRec(mousePos, retryBtn))
+            PlaySound(buttonClickSound)
+            gameState ← GAME
+            InitGame()
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+
+/*********************/
+/* Draw.c file       */
+/*********************/
 FUNCTION DrawConfetti()
     FOR i = 0 to MAX_CONFETTI - 1 do
         IF (confetti[i].active)
             particleColor ← confetti[i].color
             particleColor.a ← confetti[i].alpha*255
-            direction ← (Vector2){ -confetti[i].velocity.x * 0.15f, -confetti[i].velocity.y * 0.15f }
+            direction ← { -confetti[i].velocity.x * 0.15f, -confetti[i].velocity.y * 0.15f }
             DrawCircle(confetti[i].position.x, confetti[i].position.y, confetti[i].size, particleColor)
             FOR trail = 0 to 7 do
                 trailAlpha ← confetti[i].alpha * (1.0f - (trail * 0.14f))
@@ -351,21 +472,25 @@ FUNCTION DrawConfetti()
     ENDFOR
 ENDFUNCTION
 
+FUNCTION DrawTitleWords()
+    FOR i = 0 to 4 do
+        DrawText(titleWords[i].word, titleWords[i].position.x, titleWords[i].position.y, 40, BLACK)
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION DrawSymbols()
+    FOR i = 0 tp MAX_SYMBOLS - 1 do
+        origin ← {10, 10} 
+        DrawTextPro(GetFontDefault(), &symbols[i].symbol, symbols[i].position, origin, symbols[i].rotation, 20, 1, symbols[i].symbol == 'X' ? BLUE : RED)
+    ENDFOR
+ENDFUNCTION
+
 FUNCTION DrawGame()
+    isHintHovered ← false
     mousePos ← GetMousePosition()
-    isHintHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
-    isQuitHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
-
-    IF (!gameOver && isQuitHovered)
-        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
-    ELSEIF (!gameOver && isHintHovered)
-        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
-    ELSEIF (!gameOver)
-        SetMouseCursor(MOUSE_CURSOR_DEFAULT)
-    ENDIF
-
+    
     FOR i = 0 to GRID_SIZE - 1 do
-        FOR j = 0 to GRID_SIZE - 1
+        FOR j = 0 to GRID_SIZE - 1 do
             cell ← {(j * CELL_SIZE), (i * CELL_SIZE), CELL_SIZE, CELL_SIZE}
             isWinningCell ← false
             IF (gameOver && winner != EMPTY)
@@ -389,7 +514,7 @@ FUNCTION DrawGame()
                 cellColor ← isHovered ? DARKGRAY : LIGHTGRAY
             ENDIF
 
-            DrawRectangleRec(cell, isHovered ? DARKGRAY : LIGHTGRAY)
+            DrawRectangleRec(cell, cellColor)
 
             IF (grid[i][j] == PLAYER_X)
                 text ← "X"
@@ -399,7 +524,7 @@ FUNCTION DrawGame()
                 textX ← cell.x + (CELL_SIZE - textWidth) / 2
                 textY ← cell.y + (CELL_SIZE - textHeight) / 2
                 DrawText(text, textX, textY, fontSize, BLUE)
-            ELSEIF
+            ELSEIF (grid[i][j] == PLAYER_O)
                 text ← "O"
                 fontSize ← 100
                 textWidth ← MeasureText(text, fontSize)
@@ -417,38 +542,59 @@ FUNCTION DrawGame()
     ENDFOR
 
     hintBtn ← {SCREEN_WIDTH - 80, 10, 70, 30}
-    DrawButton(hintBtn, "Hint", 20, !gameOver && isHintHovered)
+    *hintText ← "Hint: "
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2-hint.hintCountX))
+    IF (currentPlayerTurn == PLAYER_X_TURN)
+        IF (hint.hintCountX < 2)
+            isHintHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered)
+        ELSE    
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && false)
+        ENDIF
+    ENDIF
+    
+    snprintf(hintTextFinal, sizeof(hintTextFinal), "%s%d", hintText, (2-hint.hintCountO))
+    IF (currentPlayerTurn == PLAYER_O_TURN)
+        IF (hint.hintCountO < 2)
+            isHintHovered ← (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && isHintHovered)
+        ELSE    
+            DrawButton(hintBtn, hintTextFinal, 20, !gameOver && false)
+        ENDIF
+    ENDIF
+
     quitBtn ← {SCREEN_WIDTH - 80, 10, 70, 30}
     DrawButton(quitBtn, "Quit", 20, !gameOver && isQuitHovered)
+
+    IF (!gameOver && isQuitHovered)
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
+    ELSEIF (!gameOver && isHintHovered)
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND)
+    ELSEIF (!gameOver)
+        SetMouseCursor(MOUSE_CURSOR_DEFAULT)
+    ENDIF
 
     IF (!gameOver)
         IF (!isTwoPlayer)
             currentStats ← GetCurrentModeStats()
 
-            PRINT (statsText, "Player: %d | AI: %d | Draws: %d", 
-                    currentStats->playerWins, 
-                    currentStats->aiWins, 
-                    currentStats->draws)
+            PRINT(statsText, "Player: %d | AI: %d | Draws: %d", 
+                    currentStats→playerWins, 
+                    currentStats→aiWins, 
+                    currentStats→draws)
             
             DrawText(statsText, SCREEN_WIDTH/2 - MeasureText(statsText, 20)/2, 10, 20, BLACK)
         ENDIF
 
         yPos ← isTwoPlayer ? 20 : 40
         IF (currentPlayerTurn == PLAYER_X_TURN)
-            turnText ← "Player X's Turn"
+            turnText ← isTwoPlayer ? "Player X's Turn" : "Your Turn";
             DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, BLUE)
         ELSE
-            turnText ← "Player O's Turn"
+            turnText ← isTwoPlayer ? "Player O's Turn" : "AI's Turn";
             DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 30)/2, yPos, 30, RED)
         ENDIF
     ENDIF
-ENDFUNCTION
-
-FUNCTION HandleButtonHover()
-    mousePos ← GetMousePosition()
-    *isHintHovered ← CheckCollisionPointRec(mousePos, button)
-    DrawButton(button, text, fontSize, *isHovered)
-    return *isHintHovered
 ENDFUNCTION
 
 FUNCTION DrawMenu()
@@ -578,7 +724,7 @@ FUNCTION DrawGameOver()
     SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
 ENDFUNCTION
 
-FUNCTION DrawButton()
+FUNCTION DrawButton(bounds, *text, fontSize, isHovered)
     vibrationBounds ← bounds
 
     IF (isHovered)
@@ -683,99 +829,40 @@ FUNCTION DrawModelSelect()
     SetMouseCursor((nbHover || dtHover || backHover) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT)
 ENDFUNCTION
 
-FUNCTION InitGame()
-    hint.hintCountO ← 0
-    hint.hintCountX ← 0
-    showPartyAnimation ← false
-    StopSound(victorySound)
-    StopSound(loseSound)
-    StopSound(drawSound)
-    memset(grid, EMPTY, sizeof(grid))
-    gameOver ← false
-    winner ← EMPTY
-    currentPlayerTurn ← PLAYER_X_TURN
+
+/*********************/
+/* Handle.c file     */
+/*********************/
+FUNCTION HandleButtonHover(button, *text, fontSize, *isHovered)
+    mousePos ← GetMousePosition()
+    *isHintHovered ← CheckCollisionPointRec(mousePos, button)
+    DrawButton(button, text, fontSize, *isHovered)
+    return *isHintHovered
 ENDFUNCTION
 
-FUNCTION GetCurrentModeStats()
-    IF (currentDifficulty == EASY)
-        IF (currentModel == NAIVE_BAYES)
-            RETURN &naiveBayesStats
-        ELSE
-            RETURN &decisionTreeStats
-        ENDIF
-    ELSE
-        IF (currentDifficulty == MEDIUM)
-            RETURN &mediumStats
-        ELSE
-            RETURN &hardStats
-        ENDIF
-    ENDIF
-END FUNCTION
-
-FUNCTION UpdateGame()
-    IF (gameOver) RETURN 
-
-    IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        mousePos ← GetMousePosition()
-        IF (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 && mousePos.y >= 10 && mousePos.y <= 40)
-            PlaySound(buttonClickSound)
-            gameState ← MENU
-            RETURN 
-        ENDIF
-    ENDIF
-
-    IF (currentPlayerTurn == PLAYER_X_TURN)
-        IF (HandlePlayerTurn())
-            PlaySound()
-        ENDIF
-    
-    ELSEIF (currentPlayerTurn == PLAYER_O_TURN)
-        IF (isTwoPlayer)
-            IF (HandlePlayerTurn()) 
-                PlaySound() 
-            ENDIF
-        ELSE
-            SWITCH(currentDifficulty)
-                CASE EASY
-                    IF (currentModel == NAIVE_BAYES)
-                        AITurn()
-                    ELSE
-                        AITurnDecisionTree()
-                    ENDIF
-                BREAK
-                
-                CASE MEDIUM
-                    AITurn()
-                BREAK
-
-                CASE HARD
-                    AITurn()
-                BREAK
-            ENDSWITCH
-        ENDIF
-    ENDIF
-ENDFUNCTION
-
-FUNCTION HandlePlayerTurn()
+FUNCTION HandlePlayerTurn(popSound, victorySound, loseSound, drawSound)
     clearHint()
     IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         mousePos ← GetMousePosition()
         row ← (int)(mousePos.y / CELL_SIZE)
         col ← (int)(mousePos.x / CELL_SIZE)
-        IF (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
-            PlaySound(buttonClickSound)
-            hint.hintCountX ← hint.hintCountX + 1
-            getHint()
-            row ← hint.row
-            col ← hint.col
-        ELSEIF (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO <2)
-            PlaySound(buttonClickSound)
-            hint.hintCountO ← hint.hintCountO + 1
-            getHint()
-            row = hint.row
-            row = hint.col
-        ELSE
-            RETURN false
+        IF (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 
+        && mousePos.y >= 10 && mousePos.y <= 40 && (hint.hintCountX < 2 || hint.hintCountO <2))
+            IF (currentPlayerTurn == PLAYER_X_TURN && hint.hintCountX < 2)
+                PlaySound(buttonClickSound)
+                hint.hintCountX ← hint.hintCountX + 1
+                getHint()
+                row ← hint.row
+                col ← hint.col
+            ELSEIF (currentPlayerTurn == PLAYER_O_TURN && hint.hintCountO <2)
+                PlaySound(buttonClickSound)
+                hint.hintCountO ← hint.hintCountO + 1
+                getHint()
+                row = hint.row
+                row = hint.col
+            ELSE
+                return false
+            ENDIF
         ENDIF
         currentStats ← GetCurrentModeStats()
         IF (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE)
@@ -793,12 +880,13 @@ FUNCTION HandlePlayerTurn()
                     ELSEIF (!isTwoPlayer && winner == PLAYER_X)
                         showPartyAnimation ← true
                         InitConfetti()
-                        currentStats → playerWins + 1
-                        currentStats → totalGames + 1
+                        currentStats→playerWins ← currentStats→playerWins + 1
+                        currentStats→totalGames ← currentStats→totalGames + 1
                         PlaySound(victorySound)
                     ELSE
-                        currentStats → aiWins + 1
-                        currentStats → totalGames + 1
+                        showPartyAnimation ← false
+                        currentStats→aiWins ← currentStats→aiWins + 1
+                        currentStats→totalGames ← currentStats→totalGames + 1
                         PlaySound(loseSound)
                     ENDIF
 
@@ -806,8 +894,8 @@ FUNCTION HandlePlayerTurn()
                     gameOver ← true
                     gameState ← GAME_OVER
                     winner ← EMPTY
-                    currentStats → draws + 1
-                    currentStats → totalGames + 1
+                    currentStats→draws ← currentStats→draws + 1
+                    currentStats→totalGames ← currentStats→totalGames + 1
                     PlaySound(drawSound)
 
                 ELSE 
@@ -821,13 +909,17 @@ FUNCTION HandlePlayerTurn()
     RETURN false
 ENDFUNCTION
 
-FUNCTION AITurn()
+
+/*********************/
+/* AI.c file         */
+/*********************/
+FUNCTION AITurn(victorySound, loseSound, drawSound, *model)
     bestScore ← -1000
     bestRow ← -1
     bestCol ← -1
     IF (currentDifficulty == EASY)
         IF (currentModel == NAIVE_BAYES)
-            predict_move()
+            predict_move(model, grid, &bestRow, &bestCol)
         ELSE
             AITurnDecisionTree()
         ENDIF
@@ -838,7 +930,7 @@ FUNCTION AITurn()
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (grid[i][j] == EMPTY)
                     grid[i][j] ← PLAYER_O
-                    score ← Minimax()
+                    score ← Minimax(grid, false, 0, depthLimit, -1000, 1000)
                     grid[i][j] ← EMPTY
 
                     IF (score > bestScore)
@@ -856,7 +948,7 @@ FUNCTION AITurn()
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (grid[i][j] == EMPTY)
                     grid[i][j] ← PLAYER_O
-                    score ← Minimax()
+                    score ← Minimax(grid, false, 0, depthLimit, -1000, 1000)
                     grid[i][j] ← EMPTY
 
                     IF (score > bestScore)
@@ -879,8 +971,8 @@ FUNCTION AITurn()
         gameOver ← true
         winner ← PLAYER_O
         gameState ← GAME_OVER
-        currentStats → aiWins + 1
-        currentStats → totalGames + 1
+        currentStats→aiWins ← currentStats→aiWins + 1           
+        currentStats→totalGames ← currentStats→totalGames+ 1  
         IF (!isTwoPlayer)
             PlaySound(loseSound)
         ELSE
@@ -890,123 +982,130 @@ FUNCTION AITurn()
         gameOver ← true
         gameState ← GAME_OVER
         winner ← EMPTY
-        currentStats → draws + 1
-        currentStats → totalGames + 1
+        currentStats→draws ← currentStats→draws + 1           
+        currentStats→totalGames ← currentStats→totalGames+ 1  
         PlaySound(drawSound)
     ELSE
         currentPlayerTurn ← PLAYER_X_TURN
     ENDIF
 ENDFUNCTION
 
-FUNCTION AITurnDecisionTree(victorySound, loseSound, drawSound, TDmodel)
+FUNCTION AITurnDecisionTree(victorySound, loseSound, drawSound, *TDmodel)
     bestScore ← -1000              
     bestRow ← -1                   
-    bestCol ← -1                   
+    bestCol ← -1      
+    best_prob ← 0.0            
     board ← EMPTY 2D ARRAY        
 
     // Convert the grid into a format suitable for the decision tree
-    FOR i = 0 TO 2 DO
-        FOR j = 0 TO 2 DO
-            IF grid[i][j] == EMPTY THEN
+    FOR i = 0 to 2 do
+        FOR j = 0 to 2 do
+            IF grid[i][j] == EMPTY
                 board[i][j] ← 'b'  
-            ELSE IF grid[i][j] == PLAYER_X THEN
+            ELSEIF grid[i][j] == PLAYER_X 
                 board[i][j] ← 'x'  
-            ELSE IF grid[i][j] == PLAYER_O THEN
+            ELSEIF grid[i][j] == PLAYER_O 
                 board[i][j] ← 'o'  
             ENDIF
         ENDFOR
     ENDFOR
 
-    CALL print_tree(TDmodel, 2)
-    CALL dt_predict_best_move(TDmodel, board, PLAYER_O, bestRow, bestCol)
+    print_tree(TDmodel, 2)
+    dt_predict_best_move(TDmodel, board, PLAYER_O, &bestRow, &bestCol)
 
     DO
-        row ← RANDOM_VALUE(0, GRID_SIZE - 1)
-        col ← RANDOM_VALUE(0, GRID_SIZE - 1)
-    WHILE grid[row][col] != EMPTY
+        row ← GetRandomValue(0, GRID_SIZE - 1)
+        col ← GetRandomValue(0, GRID_SIZE - 1)
+    WHILE (grid[row][col] != EMPTY)
 
     grid[bestRow][bestCol] ← PLAYER_O
 
     currentStats ← decisionTreeStats
 
-    IF CheckWin(PLAYER_O) THEN
+    IF (CheckWin(PLAYER_O))
         gameOver ← true            
         winner ← PLAYER_O             
         gameState ← GAME_OVER          
-        currentStats.aiWins + 1       
-        currentStats.totalGames + 1   
-        CALL PlaySound(loseSound)      
+        currentStats→aiWins ← currentStats→aiWins + 1       
+        currentStats→totalGames ← currentStats→totalGames + 1   
+        PlaySound(loseSound)      
 
-    ELSE IF CheckDraw() THEN
+    ELSE IF (CheckDraw())
         gameOver ← true               
         gameState ← GAME_OVER        
         winner ← EMPTY                
-        currentStats.draws + 1        
-        currentStats.totalGames + 1   
-        CALL PlaySound(drawSound)     
-
+        currentStats→draws ← currentStats→draws + 1        
+        currentStats→totalGames ← currentStats→totalGames + 1   
+        PlaySound(drawSound)     
     ELSE
         currentPlayerTurn ← PLAYER_X_TURN
     ENDIF
 ENDFUNCTION
 
-FUNCTION CheckWin()
+
+/*********************/
+/* Check.c file      */
+/*********************/
+FUNCTION CheckWin(player)
     FOR i = 0 to GRID_SIZE - 1 do
         IF (grid[i][0] == player && grid[i][1] == player && grid[i][2] == player)
-            RETURN true
+            winningCells[0][0] ← i
+            winningCells[0][1] ← 0
+            winningCells[1][0] ← i
+            winningCells[1][1] ← 1
+            winningCells[2][0] ← i
+            winningCells[2][1] ← 2
+            return true
         ENDIF
+    ENDFOR
+    FOR i = 0 to GRID_SIZE -1 do
         IF (grid[0][i] == player && grid[1][i] == player && grid[2][i] == player)
-            RETURN true
+            winningCells[0][0] ← 0
+            winningCells[0][1] ← i
+            winningCells[1][0] ← 1
+            winningCells[1][1] ← i
+            winningCells[2][0] ← 2
+            winningCells[2][1] ← i
+            return true
         ENDIF
     ENDFOR
 
     IF (grid[0][0] == player && grid[1][1] == player && grid[2][2] == player)
-        RETURN true
+        winningCells[0][0] ← 0
+        winningCells[0][1] ← 0
+        winningCells[1][0] ← 1
+        winningCells[1][1] ← 1
+        winningCells[2][0] ← 2
+        winningCells[2][1] ← 2
+        return true
     ENDIF
     IF (grid[0][2] == player && grid[1][1] == player && grid[2][0] == player)
-        RETURN true
+        winningCells[0][0] ← 0
+        winningCells[0][1] ← 2
+        winningCells[1][0] ← 1
+        winningCells[1][1] ← 1
+        winningCells[2][0] ← 2
+        winningCells[2][1] ← 0
+        return true
     ENDIF
-    RETURN false
+    return false
 ENDFUNCTION
 
 FUNCTION CheckDraw()
     FOR i = 0 to GRID_SIZE - 1 do
         FOR j = 0 to GRID_SIZE - 1 do
             IF (grid[i][j] == EMPTY)
-                RETURN false
+                return false
             ENDIF
         ENDFOR
     ENDFOR
-    RETURN true
+    return true
 ENDFUNCTION
 
-FUNCTION UpdateGameOver()
-    IF (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        mousePos ← GetMousePosition()
-        retryBtn ← {
-            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-            SCREEN_HEIGHT/2 + 40,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
-        }
-        menuBtn ← {
-            SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-            SCREEN_HEIGHT/2 + 100,
-            BUTTON_WIDTH,
-            BUTTON_HEIGHT
-        }
-        IF (CheckCollisionPointRec(mousePos, menuBtn))
-            PlaySound(buttonClickSound)
-            gameState ← MENU
-            InitGame()
-        ELSEIF (CheckCollisionPointRec(mousePos, retryBtn))
-            PlaySound(buttonClickSound)
-            gameState ← GAME
-            InitGame()
-        ENDIF
-    ENDIF
-ENDFUNCTION
 
+/*********************/
+/* Hint.c file       */
+/*********************/
 FUNCTION clearHint()
     hint.row ← -1
     hint.col ← -1 
@@ -1021,7 +1120,7 @@ FUNCTION getHint()
         FOR j = 0 to GRID_SIZE -1 do
             IF (grid[i][j] == EMPTY)
                 grid[i][j] ← PLAYER_O
-                socre ← Minimax()
+                socre ← Minimax(grid, false, 0, depthLimit, -1000, 1000)
                 grid[i][j] ← EMPTY
                 IF (score > bestScore)
                     bestScore ← score
@@ -1032,24 +1131,28 @@ FUNCTION getHint()
         ENDFOR
     ENDFOR
     IF (bestRow != -1 && bestCol != -1)
-        hint.row = bestRow
-        hint.col = bestCol
+        hint.row ← bestRow
+        hint.col ← bestCol
     ENDIF
 ENDFUNCTION
 
-FUNCTION Minimax()
+
+/*********************/
+/* Minimax.c file    */
+/*********************/
+FUNCTION Minimax(board, isMaximizing, depth, depthLimit, alpha, beta)
     IF (depth >= depthLimit) 
-        RETURN 0
+        return 0
     ENDIF
-    score ← EvaluateBoard()
+    score ← EvaluateBoard(board)
     IF (score == 10) 
-        RETURN score - depth
+        return score - depth
     ENDIF
     IF (sore == -10)
-        RETURN score + depth
+        return score + depth
     ENDIF
     IF (CheckDraw())
-        RETURN 0
+        return 0
     ENDIF
     IF (isMaximizing)
         bestScore ← -1000
@@ -1057,7 +1160,7 @@ FUNCTION Minimax()
             FOR j = 0 to GRID_SIZE -1 do
                 IF (board[i][j] == EMPTY)
                     board[i][j] ← PLAYER_O
-                    bestScore ← fmax(bestScore, Minimax())
+                    bestScore ← fmax(bestScore, Minimax(board, false, depth + 1, depthLimit, alpha, beta))
                     board[i][j] ← EMPTY
                     alpha ← fmax(alpha, bestScore)
                     IF (beta <= alpha)
@@ -1066,14 +1169,14 @@ FUNCTION Minimax()
                 ENDIF
             ENDFOR
         ENDFOR
-        RETURN bestScore
+        return bestScore
     ELSE
         bestScore ← 1000
         FOR i = 0 to GRID_SIZE - 1 do
             FOR j = 0 to GRID_SIZE - 1 do
                 IF (board[i][j] == EMPTY)
                     board[i][j] ← PLAYER_X
-                    bestScore ← fmin(bestScore, Minimax())
+                    bestScore ← fmin(bestScore, Minimax(board, true, depth + 1, depthLimit, alpha, beta))
                     board[i][j] ← EMPTY
                     beta ← fmin(beta, bestScore)
                     IF (beta <= alpha)
@@ -1082,58 +1185,55 @@ FUNCTION Minimax()
                 ENDIF
             ENDFOR
         ENDFOR
-        RETURN bestScore
+        return bestScore
     ENDIF
 ENDFUNCTION
 
-FUNCTION EvaluateBoard()
+FUNCTION EvaluateBoard(board)
     FOR row = 0 to GRID_SIZE - 1 do
         IF (board[row][0] == board[row][1] && board[row][0] == board[row][2])
             IF (board[row][0] == PLAYER_O)
-                RETURN 10
+                return 10
             ELSEIF (board[row][0] == PLAYER_X)
-                RETURN -10
+                return -10
             ENDIF
         ENDIF
     ENDFOR
     FOR col = 0 to GRID_SIZE - 1 do
         IF (board[0][col] == board[1][col] && board[0][col] == board[2][col])
             IF (board[0][col] == PLAYER_O)
-                RETURN 10
+                return 10
             ELSEIF (board[0][col] == PLAYER_X)
-                RETURN -10
+                return -10
             ENDIF
         ENDIF
     ENDFOR
 
     IF (board[0][0] == board[1][1] && board[0][0] == board[2][2])
         IF (board[0][0] == PLAYER_O)
-            RETURN 10
+            return 10
         ELSEIF (board[0][0] == PLAYER_X)
-            RETURN -10
+            return -10
         ENDIF
     ENDIF
     IF (board[0][2] == board[1][1] && board[0][2] == board[2][0])
         IF (board[0][2] == PLAYER_O)
-            RETURN 10
+            return 10
         ELSEIF (board[0][2] == PLAYER_X)
-            RETURN -10
+            return -10
         ENDIF
     ENDIF
-    RETURN 0
+    return 0
 ENDFUNCTION
 
-FUNCTION RandomizeStartingPlayer()
-    IF (GetRandomValue(0, 1) == 0)
-        currentPlayerTurn ← PLAYER_X_TURN
-    ENDIF
-    ELSE
-        currentPlayerTurn ← PLAYER_O_TURN
-    ENDIF
-ENDFUNCTION
 
+/**************************/
+/* data_processing.c file */
+/**************************/
 FUNCTION load_data(filename, boards, outcomes, total_records)
     file_ptr refToFile → &filename
+    total_records refToInt → &total_records
+
     OPEN FILE file_ptr
     IF (file_ptr = NULL)
         PRINT "Failed to open file"
@@ -1180,16 +1280,31 @@ FUNCTION split_data(boards, outcomes, total_records, train_boards, train_outcome
             *test_size ← *test_size + 1
         ENDIF
     ENDFOR
+
+    PRINT "train_boards array:"
+    FOR i = 0 to 10 do
+        PRINT train_boards[i]
+    ENDFOR
+
+    PRINT "train_outcomes array:"
+    FOR i = 0 to 10 do
+        PRINT train_outcomes[i]
+    ENDFOR
 ENDFUNCTION
 
 FUNCTION outcome_index(outcome)
     IF (outcome = "positive")
-        RETURN POSITIVE
+        return POSITIVE
     ELSE
-        RETURN NEGATIVE
+        return NEGATIVE
     ENDIF
 ENDFUNCTION
 
+
+
+/************************/
+/* NBmodel.c file       */
+/************************/
 FUNCTION train_NBmodel(model, boards, outcomes, size)
     model refToNaiveBayesModel → &NBmodel
 
@@ -1217,6 +1332,36 @@ FUNCTION train_NBmodel(model, boards, outcomes, size)
                 b_counts[j][outcome_idx] ← b_counts[j][outcome_idx] + 1
             ENDIF
         ENDFOR
+    ENDFOR
+
+    PRINT "X_counts array"
+    PRINT " pos     neg"
+    FOR i = 0 to NUM_POSITIONS do
+        PRINT "Position (i+1) ["
+        FOR j = 0 to NUM_OUTCOMES do
+            PRINT x_counts[i][j]
+        ENDFOR
+        PRINT "]"
+    ENDFOR
+
+    PRINT "o_counts array"
+    PRINT " pos     neg"
+    FOR i = 0 to NUM_POSITIONS do
+        PRINT "Position (i+1) ["
+        FOR j = 0 to NUM_OUTCOMES do
+            PRINT o_counts[i][j]
+        ENDFOR
+        PRINT "]"
+    ENDFOR
+
+    PRINT "b_counts array"
+    PRINT " pos     neg"
+    FOR i = 0 to NUM_POSITIONS do
+        PRINT "Position (i+1) ["
+        FOR j = 0 to NUM_OUTCOMES do
+            PRINT b_counts[i][j]
+        ENDFOR
+        PRINT "]"
     ENDFOR
 
     model→class_probs[POSITIVE] ← positive_count / size
@@ -1324,7 +1469,7 @@ FUNCTION calculate_probability(model, board, outcome)
             probability ← probability * model→b_probs[i][outcome]
         ENDIF
     ENDFOR
-    RETURN probability
+    return probability
 ENDFUNCTION
 
 FUNCTION predict_outcome(model, board)
@@ -1334,30 +1479,46 @@ FUNCTION predict_outcome(model, board)
     negative_prob ← calculate_probability(model, board, NEGATIVE)
 
     IF (positive_prob > negative_prob)
-        RETURN POSITIVE
+        return POSITIVE
     ELSE
-        RETURN NEGATIVE
+        return NEGATIVE
     ENDIF
 ENDFUNCTION
 
 FUNCTION predict_move(model, grid[GRID_SIZE][GRID_SIZE], bestRow, bestCol)
     model refToNaiveBayesModel → &NBmodel
+    bestRow refToInt → &bestRow
+    bestCol refToInt → &bestCol
 
     best_move ← -1
     best_prob ← 0.0
     k ← 0
 
+    PRINT "AI's Turn"
+    PRINT "Game board layout as grid(array) format:"
+
     FOR i = 0 to GRID_SIZE do
+        PRINT "["
         FOR j = 0 to GRID_SIZE do
             IF (grid[i][j] = EMPTY)
                 board[k] ← 'b'
+                PRINT "b"
             ELSEIF (grid[i][j] = PLAYER_O)
                 board[k] ← 'o'
+                PRINT "o"
             ELSE
                 board[k] ← 'x'
+                PRINT "x"
+            ENDIF
             k ← k + 1
         ENDFOR
+        PRINT "]"
     ENDFOR
+
+    PRINT "Game board layout as string:"
+    PRINT board
+
+    PRINT "Simulated move       Simulated board       Posterior Probabilities"
 
     FOR i = 0 to NUM_POSITIONS do
         IF (board[i] = 'b')
@@ -1370,12 +1531,16 @@ FUNCTION predict_move(model, grid[GRID_SIZE][GRID_SIZE], bestRow, bestCol)
                 best_prob ← positive_prob
                 best_move ← i
             ENDIF
+
+            PRINT i, temp_board, positive_prob
         ENDIF
     ENDFOR
 
     divide(best_move, 3, bestRow, bestCol)
 
-    RETURN 0
+    PRINT "Best move: %best_move -> (%bestRow, %bestCol)"
+
+    return 0
 ENDFUNCTION
 
 FUNCTION divide(dividend, divisor, quo, rem)

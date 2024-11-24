@@ -7,7 +7,7 @@
 // Function to load data from file into arrays
 void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records) {
     FILE *file_ptr = fopen(filename, "r");      // Open file of dataset to read
-    if (file_ptr == NULL) {                     // Check if its an exisiting file, else will send an error
+    if (file_ptr == NULL) {                     // Check if its an existing file, else will send an error
         perror("Failed to open file");
         exit(1);
     }
@@ -48,10 +48,10 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
         outcomes[j] = temp_outcome;
     }
     
-    int target_train_size = (int)(ratio * total_records);       // Get number of lines for training dataaset, in this case 80% of total_records
+    int target_train_size = (int)(ratio * total_records);       // Get number of lines for training dataset, in this case 80% of total_records
 
 
-    // Loop to seperate original dataset into training(80%) and testing(20%) dataset for machine learning
+    // Loop to separate original dataset into training(80%) and testing(20%) dataset for machine learning
     for (int i = 0; i < total_records; i++) {
         if (*train_size < target_train_size) { // 80%
             strcpy(train_boards[*train_size], boards[i]);
@@ -63,6 +63,18 @@ void split_data(char boards[][NUM_POSITIONS + 1], int outcomes[], int total_reco
             (*test_size)++;
         }
     }
+
+    // Print out first 10 lines of train_boards array for visualization
+    printf("\ntrain_boards array:\n");
+    for (int i = 0; i < 10; i++){
+        printf("%s\n", train_boards[i]);
+    };
+
+    // Print out first 10 lines of train_outcomes array for visualization
+    printf("\ntrain_outcomes array:\n");
+    for (int i = 0; i < 10; i++){
+        printf("%d\n", train_outcomes[i]);
+    };
 }
 
 // Utility function to convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).

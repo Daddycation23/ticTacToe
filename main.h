@@ -193,7 +193,6 @@ int outcome_index(const char *outcome);
 void divide(int dividend, int divisor, int *quo, int *rem);
 void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *TDmodel);
 
-// Add this with the other function prototypes
-void RandomizeStartingPlayer(void);
+void RandomizeStartingPlayer(void); // to randomize starting player
 
 #endif // MAIN_H

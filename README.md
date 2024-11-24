@@ -11,11 +11,13 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - **Animated UI**: Includes animations for the title, buttons, and grid cells.
 - **Sound Effects**: Includes sound effects for button clicks, game events, and background music.
 - **Hover Effects**: Visual feedback when hovering over buttons and grid cells, with vibration effects for certain buttons.
+- **Winning Animations**: Surprise players with confetti animations upon winning.
 
 ## Game States
 
 - **Menu**: The main menu where players can choose between single-player and two-player modes.
 - **Difficulty Select**: Allows players to select the difficulty level for the AI opponent.
+- **Model Select**: Allows players to select the AI model for the single-player Easy mode.
 - **Game**: The main game screen where players take turns placing their symbols on the grid.
 - **Game Over**: Displays the result of the game and provides options to retry or return to the menu.
 
@@ -60,6 +62,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void DrawGameOver()`: Renders the game over screen.
 - `void DrawDifficultySelect()`: Renders the difficulty selection screen.
 - `void DrawModelSelect()`: Renders the model selection screen when easy mode is chosen.
+- `bool HandleButtonHover(Rectangle button, const char* text, int fontSize, bool* isHovered)`: Handles button hover effects.
 
 ### Data Processing Functions
 - `void load_data(const char *filename, char boards[][NUM_POSITIONS + 1], int outcomes[], int *total_records)`: Loads data from file.
@@ -128,7 +131,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
    ```
 2. **Build**: Compile the program using a C compiler with Raylib linked.
    ```bash
-   gcc -o main main.c DecisionTree_ML/decisiontree.c NBmodel/data_processing.c NBmodel/NBmodel.c -I. -L. -lraylib -lopengl32 -lgdi32 -lwinmm
+   gcc -o main main.c DecisionTree_ML/*.c NBmodel/*.c GameFunctions/*.c -I. -I./DecisionTree_ML -I./NBmodel -I./GameFunctions -L./Libraries -L. -lraylib -lopengl32 -lgdi32 -lwinmm
    ```
 3. **Run**: Execute the compiled program.
    ```bash
