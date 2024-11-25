@@ -1550,3 +1550,163 @@ FUNCTION divide(dividend, divisor, quo, rem)
     *quo ← dividend / divisor
     *rem ← dividend % divisor
 ENDFUNCTION
+
+
+/**************************/
+/* decisiontree.c file */
+/**************************/
+FUNCTION growth_Tree(tree)
+    DECLARE dataset[MAX_ROWS], train_set[MAX_ROWS], test_set[MAX_ROWS]
+    DECLARE dataset_size, train_size, test_size AS INTEGER = 0
+    DECLARE train_confusion[2][2], test_confusion[2][2] = {0}
+    DECLARE train_accuracy, test_accuracy AS FLOAT = 0.0
+    DECLARE train_error_rate, test_error_rate AS DOUBLE = 0.0
+    DECLARE correct_train, correct_test AS INTEGER = 0
+
+    INITIALIZE RANDOM SEED
+    
+    CALL load_dataset("tic-tac-toe.data", dataset, dataset_size)
+    CALL shuffle_dataset(dataset, dataset_size)
+    CALL decision_tree_split_dataset(dataset, dataset_size, train_set, train_size, test_set, test_size, 0.8)
+    
+    SET tree = build_tree(train_set, train_size, 0)
+    CALL calculate_position_probabilities(dataset, dataset_size, "DecisionTree_ML/DTweights.txt")
+
+    CLEAR OUTPUT FILE "DecisionTree_ML/DTconfusion_matrix.txt"
+
+    CALL evaluate_with_randomness(tree, train_set, train_size, train_confusion) → train_accuracy
+    CALCULATE correct_train = train_accuracy * train_size
+    CALL display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training")
+    CALL write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Training", train_accuracy, correct_train, train_size)
+
+    CALL calculate_error_rate(tree, train_set, train_size, train_confusion) → train_error_rate
+    WRITE train_error_rate TO "DecisionTree_ML/DTconfusion_matrix.txt"
+
+    CALL evaluate_with_randomness(tree, test_set, test_size, test_confusion) → test_accuracy
+    CALCULATE correct_test = test_accuracy * test_size
+    CALL display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing")
+    CALL write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Testing", test_accuracy, correct_test, test_size)
+
+    CALL calculate_error_rate(tree, test_set, test_size, test_confusion) → test_error_rate
+    WRITE test_error_rate TO "DecisionTree_ML/DTconfusion_matrix.txt"
+ENDFUNCTION
+
+FUNCTION load_dataset(filename, dataset[], dataset_size)
+    OPEN FILE filename FOR READING
+    IF FILE NOT OPEN
+        PRINT "Failed to open file"
+        EXIT FUNCTION
+    ENDIF
+
+    WHILE FILE HAS LINES
+        READ line
+        SPLIT line INTO tokens USING ","
+        FOR i = 0 TO NUM_FEATURES
+            IF token = "x"
+                SET dataset[dataset_size].features[i] = 1
+            ELSE IF token = "o"
+                SET dataset[dataset_size].features[i] = 2
+            ELSE
+                SET dataset[dataset_size].features[i] = 0
+            ENDIF
+            MOVE TO NEXT TOKEN
+        ENDFOR
+        SET dataset[dataset_size].label = IF token = "positive\n" THEN DT_POSITIVE ELSE DT_NEGATIVE
+        INCREMENT dataset_size
+    ENDWHILE
+    CLOSE FILE
+ENDFUNCTION
+
+FUNCTION shuffle_dataset(dataset[], size)
+    FOR i = size - 1 DOWNTO 1
+        SET j = RANDOM(0, i)
+        SWAP dataset[i] WITH dataset[j]
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION decision_tree_split_dataset(dataset[], dataset_size, train_set[], train_size, test_set[], test_size, train_ratio)
+    SET train_limit = dataset_size * train_ratio
+    SET train_size = 0
+    SET test_size = 0
+    FOR i = 0 TO dataset_size
+        IF i < train_limit
+            SET train_set[train_size++] = dataset[i]
+        ELSE
+            SET test_set[test_size++] = dataset[i]
+        ENDIF
+    ENDFOR
+ENDFUNCTION
+
+FUNCTION build_tree(dataset[], size, depth)
+    DECLARE positives, negatives AS INTEGER = 0
+
+    FOR i = 0 TO size
+        IF dataset[i].label = DT_POSITIVE
+            INCREMENT positives
+        ELSE
+            INCREMENT negatives
+        ENDIF
+    ENDFOR
+
+    IF depth >= MAX_DEPTH OR positives = 0 OR negatives = 0
+        CREATE NEW LEAF NODE
+        SET leaf.prediction = IF positives > negatives THEN DT_POSITIVE ELSE DT_NEGATIVE
+        RETURN leaf
+    ENDIF
+
+    DECLARE best_feature, best_threshold AS INTEGER = -1
+    DECLARE best_gini AS FLOAT = 1.0
+
+    FOR feature_index = 0 TO NUM_FEATURES
+        FOR threshold = 0 TO 2
+            CALL calculate_gini_index(dataset, size, feature_index, threshold) → gini
+            IF gini < best_gini
+                SET best_gini = gini
+                SET best_feature = feature_index
+                SET best_threshold = threshold
+            ENDIF
+        ENDFOR
+    ENFOR
+
+    SPLIT DATASET USING best_feature, best_threshold INTO left[], right[]
+    CREATE NEW NODE
+    SET node.feature_index = best_feature
+    SET node.threshold = best_threshold
+    SET node.left = build_tree(left, left_size, depth + 1)
+    SET node.right = build_tree(right, right_size, depth + 1)
+    RETURN node
+ENDFUNCTION
+
+FUNCTION evaluate_with_randomness(tree, dataset[], size, confusion_matrix[2][2])
+    SET correct_predictions = 0
+    INITIALIZE confusion_matrix TO 0
+
+    FOR i = 0 TO size
+        CALL predict_with_randomness(tree, dataset[i].features) → prediction
+        SET actual = dataset[i].label
+
+        IF actual = DT_POSITIVE AND prediction = DT_POSITIVE
+            INCREMENT confusion_matrix[0][0]
+            INCREMENT correct_predictions
+        ELSE IF actual = DT_NEGATIVE AND prediction = DT_NEGATIVE
+            INCREMENT confusion_matrix[1][1]
+            INCREMENT correct_predictions
+        ELSE IF actual = DT_NEGATIVE AND prediction = DT_POSITIVE
+            INCREMENT confusion_matrix[1][0]
+        ELSE IF actual = DT_POSITIVE AND prediction = DT_NEGATIVE
+            INCREMENT confusion_matrix[0][1]
+        ENDIF
+    ENDFOR
+    RETURN correct_predictions / size
+ENDFUNCTION
+
+FUNCTION calculate_error_rate(tree, dataset[], size, confusion_matrix[2][2])
+    SET error_count = 0
+    FOR i = 0 TO size
+        CALL predict_with_randomness(tree, dataset[i].features) → prediction
+        IF prediction != dataset[i].label
+            INCREMENT error_count
+        ENDIF
+    ENDFOR
+    RETURN error_count / size * 100
+ENDFUNCTION
