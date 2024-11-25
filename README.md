@@ -93,7 +93,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void DrawRectangle(int posX, int posY, int width, int height, Color color)`: Draw a color-filled rectangle.
 - `void DrawRectangleRec(Rectangle rec, Color color)`: Draw a color-filled rectangle.
 - `void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color)`: Draw rectangle outline with extended parameters.
-- `void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)`: Draw a line
+- `void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)`: Draw a line.
 - `Vector2 GetMousePosition(void)`: Get mouse position XY.
 - `void SetMouseCursor(int cursor)`: Set mouse cursor.
 - `bool IsMouseButtonPressed(int button)`: Check if a mouse button has been pressed once.
@@ -117,11 +117,10 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `double GetTime(void)`: Get elapsed time in seconds since InitWindow().
 
 ### Standard Functions
-- `int sprintf(char *str, const char *format, ...)`: Sends formatted output to a string
-- `float sinf (float x)`: Computes the sine (specified in radians) of x
-- `void *memset(void *str, int c, size_t n)`: Returns a pointer to the memory area string
-
-
+- `int sprintf(char *str, const char *format, ...)`: Sends formatted output to a string.
+- `int snprintf(char *__restrict__ __stream, size_t __n, const char *__restrict__ __format, ...)`: Writes formatted output to a string.
+- `float sinf (float x)`: Computes the sine (specified in radians) of x.
+- `void *memset(void *str, int c, size_t n)`: Returns a pointer to the memory area string.
 
 ## Installation
 
