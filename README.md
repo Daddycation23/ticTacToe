@@ -81,6 +81,24 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `int predict_move(NaiveBayesModel *model, Cell grid[GRID_SIZE][GRID_SIZE], int *bestRow, int *bestCol)`: Predict next best move based on given board layout.
 - `void divide(int dividend, int divisor, int *quo, int *rem)`: Get quotient and remainder of a given integer.
 - `NBmodel/plot_confusion_matrix.py`: Python file to plot the confusion matrix of the NB model on both training and testing dataset.
+- `void growth_Tree(DecisionTreeNode *tree)`: Builds, trains, and evaluates a decision tree on a dataset, calculates accuracy and error rates, and writes results to files.
+- `void load_dataset(const char *filename, DataRow dataset[], int *dataset_size)`: Loads the dataset from a file, parses it into features and labels, and stores it in an array.
+- `void shuffle_dataset(DataRow dataset[], int size)`: Randomly shuffles the dataset to ensure random distribution of samples.
+- `void decision_tree_split_dataset(DataRow dataset[], int dataset_size, DataRow train_set[], int *train_size, DataRow test_set[], int *test_size, float train_ratio)`: Splits the dataset into training and testing subsets based on a specified ratio.
+- `DecisionTreeNode *build_tree(DataRow dataset[], int size, int depth)`: Constructs a decision tree by recursively splitting the dataset using the Gini index and applying depth or purity stopping conditions.
+- `float evaluate_with_randomness(DecisionTreeNode *root, DataRow dataset[], int size, int confusion_matrix[2][2])`: Evaluates the decision tree's accuracy with randomized predictions and updates a confusion matrix.
+- `int predict_with_randomness(DecisionTreeNode *node, int features[])`: Predicts a label using a decision tree with an optional randomness factor to flip predictions.
+- `void display_confusion_matrix(int confusion_matrix[2][2], const char *filename, const char *dataset_type)`: Writes a confusion matrix and associated metrics to a file.
+- `void write_accuracy_to_file(const char *filename, const char *dataset_type, float accuracy, int correct, int total)`: Writes the accuracy and classification results for training or testing datasets to a file.
+- `void free_tree(DecisionTreeNode *node)`: Recursively frees memory allocated for the decision tree nodes.
+- `float calculate_gini_index(DataRow dataset[], int size, int feature_index, int threshold)`: Calculates the Gini index to evaluate the quality of a potential split in the dataset.
+- `void decision_tree_split_data(DataRow dataset[], int size, int feature_index, int threshold, DataRow left[], int *left_size, DataRow right[], int *right_size)`: Splits the dataset into left and right branches based on a feature index and threshold.
+- `void dt_predict_best_move(DecisionTreeNode *tree, char board[3][3], char current_player, int *best_row, int *best_col)`: Predicts the best move for a player in a tic-tac-toe board using the decision tree model.
+- `void print_tree(DecisionTreeNode *node, int depth)`: Recursively prints the structure of the decision tree, including nodes and leaf predictions.
+- `void calculate_position_probabilities(DataRow dataset[], int dataset_size, const char *filename)`: Calculates and saves the probabilities of each symbol (`x`, `o`, `b`) at each position for positive and negative outcomes.
+- `double calculate_error_rate(DecisionTreeNode *root, DataRow dataset[], int size, int confusion_matrix[2][2])`: Calculates the error rate of a decision tree by comparing its predictions to the actual labels.
+- `DecisionTree_ML/confusionmatrix.py`: Python file to plot the confusion matrix of the Decision Tree model on both training and testing dataset.
+- `DecisionTree_ML/decisiontree.h`: Header file that defines the structure, constants and function prototypes for building, training, evaluating, and utilizing a decision tree model including dataset handling prediction.
 
 ### Raylib Functions
 - `void InitWindow(int width, int height, const char *title)`: Initialize window and OpenGL context.
