@@ -1300,7 +1300,6 @@ FUNCTION outcome_index(outcome)
 ENDFUNCTION
 
 
-
 /************************/
 /* NBmodel.c file       */
 /************************/
@@ -1552,7 +1551,7 @@ ENDFUNCTION
 
 
 /****************************************/
-/* decisiontree.c                       */
+/* decisiontree.c file                  */
 /****************************************/
 FUNCTION growth_Tree(tree)
     dataset_size, train_size, test_size ← 0
