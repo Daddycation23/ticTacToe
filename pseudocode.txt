@@ -1848,7 +1848,11 @@ FUNCTION dt_predict_best_move(tree, board, current_player, best_row, best_col)
                 IF board[i][j] = 'b'
                     features[i * 3 + j] ← (current_player = 'x') ? 1 : 2
 
+<<<<<<< HEAD
                     prediction ← predict_with_randomness(tree, features)
+=======
+                    prediction ←  predict_with_randomness(tree, features)
+>>>>>>> 170b791e4b93d0a66e55fc7abb68317eb051c898
 
                     IF prediction = DT_POSITIVE AND (max_positive_prob = -1 OR prediction > max_positive_prob)
                         temp_row ← i
