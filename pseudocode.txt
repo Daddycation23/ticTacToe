@@ -1551,10 +1551,10 @@ FUNCTION divide(dividend, divisor, quo, rem)
 ENDFUNCTION
 
 
-/****************************************/
-/* decisiontree.c                       */
-/****************************************/
-
+/**************************/
+/* decisiontree.c file    */
+/                          / 
+/**************************/ 
 FUNCTION growth_Tree(tree)
     dataset_size, train_size, test_size ← 0
     train_confusion[2][2], test_confusion[2][2] ← {0}
@@ -1562,46 +1562,46 @@ FUNCTION growth_Tree(tree)
     train_error_rate, test_error_rate ← 0.0
     correct_train, correct_test ← 0
     
-    CALL srand(time(NULL))
+    srand(time(NULL))
 
-    CALL load_dataset("tic-tac-toe.data", dataset, &dataset_size)
+    load_dataset("tic-tac-toe.data", dataset, &dataset_size)
     
-    CALL shuffle_dataset(dataset, dataset_size)
+    shuffle_dataset(dataset, dataset_size)
 
-    CALL decision_tree_split_dataset(dataset, dataset_size, train_set, &train_size, test_set, &test_size, 0.8)
+    decision_tree_split_dataset(dataset, dataset_size, train_set, &train_size, test_set, &test_size, 0.8)
 
-    tree ← CALL build_tree(train_set, train_size, 0)
+    tree ← build_tree(train_set, train_size, 0)
 
-    CALL calculate_position_probabilities(dataset, dataset_size, "DecisionTree_ML/DTweights.txt")
+    calculate_position_probabilities(dataset, dataset_size, "DecisionTree_ML/DTweights.txt")
 
     file ← open("DecisionTree_ML/DTconfusion_matrix.txt", "w")
     IF file IS NOT NULL
-        CALL close(file)
+        close(file)
     ENDIF
 
-    CALL evaluate_with_randomness(tree, train_set, train_size, train_confusion) → train_accuracy
-    CALCULATE correct_train = train_accuracy * train_size
-    CALL display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training")
-    CALL write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Training", train_accuracy, correct_train, train_size)
+    evaluate_with_randomness(tree, train_set, train_size, train_confusion) → train_accuracy
+    correct_train = train_accuracy * train_size
+    display_confusion_matrix(train_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Training")
+    write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Training", train_accuracy, correct_train, train_size)
 
-    CALL calculate_error_rate(tree, train_set, train_size, train_confusion) → train_error_rate
-    train_error_rate ← CALL calculate_error_rate(tree, train_set, train_size, train_confusion)
+     calculate_error_rate(tree, train_set, train_size, train_confusion) → train_error_rate
+    train_error_rate ←  calculate_error_rate(tree, train_set, train_size, train_confusion)
     file ← open("DecisionTree_ML/DTconfusion_matrix.txt", "a")
     IF file IS NOT NULL
         WRITE file, "Training Error Rate: train_error_rate"
-        CALL close(file)
+        close(file)
     ENDIF
 
-    test_accuracy ← CALL evaluate_with_randomness(tree, test_set, test_size, test_confusion)
+    test_accuracy ←  evaluate_with_randomness(tree, test_set, test_size, test_confusion)
     correct_test ← int(test_accuracy * test_size)
-    CALL display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing")
-    CALL write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Testing", test_accuracy, correct_test, test_size)
+     display_confusion_matrix(test_confusion, "DecisionTree_ML/DTconfusion_matrix.txt", "Testing")
+     write_accuracy_to_file("DecisionTree_ML/DTconfusion_matrix.txt", "Testing", test_accuracy, correct_test, test_size)
 
-    test_error_rate ← CALL calculate_error_rate(tree, test_set, test_size, test_confusion)
+    test_error_rate ←  calculate_error_rate(tree, test_set, test_size, test_confusion)
     file ← open("DecisionTree_ML/DTconfusion_matrix.txt", "a")
     IF file IS NOT NULL
         WRITE file, "Testing Error Rate: test_error_rate"
-        CALL close(file)
+        close(file)
     ENDIF
 ENDFUNCTION
 
@@ -1613,8 +1613,8 @@ FUNCTION load_dataset(filename, dataset, dataset_size)
     ENDIF
 
     dataset_size ← 0
-    WHILE (line ← CALL read_line(file)) do
-        tokens ← CALL split(line, ",")
+    WHILE (line ←  read_line(file)) do
+        tokens ←  split(line, ",")
         FOR i = 0 to NUM_FEATURES - 1 do
             dataset[dataset_size].features[i] ← 
                 (tokens[i] == "x") ? 1 : (tokens[i] == "o") ? 2 : 0
@@ -1623,22 +1623,22 @@ FUNCTION load_dataset(filename, dataset, dataset_size)
             (tokens[NUM_FEATURES] == "positive") ? DT_POSITIVE : DT_NEGATIVE
         dataset_size ← dataset_size + 1
     ENDWHILE
-    CALL close(file)
+    close(file)
 ENDFUNCTION
 
 FUNCTION shuffle_dataset(dataset, size)
     FOR i = size - 1 to 1 do
-        j ← CALL random(0, i)
-        CALL swap(dataset[i], dataset[j])
+        j ←  random(0, i)
+         swap(dataset[i], dataset[j])
     ENDFOR
 ENDFUNCTION
 
 FUNCTION build_tree(dataset, size, depth)
-    positives ← CALL count(dataset, DT_POSITIVE)
-    negatives ← CALL count(dataset, DT_NEGATIVE)
+    positives ←  count(dataset, DT_POSITIVE)
+    negatives ←  count(dataset, DT_NEGATIVE)
 
     IF (depth >= MAX_DEPTH OR positives == 0 OR negatives == 0)
-        leaf ← CALL new DecisionTreeNode
+        leaf ←  new DecisionTreeNode
         leaf.is_leaf ← TRUE
         leaf.prediction ← (positives > negatives) ? DT_POSITIVE : DT_NEGATIVE
         return leaf
@@ -1651,7 +1651,7 @@ FUNCTION build_tree(dataset, size, depth)
 
     FOR feature_index = 0 to NUM_FEATURES - 1 do
         FOR threshold = 0 to 2 do
-            gini ← CALL calculate_gini_index(dataset, size, feature_index, threshold)
+            gini ←  calculate_gini_index(dataset, size, feature_index, threshold)
             IF (gini < best_gini)
                 best_gini ← gini
                 best_feature ← feature_index
@@ -1661,14 +1661,14 @@ FUNCTION build_tree(dataset, size, depth)
     ENDFOR
 
     WRITE "Splitting at Feature:", best_feature, "Threshold:", best_threshold
-    CALL decision_tree_split_data(dataset, size, best_feature, best_threshold, left, &left_size, right, &right_size)
+     decision_tree_split_data(dataset, size, best_feature, best_threshold, left, &left_size, right, &right_size)
 
-    node ← CALL new DecisionTreeNode
+    node ←  new DecisionTreeNode
     node.is_leaf ← FALSE
     node.feature_index ← best_feature
     node.threshold ← best_threshold
-    node.left ← CALL build_tree(left, left_size, depth + 1)
-    node.right ← CALL build_tree(right, right_size, depth + 1)
+    node.left ← build_tree(left, left_size, depth + 1)
+    node.right ← build_tree(right, right_size, depth + 1)
     return node
 ENDFUNCTION
 
@@ -1682,7 +1682,7 @@ FUNCTION evaluate_with_randomness(root, dataset, size, confusion_matrix)
     ENDFOR
 
     FOR i = 0 TO size - 1 do
-        prediction ← CALL predict_with_randomness(root, dataset[i].features)
+        prediction ←  predict_with_randomness(root, dataset[i].features)
         actual ← dataset[i].label
 
         IF (actual == DT_POSITIVE AND prediction == DT_POSITIVE)
@@ -1723,7 +1723,7 @@ ENDFUNCTION
 FUNCTION display_confusion_matrix(confusion_matrix, filename, dataset_type)
     file ← open(filename, "append")
     IF file IS NULL 
-        CALL perror("Failed to open confusion matrix file")
+         perror("Failed to open confusion matrix file")
         RETURN
     ENDIF
 
@@ -1743,27 +1743,27 @@ FUNCTION display_confusion_matrix(confusion_matrix, filename, dataset_type)
     WRITE(file, "Actual Negative        ", FP, "                  ", TN, "\n")
     WRITE(file, "---------------------------------------------------------\n")
 
-    CALL close(file)
+     close(file)
 ENDFUNCTION
 
 FUNCTION write_accuracy_to_file(filename, dataset_type, accuracy, correct, total)
     file ← open(filename, "append")
     IF file IS NULL 
-        CALL perror("Failed to open file for writing accuracy")
+         perror("Failed to open file for writing accuracy")
         RETURN
     ENDIF
 
     WRITE(file, dataset_type, " Accuracy: ", FORMAT(accuracy * 100, 2), "% (", correct, "/", total, ")\n")
-    CALL close(file)
+     close(file)
 ENDFUNCTION
 
 FUNCTION free_tree(node)
     IF node IS NULL
         return
     ENDIF
-    CALL free_tree(node.left)
-    CALL free_tree(node.right)
-    CALL free(node)
+     free_tree(node.left)
+     free_tree(node.right)
+     free(node)
 ENDFUNCTION
 
 FUNCTION calculate_gini_index(dataset, size, feature_index, threshold)
@@ -1772,7 +1772,7 @@ FUNCTION calculate_gini_index(dataset, size, feature_index, threshold)
     left_size ← 0
     right_size ← 0
 
-    CALL decision_tree_split_data(dataset, size, feature_index, threshold, left, &left_size, right, &right_size)
+     decision_tree_split_data(dataset, size, feature_index, threshold, left, &left_size, right, &right_size)
 
     IF left_size = 0 OR right_size = 0
         return 1.0
@@ -1850,7 +1850,7 @@ FUNCTION dt_predict_best_move(tree, board, current_player, best_row, best_col)
                 IF board[i][j] = 'b'
                     features[i * 3 + j] ← (current_player = 'x') ? 1 : 2
 
-                    prediction ← CALL predict_with_randomness(tree, features)
+                    prediction ←  predict_with_randomness(tree, features)
 
                     IF prediction = DT_POSITIVE AND (max_positive_prob = -1 OR prediction > max_positive_prob)
                         temp_row ← i
@@ -1890,8 +1890,8 @@ FUNCTION print_tree(node, depth)
         PRINT "Leaf: Prediction =", node.prediction
     ELSE
         PRINT "Node: Feature =", node.feature_index, ", Threshold =", node.threshold
-        CALL print_tree(node.left, depth + 1)
-        CALL print_tree(node.right, depth + 1)
+         print_tree(node.left, depth + 1)
+         print_tree(node.right, depth + 1)
     ENDIF
 ENDFUNCTION
 
@@ -1918,31 +1918,31 @@ FUNCTION calculate_position_probabilities(dataset, dataset_size, filename)
         ENDFOR
     ENDFOR
 
-    file ← CALL open(filename, "w")
+    file ←  open(filename, "w")
     IF file IS NULL
         return
     ENDIF
 
-    CALL write(file, "Class Probabilities:")
-    CALL write(file, "  Positive: P(Positive) =", positive_count / dataset_size)
-    CALL write(file, "  Negative: P(Negative) =", negative_count / dataset_size)
-    CALL write(file, "--------------------------------------------")
+     write(file, "Class Probabilities:")
+     write(file, "  Positive: P(Positive) =", positive_count / dataset_size)
+     write(file, "  Negative: P(Negative) =", negative_count / dataset_size)
+     write(file, "--------------------------------------------")
 
     FOR i = 0 TO NUM_FEATURES - 1 do
-        CALL write(file, "Position", i + 1, ":")
-        CALL write(file, "  Symbol | P(Symbol | Positive) | P(Symbol | Negative)")
-        CALL write(file, "  -------|----------------------|----------------------")
+         write(file, "Position", i + 1, ":")
+         write(file, "  Symbol | P(Symbol | Positive) | P(Symbol | Negative)")
+         write(file, "  -------|----------------------|----------------------")
 
         FOR j = 0 TO 2 do
             p_positive ← IF positive_count > 0 position_count[i][j][DT_POSITIVE] / positive_count ELSE 0.0
             p_negative ← IF negative_count > 0 position_count[i][j][DT_NEGATIVE] / negative_count ELSE 0.0
-            CALL write(file, "  ", symbols[j], "|", p_positive, "|", p_negative)
+             write(file, "  ", symbols[j], "|", p_positive, "|", p_negative)
         ENDFOR
 
-        CALL write(file, "--------------------------------------------")
+         write(file, "--------------------------------------------")
     ENDFOR
 
-    CALL close(file)
+     close(file)
     PRINT "Weights updated and saved to", filename
 ENDFUNCTION
 
@@ -1950,7 +1950,7 @@ FUNCTION calculate_error_rate(root, dataset, size, confusion_matrix)
     error_count ← 0
 
     FOR i = 0 TO size - 1 do
-        prediction ← CALL predict_with_randomness(root, dataset[i].features)
+        prediction ←  predict_with_randomness(root, dataset[i].features)
         actual ← dataset[i].label
 
         IF prediction ≠ actual
