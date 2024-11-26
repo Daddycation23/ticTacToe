@@ -35,7 +35,8 @@ void growth_Tree(DecisionTreeNode *tree) {
 
     // Clear the output file before appending results
     FILE *file = fopen("DecisionTree_ML/DTconfusion_matrix.txt", "w");
-    if (file) fclose(file);
+    if (file) 
+    fclose(file);
 
     // Evaluate the decision tree on the training data
     train_accuracy = evaluate_with_randomness(tree, train_set, train_size, train_confusion);
