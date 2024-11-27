@@ -12,6 +12,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - **Sound Effects**: Includes sound effects for button clicks, game events, and background music.
 - **Hover Effects**: Visual feedback when hovering over buttons and grid cells, with vibration effects for certain buttons.
 - **Winning Animations**: Surprise players with confetti animations upon winning.
+- **Hint System**: Helping players to perform the best move available.
 
 ## Game States
 
@@ -42,8 +43,8 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `void AITurnDecisionTree(Sound victorySound, Sound loseSound, Sound drawSound, DecisionTreeNode *TDmodel)`: Handles the AI's turn in single-player mode with integrated Decision Tree model.
 - `bool HandlePlayerTurn(Sound popSound, Sound victorySound, Sound loseSound, Sound drawSound)`: Manages the player's turn and checks for game outcomes.
 - `void UpdateGameOver(Sound buttonClickSound)`: Manages the game over state, allowing players to retry or return to the menu.
-- `void clearHint()`: Clear hint.
-- `void getHint()`: Get hint for player
+- `void clearHint()`: Clear best move from previous turn.
+- `void getHint()`: Get best move for current player.
 - `ModeStats* GetCurrentModeStats(void)`: Tracks game statistics (wins, losses and draws) for each difficulty mode and AI model.
 
 ### UI and Animation Functions
@@ -70,7 +71,7 @@ This is a graphical Tic-Tac-Toe game implemented using the Raylib library. The g
 - `int outcome_index(const char *outcome)`: Convert the string outcome ("positive" or "negative") into the corresponding numerical label (POSITIVE(0) or NEGATIVE(1)).
 
 ### AI Functions
-- `int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta)`: Implements the Minimax algorithm for AI decision-making.
+- `int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit, int alpha, int beta)`: Implements the Minimax algorithm with Alpha-Beta Pruning and imperfectness for AI decision-making.
 - `void AITurnDecisionTree()`: Implements the decision tree algorithm for AI decision-making.
 - `int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE])`: Evaluates the board to determine the score for the AI.
 - `void train_NBmodel(NaiveBayesModel *model, char boards[][NUM_POSITIONS + 1], int outcomes[], int size)`: Train model with Naive Bayes(NB) algorithm.
